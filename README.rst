@@ -3,7 +3,7 @@ geopathfinder
 =============
 
 
-Add a short description here!
+A package for creating, quering, and searching in data structures holding geo data sets
 
 
 Description
