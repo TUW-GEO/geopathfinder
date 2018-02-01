@@ -34,12 +34,23 @@ import pandas as pd
 class SmartPath(object):
     '''
     Base class for the single path structure to a data set.
-    Allows building a path,
-    searching files with temporal slicing,
-    creating a pandas.DataFrame from a folder
+    - allows building a path,
+    - searching files with temporal slicing,
+    - creating a pandas.DataFrame from a folder
     '''
 
     def __init__(self, levels, hierarchy, make_dir=False):
+        '''
+        Parameters
+        ----------
+        levels : str
+            name of level in hierarchy
+        hierarchy : list of str
+            list defining the order of the levels
+        make_dir : bool, optional
+            if set to True, then the full path of
+            the SmartPath is created in the filesystem
+        '''
 
         self.levels = levels
         self.hierarchy = hierarchy
@@ -55,11 +66,34 @@ class SmartPath(object):
         '''
         short link for path, down to 'level'.
         Usage: path2level = your_smart_path[level]
+
+        Parameters
+        ----------
+        level : str
+            name of level in hierarchy
+
+        Returns
+        -------
+        str
+            path from root to level
+
         '''
         return self.get_level(level)
 
 
     def get_dir(self, make_dir=False):
+        '''
+
+        Parameters
+        ----------
+        make_dir : bool, optional
+
+        Returns
+        -------
+        str
+            full path of the SmartPath
+
+        '''
 
         if make_dir:
             self.make_dir()
@@ -67,10 +101,27 @@ class SmartPath(object):
         return self.directory
 
     def make_dir(self):
+        '''
+        Creates directory from root to deepest level
+
+        '''
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
 
     def build_levels(self, level=''):
+        '''
+
+        Parameters
+        ----------
+        level : str, optional
+            name of level in hierarchy
+
+        Returns
+        -------
+        str
+            full path of the SmartPath
+
+        '''
 
         directory = ''
 
@@ -85,6 +136,19 @@ class SmartPath(object):
         return directory
 
     def get_level(self, level):
+        '''
+
+        Parameters
+        ----------
+        level : str
+            name of level in hierarchy
+
+        Returns
+        -------
+        str
+            path from root to level
+
+        '''
 
         if level in self.hierarchy:
             return self.build_levels(level=level)
@@ -94,6 +158,22 @@ class SmartPath(object):
 
 
     def expand_full_path(self, level, files):
+        '''
+        Joins the path at level with given filenames
+
+        Parameters
+        ----------
+        level : str
+            name of level in hierarchy
+        files : list of str
+            fileanames
+
+        Returns
+        -------
+        str
+            joined filepaths
+
+        '''
 
         return [os.path.join(self[level], x) for x in files]
 
@@ -105,14 +185,16 @@ class SmartPath(object):
         Parameters
         ----------
         level : str
-            name of level
-        pattern : str
+            name of level in hierarchy
+        pattern : str, optional
             regex search pattern for file search
-        full_paths : bool
+        full_paths : bool, optional
             should full paths be in the dataframe? if not set: False
 
         Returns
         -------
+        list of str
+            filenames at the level
 
         '''
 
@@ -138,19 +220,19 @@ class SmartPath(object):
         Parameters
         ----------
         level : str
-            name of level
-        pattern : str
+            name of level in hierarchy
+        pattern : str, optional
             regex search pattern for file search
         date_position : int
             position of first character of date string in name of files
         date_format : str
             string with the datetime format in the filenames.
             e.g. '%Y%m%d_%H%M%S' reflects '20161224_000000'
-        starttime : str or datetime
-            earliest date and time, following "date_format"
-        endtime : str or datetime
-            latest date and time, following "date_format"
-        full_paths : bool
+        starttime : str or datetime, optional
+            earliest date and time, if str must follow "date_format"
+        endtime : str or datetime, optional
+            latest date and time, if str must follow "date_format"
+        full_paths : bool, optional
             should full paths be in the dataframe? if not set: False
 
         Returns
@@ -158,7 +240,6 @@ class SmartPath(object):
         df : pd.DataFrame
             dataframe holding the filenames and the datetimes
         '''
-
 
 
         files = self.search_files(level, pattern=pattern)
