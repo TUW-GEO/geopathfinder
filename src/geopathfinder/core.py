@@ -128,9 +128,9 @@ class SmartPath(object):
         return files
 
 
-    def get_dataframe(self, level, pattern='.*',
-                      date_position=1, date_format='%Y%m%d_%H%M%S',
-                      starttime=None, endtime=None, full_paths=False):
+    def search_files_ts(self, level, pattern='.*',
+                        date_position=1, date_format='%Y%m%d_%H%M%S',
+                        starttime=None, endtime=None, full_paths=False):
         '''
         Function searching files at a level in the SmartPath, returning the filenames
         and the datetimes as pd.DataFrame
@@ -145,10 +145,10 @@ class SmartPath(object):
             position of first character of date string in name of files
         date_format : str
             string with the datetime format in the filenames.
-            '%Y%m%d_%H%M%S' reflects eg. '20161224_000000'
-        starttime : str
+            e.g. '%Y%m%d_%H%M%S' reflects '20161224_000000'
+        starttime : str or datetime
             earliest date and time, following "date_format"
-        endtime : str
+        endtime : str or datetime
             latest date and time, following "date_format"
         full_paths : bool
             should full paths be in the dataframe? if not set: False
@@ -159,18 +159,23 @@ class SmartPath(object):
             dataframe holding the filenames and the datetimes
         '''
 
+
+
         files = self.search_files(level, pattern=pattern)
         times = extract_times(files, date_position=date_position, date_format=date_format)
-
-        if (starttime is not None) or (endtime is not None):
-            files, times = temporal_slice(files, times, date_format=date_format,
-                                          starttime=starttime, endtime=endtime)
 
         if full_paths:
             files = self.expand_full_path(level, files)
 
         df = pd.DataFrame({'Files': files}, index=times)
         df.sort_index()
+
+        if (starttime is not None) or (endtime is not None):
+            if not isinstance(starttime, datetime):
+                starttime = datetime.strptime(starttime, date_format)
+            if not isinstance(endtime, datetime):
+                endtime = datetime.strptime(endtime, date_format)
+            df = df[starttime:endtime]
 
         return df
 
@@ -218,44 +223,3 @@ def extract_times(files, date_position=1, date_format='%Y%m%d_%H%M%S'):
         files = reduce_2_basename(files)
 
     return [datetime.strptime(x[date_position:date_position + len(date_format) + 2], date_format) for x in files]
-
-
-def temporal_slice(files, times, date_format='%Y%m%d_%H%M%S', starttime=None, endtime=None):
-    '''
-    Reduces a list of filenames and a list of datetimes to the specified period.
-
-    Parameters
-    ----------
-    files : list of str
-        list of strings with filenames or filepaths
-    times : list of datetime
-        list of datetimes corresponding to files
-    date_format : str
-        string with the datetime format in the filenames.
-        '%Y%m%d_%H%M%S' reflects eg. '20161224_000000'
-    starttime : str
-        earliest date and time, following "date_format"
-    endtime : str
-        latest date and time, following "date_format"
-
-    Returns
-    -------
-    files : list of str
-        list of strings with filenames or filepaths
-    times : list of datetime
-        list of datetimes corresponding to files
-    '''
-
-    if starttime:
-        starttime = datetime.strptime(starttime, date_format)
-        ind_matches = np.where(np.array([(x >= starttime) for x in times]))[0]
-        files = np.array(files)[ind_matches].tolist()
-        times = np.array(times)[ind_matches].tolist()
-
-    if endtime:
-        endtime = datetime.strptime(endtime, date_format)
-        ind_matches = np.where(np.array([(x <= endtime) for x in times]))[0]
-        files = np.array(files)[ind_matches].tolist()
-        times = np.array(times)[ind_matches].tolist()
-
-    return files, times

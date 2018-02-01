@@ -20,7 +20,7 @@ Base class for the SGRT folder structure
 '''
 
 import os
-from geopathfinder.base import SmartPath
+from geopathfinder.core import SmartPath
 
 class SgrtFolderName(object):
 
@@ -273,7 +273,7 @@ if __name__ == '__main__':
 
 
 
-    df = ftf.get_dataframe('var', pattern=".*SSM", starttime='20161218_000000', endtime='20161224_000000',
+    df = ftf.search_files_ts('var', pattern=".*SSM", starttime='20161218_000000', endtime='20161224_000000',
                            full_paths=True)
 
     print(ftf.search_files('var', pattern='M*', full_paths=True))
