@@ -20,14 +20,12 @@ Base class for the geopathfinder
 '''
 
 import os
-import abc
+
 import re
 import glob
-import errno
 
 from datetime import datetime
 
-import numpy as np
 import pandas as pd
 
 
