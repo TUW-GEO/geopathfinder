@@ -21,20 +21,42 @@ Base class for the geopathfinder
 
 import os
 import abc
+import re
+import glob
+import errno
 
-class GeoTree(object):
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+
+
+class SmartPath(object):
     '''
-    Base class for the structure of a geo data set
+    Base class for the single path structure to a data set.
+    Allows building a path,
+    searching files with temporal slicing,
+    creating a pandas.DataFrame from a folder
     '''
 
-    def __init__(self, levels, hierarchy):
+    def __init__(self, levels, hierarchy, make_dir=False):
 
         self.levels = levels
         self.hierarchy = hierarchy
 
-        directory = self._build_dir()
+        directory = self.build_levels()
 
         self.directory = directory
+
+        if make_dir:
+            self.make_dir()
+
+    def __getitem__(self, level):
+        '''
+        short link for path, down to 'level'.
+        Usage: path2level = your_smart_path[level]
+        '''
+        return self.get_level(level)
 
 
     def get_dir(self, make_dir=False):
@@ -48,34 +70,192 @@ class GeoTree(object):
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
 
-    @property
-    def level_1(self):
-        return 'mainpath'
-
-
-
-    def _build_dir(self, level=''):
+    def build_levels(self, level=''):
 
         directory = ''
 
         for h in self.hierarchy:
-            directory = os.path.join(directory, self.levels[h])
-
-            if h == level:
+            if self.levels[h] is None:
                 break
+            else:
+                directory = os.path.join(directory, self.levels[h])
+                if h == level:
+                    break
 
         return directory
 
-    def search_level(self, level, pattern=None):
+    def get_level(self, level):
 
-        directory = self._build_dir(level)
-
-        search = 2
-
-        return search
-
-    def search_files(self, level, pattern):
-
-        pass
+        if level in self.hierarchy:
+            return self.build_levels(level=level)
+        else:
+            print('\'{}\' is not part of the path\'s hierarchy. '
+                  'Try on of {}.'.format(level, self.hierarchy))
 
 
+    def expand_full_path(self, level, files):
+
+        return [os.path.join(self[level], x) for x in files]
+
+
+    def search_files(self, level, pattern='.*', full_paths=False):
+        '''
+        Searches files meeting the regex pattern at level in the SmartPath
+
+        Parameters
+        ----------
+        level : str
+            name of level
+        pattern : str
+            regex search pattern for file search
+        full_paths : bool
+            should full paths be in the dataframe? if not set: False
+
+        Returns
+        -------
+
+        '''
+
+        paths = glob.glob(os.path.join(self.build_levels(level), '*.*'))
+        basenames = reduce_2_basename(paths)
+
+        regex = re.compile(pattern)
+        files = [x for x in basenames if regex.match(x)]
+
+        if full_paths:
+            files = self.expand_full_path(level, files)
+
+        return files
+
+
+    def get_dataframe(self, level, pattern='.*',
+                      date_position=1, date_format='%Y%m%d_%H%M%S',
+                      starttime=None, endtime=None, full_paths=False):
+        '''
+        Function searching files at a level in the SmartPath, returning the filenames
+        and the datetimes as pd.DataFrame
+
+        Parameters
+        ----------
+        level : str
+            name of level
+        pattern : str
+            regex search pattern for file search
+        date_position : int
+            position of first character of date string in name of files
+        date_format : str
+            string with the datetime format in the filenames.
+            '%Y%m%d_%H%M%S' reflects eg. '20161224_000000'
+        starttime : str
+            earliest date and time, following "date_format"
+        endtime : str
+            latest date and time, following "date_format"
+        full_paths : bool
+            should full paths be in the dataframe? if not set: False
+
+        Returns
+        -------
+        df : pd.DataFrame
+            dataframe holding the filenames and the datetimes
+        '''
+
+        files = self.search_files(level, pattern=pattern)
+        times = extract_times(files, date_position=date_position, date_format=date_format)
+
+        if (starttime is not None) or (endtime is not None):
+            files, times = temporal_slice(files, times, date_format=date_format,
+                                          starttime=starttime, endtime=endtime)
+
+        if full_paths:
+            files = self.expand_full_path(level, files)
+
+        df = pd.DataFrame({'Files': files}, index=times)
+        df.sort_index()
+
+        return df
+
+def reduce_2_basename(files):
+    '''
+    Converts full file paths to file basenames.
+
+    Parameters
+    ----------
+    files : list of str
+        list of filepaths
+
+    Returns
+    -------
+    list of str
+        list of basenames
+
+    '''
+
+    return [os.path.basename(f) for f in files]
+
+
+def extract_times(files, date_position=1, date_format='%Y%m%d_%H%M%S'):
+    '''
+    Extracts the datetimes from filenames.
+
+    Parameters
+    ----------
+    files: list of str
+        list of strings with filenames or filepaths
+    date_position: int
+        position of first character of date string in name of files
+    date_format: str
+        string with the datetime format in the filenames.
+        '%Y%m%d_%H%M%S' reflects eg. '20161224_000000'
+
+    Return
+    ------
+    list of datetime
+        list of datetime.datetime objects extracted from the filenames,
+
+    '''
+
+    if any([os.path.isdir(x) for x in files]):
+        files = reduce_2_basename(files)
+
+    return [datetime.strptime(x[date_position:date_position + len(date_format) + 2], date_format) for x in files]
+
+
+def temporal_slice(files, times, date_format='%Y%m%d_%H%M%S', starttime=None, endtime=None):
+    '''
+    Reduces a list of filenames and a list of datetimes to the specified period.
+
+    Parameters
+    ----------
+    files : list of str
+        list of strings with filenames or filepaths
+    times : list of datetime
+        list of datetimes corresponding to files
+    date_format : str
+        string with the datetime format in the filenames.
+        '%Y%m%d_%H%M%S' reflects eg. '20161224_000000'
+    starttime : str
+        earliest date and time, following "date_format"
+    endtime : str
+        latest date and time, following "date_format"
+
+    Returns
+    -------
+    files : list of str
+        list of strings with filenames or filepaths
+    times : list of datetime
+        list of datetimes corresponding to files
+    '''
+
+    if starttime:
+        starttime = datetime.strptime(starttime, date_format)
+        ind_matches = np.where(np.array([(x >= starttime) for x in times]))[0]
+        files = np.array(files)[ind_matches].tolist()
+        times = np.array(times)[ind_matches].tolist()
+
+    if endtime:
+        endtime = datetime.strptime(endtime, date_format)
+        ind_matches = np.where(np.array([(x <= endtime) for x in times]))[0]
+        files = np.array(files)[ind_matches].tolist()
+        times = np.array(times)[ind_matches].tolist()
+
+    return files, times
