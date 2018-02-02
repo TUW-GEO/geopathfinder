@@ -224,18 +224,18 @@ class SGRTFolder_Substi():
         # function for qlooks
         qlook = 'qlooks'
 
-def full_sgrt_tree(root,
-                   sensor=None,
-                   mode=None,
-                   group=None,
-                   datalog=None,
-                   product=None,
-                   wflow=None,
-                   grid=None,
-                   tile=None,
-                   var=None,
-                   qlook=True,
-                   make_dir=False):
+def get_full_sgrt_path(root,
+                       sensor=None,
+                       mode=None,
+                       group=None,
+                       datalog=None,
+                       product=None,
+                       wflow=None,
+                       grid=None,
+                       tile=None,
+                       var=None,
+                       qlook=True,
+                       make_dir=False):
 
 
     # defining the levels in the directory tree (order could become shuffled around)
@@ -259,23 +259,5 @@ def full_sgrt_tree(root,
     return SmartPath(levels, hierarchy, make_dir=make_dir)
 
 if __name__ == '__main__':
-
-    root_path = r'R:\Projects_work\SAR_NRT_Code_Sprint\Testdata'
-
-    ftf = full_sgrt_tree(root_path, sensor='Sentinel-1_CSAR', mode='IWGRDH', group='products', datalog='datasets',
-                         product='ssm', wflow='C1003', grid='EQUI7_EU500M', tile='E048N012T6', var='ssm',
-                         make_dir=True)
-
-
-    print(ftf['grid'])
-    print(ftf.search_files('var', pattern=".*SSM.*VV.*", full_paths=True))
-    files = ftf.search_files('var', pattern=".*SSM")
-
-
-
-    df = ftf.search_files_ts('var', pattern=".*SSM", starttime='20161218_000000', endtime='20161224_000000',
-                           full_paths=True)
-
-    print(ftf.search_files('var', pattern='M*', full_paths=True))
 
     pass

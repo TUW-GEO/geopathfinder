@@ -42,8 +42,9 @@ class TestSgrt(unittest.TestCase):
         self.path = os.path.join(curpath())
 
     def tearDown(self):
-        if os.path.exists(self.path):
-            shutil.rmtree(self.path, )
+        #if os.path.exists(self.path):
+        #    shutil.rmtree(self.path)
+        pass
 
 
     def test_a_sgrt(self):

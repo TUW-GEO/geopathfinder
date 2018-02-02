@@ -85,7 +85,7 @@ class SmartPath(object):
         Parameters
         ----------
         make_dir : bool, optional
-
+            creates the directory
         Returns
         -------
         str
@@ -106,13 +106,15 @@ class SmartPath(object):
         if not os.path.exists(self.directory):
             os.makedirs(self.directory)
 
-    def build_levels(self, level=''):
+    def build_levels(self, level='', make_dir=False):
         '''
 
         Parameters
         ----------
         level : str, optional
             name of level in hierarchy
+        make_dir : bool, optional
+            creates the directory until level
 
         Returns
         -------
@@ -130,6 +132,10 @@ class SmartPath(object):
                 directory = os.path.join(directory, self.levels[h])
                 if h == level:
                     break
+
+        if make_dir:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
 
         return directory
 
