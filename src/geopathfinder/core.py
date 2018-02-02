@@ -249,7 +249,7 @@ class SmartPath(object):
             files = self.expand_full_path(level, files)
 
         df = pd.DataFrame({'Files': files}, index=times)
-        df.sort_index()
+        df.sort_index(inplace=True)
 
         if (starttime is not None) or (endtime is not None):
             if not isinstance(starttime, datetime):
