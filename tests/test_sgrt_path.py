@@ -27,7 +27,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-from geopathfinder.sgrt_path import sgrt_tree
+from geopathfinder.sgrt_path import get_full_sgrt_path
 from geopathfinder.sgrt_path import SgrtFolderName
 
 def curpath():
@@ -35,7 +35,7 @@ def curpath():
     pth = r'R:\Projects_work\SAR_NRT_Code_Sprint\test_pathfinder'
     return pth
 
-
+'''
 class TestSgrt(unittest.TestCase):
 
     def setUp(self):
@@ -61,7 +61,7 @@ class TestSgrt(unittest.TestCase):
         ftile = 'EU500M_E048N006T6'
         sgrt_var_name = 'SSM--'
 
-        sgrt_dir = sgrt_tree(dir_root=root_path, product_id=product_id, wflow_id=wflow_id,
+        sgrt_dir = get_full_sgrt_path(dir_root=root_path, product_id=product_id, wflow_id=wflow_id,
                              ptop_name=ptop_name, grid=grid, ftile=ftile, sgrt_var_name=sgrt_var_name)
 
         result = sgrt_dir.get_dir(make_dir=True)
@@ -95,7 +95,7 @@ class TestSgrt(unittest.TestCase):
 
         # test if directory was created
         assert os.path.exists(obj.level_5)
-
+'''
 
 
 if __name__ == "__main__":
