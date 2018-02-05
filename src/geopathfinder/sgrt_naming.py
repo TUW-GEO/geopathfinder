@@ -22,7 +22,7 @@ import os
 from geopathfinder.folder_naming import SmartPath
 
 
-class SgrtFolderName():
+class SgrtFolderName_old_interface():
 
     """
     Heritage-class from SGRT. This class handles sgrt data (folders)
@@ -149,7 +149,7 @@ class SgrtFolderName():
                 continue
 
 
-class SGRTFolder_Substi():
+class SGRTFolderName():
 
     """
     Heritage-class from SGRT. This class handles sgrt data (folders)

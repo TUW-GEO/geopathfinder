@@ -152,6 +152,31 @@ class SmartPath(object):
             print('\'{}\' is not part of the path\'s hierarchy. '
                   'Try on of {}.'.format(level, self.hierarchy))
 
+
+    def remove_level(self, level):
+
+        if level in self.hierarchy:
+
+            self.levels.pop(level)
+            self.hierarchy.remove(level)
+
+            self.__init__(self.levels, self.hierarchy)
+
+        else:
+            print('Level \'{}\' is not in hierarchy!')
+
+    def rebase_2_root(self, root):
+
+        if 'root' in self.hierarchy:
+            self.remove_level('root')
+
+        self.levels.update({'root': root})
+        self.hierarchy = ['root'] + self.hierarchy
+
+        self.__init__(self.levels, self.hierarchy)
+
+
+
     def expand_full_path(self, level, files):
         """
         Joins the path at level with given filenames.
@@ -249,6 +274,101 @@ class SmartPath(object):
 
         return df
 
+def get_test_sp(sensor=None,
+                mode=None,
+                group=None,
+                datalog=None,
+                product=None,
+                wflow=None,
+                grid=None,
+                tile=None,
+                var=None,
+                qlook=True,
+                make_dir=False):
+
+
+    # defining the levels in the directory tree (order could become shuffled around)
+    levels = {'sensor': sensor,
+              'mode': mode,
+              'group': group,
+              'datalog': datalog,
+              'product': product,
+              'wflow': wflow,
+              'grid': grid,
+              'tile': tile,
+              'var': var,
+              'qlook': 'qlooks'}
+
+    # defining the hierarchy
+    hierarchy = ['sensor', 'mode', 'group',
+                 'datalog', 'product', 'wflow', 'grid',
+                 'tile', 'var', 'qlook']
+
+    return SmartPath(levels, hierarchy, make_dir=make_dir)
+
+
+class SmartTree(object):
+    '''
+    Class for collecting multiple SmartPaths() at one root path.
+    '''
+
+    def __init__(self, root, hierarchy, make_dir=False):
+        '''
+
+        Parameters
+        ----------
+        root : str
+            directory path to root of directory tree.
+        '''
+
+        if not os.path.exists(root):
+            raise OSError('Given directory for attribute \'root\', '
+                          '\'{}\', does not exist!'.format(root))
+
+        self.root = root
+        self.dirs = {}
+        self.hierarchy = hierarchy
+
+        if make_dir:
+            if not os.path.exists(self.root):
+                os.makedirs(self.root)
+
+
+    def add_smartpath(self, smartpath):
+
+        if isinstance(smartpath, SmartPath):
+
+            smartpath.rebase_2_root(self.root)
+
+            if self.hierarchy == smartpath.hierarchy:
+
+                self.dirs.update({smartpath.get_dir(): smartpath})
+
+            else:
+                print("SmartPath is not compatible with SmartTree: "
+                      "Hierarchies do not correspond!")
+
+
+    def remove_dir(self, key):
+        self.dirs.pop(key)
+
+
+    def collect_level(self, level, pattern=None):
+
+        result = []
+
+        for _, smartpath in self.dirs.items():
+            if smartpath.levels[level] is not None:
+
+                if pattern is not None:
+                    if smartpath.levels[level] == pattern:
+                        result.append(smartpath[level])
+                else:
+                    result.append(smartpath[level])
+
+        return set(result)
+
+
 
 def reduce_2_basename(files):
     """
@@ -297,3 +417,48 @@ def extract_times(files, date_position=1, date_format='%Y%m%d_%H%M%S'):
         times.append(t)
 
     return times
+
+
+if __name__ == '__main__':
+
+    hierarchy = ['root', 'sensor', 'mode', 'group',
+                 'datalog', 'product', 'wflow', 'grid',
+                 'tile', 'var', 'qlook']
+
+    st = SmartTree(r'D:\temp\tests', hierarchy)
+
+    sp = get_test_sp(sensor='Sentinel-1_CSAR',
+                     mode='IWGRDH', group='products',
+                     datalog='datasets', product='ssm',
+                     wflow='C1003', grid='EQUI7_EU500M',
+                     tile='E048N012T6', var='ssm')
+
+    st.add_smartpath(sp)
+
+    sp2 = get_test_sp(sensor='Sentinel-1_CSAR',
+                     mode='IWGRDH', group='products',
+                     datalog='datasets', product='ssm',
+                     wflow='C1077', grid='EQUI7_EU500M',
+                     tile='E048N012T6', var='ssm')
+
+    st.add_smartpath(sp2)
+
+    sp3 = get_test_sp(sensor='Sentinel-1_CSAR',
+                     mode='IWGRDH', group='products',
+                     datalog='logfiles')
+
+    st.add_smartpath(sp3)
+
+    sp4 = get_test_sp(sensor='Sentinel-1_CSAR',
+                     mode='IWGRDH', group='products',
+                     datalog='datasets', product='resampled',
+                     wflow='A0202', grid='EQUI7_EU500M',
+                     tile='E048N012T6', var='sig0')
+
+    st.add_smartpath(sp4)
+
+    st.collect_level('datalog')
+
+    st.collect_level('wflow', pattern='C1003')
+
+    pass
