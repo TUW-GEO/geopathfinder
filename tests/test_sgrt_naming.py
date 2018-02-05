@@ -27,8 +27,8 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-from geopathfinder.sgrt_path import get_full_sgrt_path
-from geopathfinder.sgrt_path import SgrtFolderName
+from geopathfinder.sgrt_naming import get_full_sgrt_path
+from geopathfinder.sgrt_naming import SgrtFolderName
 
 def curpath():
     # pth, _ = os.path.split(os.path.abspath(__file__))

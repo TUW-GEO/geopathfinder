@@ -20,8 +20,8 @@ import os
 import shutil
 import pandas as pd
 
-from geopathfinder.core import SmartPath
-from geopathfinder.core import extract_times
+from geopathfinder.folder_naming import SmartPath
+from geopathfinder.folder_naming import extract_times
 
 def cur_path():
     pth, _ = os.path.split(os.path.abspath(__file__))

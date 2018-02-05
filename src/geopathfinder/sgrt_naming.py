@@ -19,7 +19,7 @@ Base class for the SGRT folder structure
 """
 
 import os
-from geopathfinder.foldernaming import SmartPath
+from geopathfinder.folder_naming import SmartPath
 
 
 class SgrtFolderName():
