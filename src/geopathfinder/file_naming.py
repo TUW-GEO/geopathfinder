@@ -14,14 +14,12 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from collections import OrderedDict
-from datetime import datetime
-
 
 class SmartFilename():
 
     """
-    Class handling file name following pre-defined rules.
+    SmartFilename class handles file names with pre-defined field names
+    and field length.
     """
 
     def __init__(self, fields, fields_def, ext=None, pad='-', delimiter='_'):
@@ -31,7 +29,7 @@ class SmartFilename():
         Parameters
         ----------
         fields : dict
-            Name of fields (keys) and  (values).
+            Name of fields (keys) and (values).
         field_def : OrderedDict
             Name of fields (keys) in right order and length (values).
         ext : str, optional
@@ -46,6 +44,20 @@ class SmartFilename():
         self.ext = ext
         self.delimiter = delimiter
         self.pad = pad
+        self._check_def()
+
+    def _check_def(self):
+        """
+        Check if fields names and length comply with definition.
+        """
+        for key, value in self.fields.items():
+            if key in self.fields_def:
+                if len(value) > self.fields_def[key]:
+                    raise ValueError("Length does not comply with "
+                                     "definition: {:} > {:}".format(
+                                         len(value), self.fields_def[key]))
+            else:
+                raise KeyError("Field name undefined: {:}".format(key))
 
     def _build_fn(self):
         """
@@ -60,9 +72,10 @@ class SmartFilename():
         for name, length in self.fields_def.items():
             if name in self.fields:
                 if filename == '':
-                    filename = self.fields[name]
+                    filename = self.fields[name].rjust(length, self.pad)
                 else:
-                    filename += self.delimiter + self.fields[name]
+                    filename += self.delimiter + \
+                        self.fields[name].rjust(length, self.pad)
             else:
                 if filename == '':
                     filename = self.pad * length
@@ -79,9 +92,14 @@ class SmartFilename():
 
     def __setitem__(self, key, value):
         if key in self.fields_def:
-            self.fields[key] = value
+            if len(value) > self.fields_def[key]:
+                raise ValueError("Length does not comply with "
+                                 "definition: {:} > {:}".format(
+                                     len(value), self.fields_def[key]))
+            else:
+                self.fields[key] = value
         else:
-            raise KeyError('Field not part of definition dictionary')
+            raise KeyError("Field name undefined: {:}".format(key))
 
     def __repr__(self):
         return self._build_fn()

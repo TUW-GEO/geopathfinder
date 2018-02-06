@@ -32,7 +32,7 @@ class TestSmartFilename(unittest.TestCase):
         fields = {'pflag': 'M', 'start_time': '20180101120000'}
         smrtf = SmartFilename(fields, self.fields_def)
 
-        self.assertTrue(smrtf.__repr__() == 'M_20180101120000')
+        self.assertEqual(smrtf.__repr__(), 'M_20180101120000')
 
     def test_build_filename_with_ext(self):
         """
@@ -41,23 +41,25 @@ class TestSmartFilename(unittest.TestCase):
         fields = {'pflag': 'M', 'start_time': '20180101120000'}
         smrtf = SmartFilename(fields, self.fields_def, ext='.tif')
 
-        self.assertTrue(smrtf.__repr__() == 'M_20180101120000.tif')
+        self.assertEqual(smrtf.__repr__(), 'M_20180101120000.tif')
 
-    def test_set_and_get_fields(self):
+    def test_init_undefined_field(self):
         """
-        Test set and get file name fields.
+        Test initialization with undefined field name.
         """
-        fields = {'pflag': 'M', 'start_time': '20180101120000'}
-        smrtf = SmartFilename(fields, self.fields_def, ext='.tif')
-        
-        self.assertTrue(smrtf['pflag'] == 'M')
-        self.assertTrue(smrtf['start_time'] == '20180101120000')
+        fields = {'pflag': 'M', 'test_time': '20180101120000'}
 
-        smrtf['pflag'] = 'D'
-        smrtf['start_time'] = '20180101130000'
+        with self.assertRaises(KeyError):
+            SmartFilename(fields, self.fields_def, ext='.tif')
 
-        self.assertTrue(smrtf['pflag'] == 'D')
-        self.assertTrue(smrtf['start_time'] == '20180101130000')
+    def test_init_wrong_field_length(self):
+        """
+        Test initialization with wrong field length.
+        """
+        fields = {'pflag': 'ME'}
+
+        with self.assertRaises(ValueError):
+            SmartFilename(fields, self.fields_def, ext='.tif')
 
     def test_set_nonexisting_fields(self):
         """
@@ -66,8 +68,35 @@ class TestSmartFilename(unittest.TestCase):
         fields = {'pflag': 'M', 'start_time': '20180101120000'}
         smrtf = SmartFilename(fields, self.fields_def, ext='.tif')
 
-        with self.assertRaises(KeyError) as context: 
+        with self.assertRaises(KeyError):
             smrtf['new_field'] = 'test'
+
+    def test_set_wrong_fields_len(self):
+        """
+        Test setting field with wrong length.
+        """
+        fields = {'pflag': 'M', 'start_time': '20180101120000'}
+        smrtf = SmartFilename(fields, self.fields_def, ext='.tif')
+
+        with self.assertRaises(ValueError):
+            smrtf['pflag'] = 'MM'
+
+    def test_set_and_get_fields(self):
+        """
+        Test set and get file name fields.
+        """
+        fields = {'pflag': 'M', 'start_time': '20180101120000'}
+        smrtf = SmartFilename(fields, self.fields_def, ext='.tif')
+
+        self.assertEqual(smrtf['pflag'], 'M')
+        self.assertEqual(smrtf['start_time'], '20180101120000')
+
+        smrtf['pflag'] = 'D'
+        smrtf['start_time'] = '20180101130000'
+
+        self.assertEqual(smrtf['pflag'], 'D')
+        self.assertEqual(smrtf['start_time'], '20180101130000')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -2,9 +2,9 @@
 Changelog
 =========
 
-Version 0.1
-===========
+Version v0.0.1
+==============
 
-- Feature A added
-- FIX: nasty bug #1729 fixed
-- add your changes here!
+- Add class SmartPath and SmartFilename
+- Add class SgrtFoldername and SgrtFilename
+- Add unit tests
