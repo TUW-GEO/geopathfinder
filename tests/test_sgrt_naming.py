@@ -15,11 +15,12 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import unittest
 import os
 import shutil
 from datetime import date, datetime
 import glob
+import unittest
+
 import numpy.testing as nptest
 import numpy as np
 
@@ -29,6 +30,7 @@ logging.basicConfig(level=logging.INFO)
 
 from geopathfinder.sgrt_naming import get_full_sgrt_path
 from geopathfinder.sgrt_naming import SgrtFolderName
+from geopathfinder.sgrt_naming import SgrtFilename
 
 def curpath():
     # pth, _ = os.path.split(os.path.abspath(__file__))
@@ -96,6 +98,24 @@ class TestSgrt(unittest.TestCase):
         # test if directory was created
         assert os.path.exists(obj.level_5)
 '''
+
+
+def test_sgrt_filename_times():
+    """
+    Test file name dates.
+    """
+    start_time = datetime(2008, 1, 1, 12, 23, 33)
+    end_time = datetime(2008, 1, 1, 13, 23, 33)
+    fields = {'start_time': start_time, 'end_time': end_time}
+    fn = SgrtFilename(fields)
+
+    assert fn['start_time'] == start_time
+    assert fn['end_time'] == end_time
+
+    new_start_time = datetime(2008, 3, 1, 12, 23, 33)
+    fn['start_time'] = new_start_time
+
+    assert fn['start_time'] == new_start_time
 
 
 if __name__ == "__main__":

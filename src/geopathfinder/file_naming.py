@@ -24,7 +24,7 @@ class SmartFilename():
     Class handling file name following pre-defined rules.
     """
 
-    def __init__(self, fields, fields_def, pad='-', delimiter='_'):
+    def __init__(self, fields, fields_def, ext=None, pad='-', delimiter='_'):
         """
         Define name of fields, length, pad and delimiter symbol.
 
@@ -34,6 +34,8 @@ class SmartFilename():
             Name of fields (keys) and  (values).
         field_def : OrderedDict
             Name of fields (keys) in right order and length (values).
+        ext : str, optional
+            File name extension (default: None).
         pad : str, optional
             Padding symbol (default: '-').
         delimiter : str, optional
@@ -41,6 +43,7 @@ class SmartFilename():
         """
         self.fields = fields
         self.fields_def = fields_def
+        self.ext = ext
         self.delimiter = delimiter
         self.pad = pad
 
@@ -66,142 +69,19 @@ class SmartFilename():
                 else:
                     filename += self.delimiter + self.pad * length
 
+        if self.ext is not None:
+            filename += self.ext
+
         return filename
 
     def __getitem__(self, key):
         return self.fields[key]
 
     def __setitem__(self, key, value):
-        self.fields[key] = value
+        if key in self.fields_def:
+            self.fields[key] = value
+        else:
+            raise KeyError('Field not part of definition dictionary')
 
     def __repr__(self):
         return self._build_fn()
-
-
-def sgrt_ssm_fn(start_time, end_time, pol):
-    """
-    Test function.
-
-    Parameters
-    ----------
-    start_time : datetime
-        Start time.
-    end_time : datetime
-        End time.
-    pol : str
-        Polarization
-
-    Returns
-    -------
-    smart_fn : SmartFilename object
-        Smart file name object.
-    """
-    fields_def = OrderedDict(
-        [('pflag', 1), ('start_time', 15), ('end_time', 15),
-            ('var_name', 9), ('sensor_id', 3), ('mode_id', 2),
-            ('product_type', 3), ('res_class', 1), ('level', 1),
-            ('pol', 2), ('direction', 4), ('relative_orbit', 4),
-            ('workflow_id', 5), ('ftile_name', 3), ('ext', 4)])
-
-    names = {'start_time': start_time.strftime("%Y%m%d_%H%M%S"),
-             'end_time': end_time.strftime("%Y%m%d_%H%M%S"),
-             'product_type': 'SSM', 'pol': pol, 'ext': '.tif'}
-
-    return SmartFilename(names, fields_def)
-
-
-class SgrtFilename(SmartFilename):
-
-    def __init__(self, fields):
-
-        self.date_format = "%Y%m%d%H%M%SZ"
-
-        fields_def = OrderedDict(
-            [('pflag', 1), ('start_time', 15), ('end_time', 15),
-             ('var_name', 9), ('sensor_id', 3), ('mode_id', 2),
-             ('product_type', 3), ('res_class', 1), ('level', 1),
-             ('pol', 2), ('direction', 4), ('relative_orbit', 4),
-             ('workflow_id', 5), ('ftile_name', 3), ('ext', 4)])
-
-        for v in ['start_time', 'end_time']:
-            if v in fields:
-                fields[v] = fields[v].strftime(self.date_format)
-
-        fields['ext'] = '.tif'
-
-        super(SgrtFilename, self).__init__(fields, fields_def)
-
-    def __getitem__(self, key):
-        """
-        Get field content.
-
-        Parameters
-        ----------
-        key : str
-            Field name.
-
-        Returns
-        -------
-        item : str
-            Item value.
-        """
-        if key in ['start_time', 'end_time']:
-            item = datetime.strptime(self.fields[key], self.date_format)
-        else:
-            item = self.fields[key]
-
-        return item
-
-    def __setitem__(self, key, value):
-        """
-        Set field content.
-
-        Parameters
-        ----------
-        key : str
-            Field name.
-        value : str or datetime
-            Field value.
-        """
-        if key in ['start_time', 'end_time'] and isinstance(value, datetime):
-            self.fields[key] = value.strftime(self.date_format)
-        else:
-            self.fields[key] = value
-
-
-def test_sgrt_filename_times():
-    """
-    Test file name dates.
-    """
-    start_time = datetime(2008, 1, 1, 12, 23, 33)
-    end_time = datetime(2008, 1, 1, 13, 23, 33)
-    fields = {'start_time': start_time, 'end_time': end_time}
-    fn = SgrtFilename(fields)
-
-    assert fn['start_time'] == start_time
-    assert fn['end_time'] == end_time
-
-    new_start_time = datetime(2008, 3, 1, 12, 23, 33)
-    fn['start_time'] = new_start_time
-
-    assert fn['start_time'] == new_start_time
-
-
-def example():
-    """
-    Example.
-    """
-    start_time = datetime(2008, 1, 1, 12, 23, 33)
-    end_time = datetime(2008, 1, 1, 13, 23, 33)
-    pol = 'VV'
-    fn = sgrt_ssm_fn(start_time, end_time, pol)
-    print(fn)
-
-    fields = {'start_time': start_time, 'end_time': end_time}
-    fn = SgrtFilename(fields)
-    print(fn)
-    print(fn['start_time'], fn['end_time'])
-
-if __name__ == '__main__':
-    example()
-    test_sgrt_filename_times()
