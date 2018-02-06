@@ -15,25 +15,61 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import unittest
 import os
 import shutil
-from datetime import date, datetime
 import glob
+import unittest
+from datetime import date, datetime
+
 import numpy.testing as nptest
 import numpy as np
-
 import logging
+
+# from geopathfinder.sgrt_naming import get_full_sgrt_path
+# from geopathfinder.sgrt_naming import SgrtFolderName
+from geopathfinder.sgrt_naming import SgrtFilename
 
 logging.basicConfig(level=logging.INFO)
 
-from geopathfinder.sgrt_naming import get_full_sgrt_path
-from geopathfinder.sgrt_naming import SgrtFolderName
+
+class TestSgrtFilename(unittest.TestCase):
+
+    def setUp(self):
+        self.start_time = datetime(2008, 1, 1, 12, 23, 33)
+        self.end_time = datetime(2008, 1, 1, 13, 23, 33)
+
+        fields = {'start_time': self.start_time, 'end_time': self.end_time,
+                  'var_name': 'SSM'}
+
+        self.sgrt_fn = SgrtFilename(fields)
+
+    def test_build_sgrt_filename(self):
+        """
+        Test building SGRT file name.
+        """
+        fn = ('-_20080101_122333_20080101_132333_------SSM_---_--_---_-_-_--_'
+              '----_----_-----_---.tif')
+
+        self.assertEqual(self.sgrt_fn.__repr__(), fn)
+
+    def test_set_and_get_datetime(self):
+        """
+        Test set and get start and end time.
+        """
+        self.assertEqual(self.sgrt_fn['start_time'], self.start_time)
+        self.assertEqual(self.sgrt_fn['end_time'], self.end_time)
+
+        new_start_time = datetime(2009, 1, 1, 12, 23, 33)
+        self.sgrt_fn['start_time'] = new_start_time
+
+        self.assertEqual(self.sgrt_fn['start_time'], new_start_time)
+
 
 def curpath():
     # pth, _ = os.path.split(os.path.abspath(__file__))
     pth = r'R:\Projects_work\SAR_NRT_Code_Sprint\test_pathfinder'
     return pth
+
 
 '''
 class TestSgrt(unittest.TestCase):
@@ -99,5 +135,4 @@ class TestSgrt(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

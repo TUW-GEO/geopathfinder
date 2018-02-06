@@ -15,11 +15,76 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-Base class for the SGRT folder structure
+SGRT folder and file name definition.
 """
 
 import os
+from datetime import datetime
+from collections import OrderedDict
+
 from geopathfinder.folder_naming import SmartPath
+from geopathfinder.file_naming import SmartFilename
+
+
+class SgrtFilename(SmartFilename):
+
+    """
+    SGRT file name definition using SmartFilename class.
+    """
+
+    def __init__(self, fields):
+
+        self.date_format = "%Y%m%d_%H%M%S"
+
+        fields_def = OrderedDict(
+            [('pflag', 1), ('start_time', 15), ('end_time', 15),
+             ('var_name', 9), ('sensor_id', 3), ('mode_id', 2),
+             ('product_type', 3), ('res_class', 1), ('level', 1),
+             ('pol', 2), ('direction', 4), ('relative_orbit', 4),
+             ('workflow_id', 5), ('ftile_name', 3)])
+
+        for v in ['start_time', 'end_time']:
+            if v in fields:
+                fields[v] = fields[v].strftime(self.date_format)
+
+        super(SgrtFilename, self).__init__(fields, fields_def, ext='.tif')
+
+    def __getitem__(self, key):
+        """
+        Get field content.
+
+        Parameters
+        ----------
+        key : str
+            Field name.
+
+        Returns
+        -------
+        item : str
+            Item value.
+        """
+        item = super(SgrtFilename, self).__getitem__(key)
+
+        if key in ['start_time', 'end_time']:
+            item = datetime.strptime(item, self.date_format)
+
+        return item
+
+    def __setitem__(self, key, value):
+        """
+        Set field content.
+
+        Parameters
+        ----------
+        key : str
+            Field name.
+        value : str or datetime
+            Field value.
+        """
+        if key in ['start_time', 'end_time'] and isinstance(value, datetime):
+            value = value.strftime(self.date_format)
+
+        super(SgrtFilename, self).__setitem__(key, value)
 
 
 class SgrtFolderName_old_interface():
@@ -239,8 +304,7 @@ def full_sgrt_tree(root, sensor=None, mode=None, group=None, datalog=None,
     return SmartPath(levels, hierarchy, make_dir=make_dir)
 
 
-if __name__ == '__main__':
-
+def test_folders():
     root_path = r'R:\Projects_work\SAR_NRT_Code_Sprint\Testdata'
 
     ftf = full_sgrt_tree(
@@ -256,3 +320,7 @@ if __name__ == '__main__':
                              full_paths=True)
 
     print(ftf.search_files('var', pattern='M*', full_paths=True))
+
+
+if __name__ == '__main__':
+    test_folders()
