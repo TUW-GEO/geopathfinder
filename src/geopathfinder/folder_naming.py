@@ -154,6 +154,15 @@ class SmartPath(object):
 
 
     def remove_level(self, level):
+        '''
+        In the SmartPath-instance, it removes a level from the hierarchy
+        and level dictionary.
+
+        Parameters
+        ----------
+        level : str
+            Name of level in hierarchy.
+        '''
 
         if level in self.hierarchy:
 
@@ -165,7 +174,15 @@ class SmartPath(object):
         else:
             print('Level \'{}\' is not in hierarchy!')
 
-    def rebase_2_root(self, root):
+    def rebase_onto_root(self, root):
+        '''
+        Adds as first level 'root' to the SmartPath-instance.
+
+        Parameters
+        ----------
+        root : str
+            String of the root directory
+        '''
 
         if 'root' in self.hierarchy:
             self.remove_level('root')
@@ -174,7 +191,6 @@ class SmartPath(object):
         self.hierarchy = ['root'] + self.hierarchy
 
         self.__init__(self.levels, self.hierarchy)
-
 
 
     def expand_full_path(self, level, files):
@@ -195,7 +211,7 @@ class SmartPath(object):
         """
         return [os.path.join(self[level], f) for f in files]
 
-    def search_files(self, level, pattern='.*', full_paths=False):
+    def search_files(self, level, pattern='', full_paths=False):
         """
         Searches files meeting the regex pattern at level in the SmartPath
 
@@ -204,7 +220,7 @@ class SmartPath(object):
         level : str
             Name of level in hierarchy
         pattern : str, optional
-            Regex search pattern for file search (default: '.*')
+            string search pattern for file search (default: '')
         full_paths : bool, optional
             If True, full paths will be included in dataframe (default: False)
 
@@ -213,6 +229,9 @@ class SmartPath(object):
         filenames : list of str
             File names at the level.
         """
+
+        pattern = patterns_2_regex(pattern)
+
         paths = glob.glob(os.path.join(self.build_levels(level), '*.*'))
         basenames = reduce_2_basename(paths)
 
@@ -224,7 +243,7 @@ class SmartPath(object):
 
         return files
 
-    def search_files_ts(self, level, pattern='.*',
+    def search_files_ts(self, level, pattern='',
                         date_position=1, date_format='%Y%m%d_%H%M%S',
                         starttime=None, endtime=None, full_paths=False):
         """
@@ -236,7 +255,7 @@ class SmartPath(object):
         level : str
             name of level in hierarchy
         pattern : str, optional
-            regex search pattern for file search
+            string search pattern for file search
         date_position : int
             position of first character of date string in name of files
         date_format : str
@@ -254,6 +273,8 @@ class SmartPath(object):
         df : pandas.DataFrame
             Dataframe holding the filenames and the datetimes
         """
+
+        pattern = patterns_2_regex(pattern)
 
         files = self.search_files(level, pattern=pattern)
         times = extract_times(
@@ -274,38 +295,6 @@ class SmartPath(object):
 
         return df
 
-def get_test_sp(sensor=None,
-                mode=None,
-                group=None,
-                datalog=None,
-                product=None,
-                wflow=None,
-                grid=None,
-                tile=None,
-                var=None,
-                qlook=True,
-                make_dir=False):
-
-
-    # defining the levels in the directory tree (order could become shuffled around)
-    levels = {'sensor': sensor,
-              'mode': mode,
-              'group': group,
-              'datalog': datalog,
-              'product': product,
-              'wflow': wflow,
-              'grid': grid,
-              'tile': tile,
-              'var': var,
-              'qlook': 'qlooks'}
-
-    # defining the hierarchy
-    hierarchy = ['sensor', 'mode', 'group',
-                 'datalog', 'product', 'wflow', 'grid',
-                 'tile', 'var', 'qlook']
-
-    return SmartPath(levels, hierarchy, make_dir=make_dir)
-
 
 class SmartTree(object):
     '''
@@ -319,9 +308,13 @@ class SmartTree(object):
         ----------
         root : str
             directory path to root of directory tree.
+        hierarchy : list of str
+            List defining the order of the levels
+        make_dir : bool, optional
+            creates the root directory
         '''
 
-        if not os.path.exists(root):
+        if not os.path.exists(root) and make_dir == False:
             raise OSError('Given directory for attribute \'root\', '
                           '\'{}\', does not exist!'.format(root))
 
@@ -334,11 +327,32 @@ class SmartTree(object):
                 os.makedirs(self.root)
 
 
-    def add_smartpath(self, smartpath):
+    def __getitem__(self, pattern):
+        '''
+        Shortcut for get_smartpath()
+
+        Usage-example: smarttree['C1003', 'E048N012T6']
+        '''
+
+        return self.get_smartpath(pattern)
+
+
+    def add_smartpath(self, smartpath, make_dir=False):
+        '''
+        Adds a SmartPath-object to the SmartTree.
+
+        Parameters
+        ----------
+        smartpath : SmartPath
+            A SmartPath object. Only valid if hierarchy is compatible with the
+            hierarchy of the SmartTree.
+        make_dir : bool, optional
+            creates the full directory of the SmartPath
+        '''
 
         if isinstance(smartpath, SmartPath):
 
-            smartpath.rebase_2_root(self.root)
+            smartpath.rebase_onto_root(self.root)
 
             if self.hierarchy == smartpath.hierarchy:
 
@@ -348,12 +362,80 @@ class SmartTree(object):
                 print("SmartPath is not compatible with SmartTree: "
                       "Hierarchies do not correspond!")
 
+            if make_dir:
+                smartpath.make_dir()
+
 
     def remove_dir(self, key):
+        '''
+        Removes the SmartPath with 'key' from the SmartTree
+
+        Parameters
+        ----------
+        key : str
+            Path representing the key for the SmartPath
+        '''
+
         self.dirs.pop(key)
 
 
+    def make_dirs(self):
+        '''
+        Creates a full path for each of the contained SmartPaths.
+        '''
+
+        for _, smartpath in self.dirs.items():
+            smartpath.make_dir()
+
+
+    def get_smartpath(self, pattern):
+        '''
+        Returns one SmartPath-object from the SmartTree that matches with
+        the pattern. If more than one match, None is returned.
+
+        Parameters
+        ----------
+        pattern : str, optional
+            string search pattern for file search
+
+        Returns
+        -------
+        SmartPath
+            The path object matching the pattern.
+        '''
+
+        pattern = patterns_2_regex(pattern)
+
+        paths = self.dirs.keys()
+
+        matching_paths = []
+
+        regex = re.compile(pattern)
+        matching_paths += [m for m in paths if regex.match(m)]
+
+        if len(matching_paths) == 0:
+            return None
+        elif len(matching_paths) > 1:
+            return None
+        else:
+            return self.dirs[matching_paths[0]]
+
+
     def collect_level(self, level, pattern=None):
+        '''
+        Returns a list of paths at given level.
+
+        Parameters
+        ----------
+        level : str
+            name of level in hierarchy
+        pattern : str, optional
+            string search pattern for file search
+        Returns
+        -------
+        list of str
+            unique set of paths at given level, matching the given pattern
+        '''
 
         result = []
 
@@ -369,6 +451,40 @@ class SmartTree(object):
         return set(result)
 
 
+def build_smarttree(root, hierarchy):
+    '''
+    Function walking through directories in root path for
+    building a structure of/for SmartPaths
+
+    Parameters
+    ----------
+    root
+    hierarchy
+
+    Returns
+    -------
+
+    '''
+
+    '''
+    levels = {'root': root}
+    level_count = 0
+
+    for xroot, subdir, _ in os.walk(root):
+        for name in subdir:
+            print(os.path.join(xroot, name))
+
+
+    smarttree = SmartTree(root, hierarchy=hierarchy)
+
+    for s in selection:
+      sp = SmartPath(levels='', hierarchy=hierarchy)
+      smarttree.add_smartpath(sp)
+    
+    return smarttree
+    '''
+
+    return None
 
 def reduce_2_basename(files):
     """
@@ -419,46 +535,30 @@ def extract_times(files, date_position=1, date_format='%Y%m%d_%H%M%S'):
     return times
 
 
+def patterns_2_regex(patterns):
+    '''
+    Converts any string, or tuple of strings, to a regex pattern.
+
+    Parameters
+    ----------
+    patterns : str or tuple of str
+        String patterns
+
+    Returns
+    -------
+    str: regex string
+    '''
+
+    if isinstance(patterns, str):
+        patterns = [patterns]
+
+    regex = ''
+
+    for p in patterns:
+        regex += '.*{}'.format(p)
+
+    return regex
+
+
 if __name__ == '__main__':
-
-    hierarchy = ['root', 'sensor', 'mode', 'group',
-                 'datalog', 'product', 'wflow', 'grid',
-                 'tile', 'var', 'qlook']
-
-    st = SmartTree(r'D:\temp\tests', hierarchy)
-
-    sp = get_test_sp(sensor='Sentinel-1_CSAR',
-                     mode='IWGRDH', group='products',
-                     datalog='datasets', product='ssm',
-                     wflow='C1003', grid='EQUI7_EU500M',
-                     tile='E048N012T6', var='ssm')
-
-    st.add_smartpath(sp)
-
-    sp2 = get_test_sp(sensor='Sentinel-1_CSAR',
-                     mode='IWGRDH', group='products',
-                     datalog='datasets', product='ssm',
-                     wflow='C1077', grid='EQUI7_EU500M',
-                     tile='E048N012T6', var='ssm')
-
-    st.add_smartpath(sp2)
-
-    sp3 = get_test_sp(sensor='Sentinel-1_CSAR',
-                     mode='IWGRDH', group='products',
-                     datalog='logfiles')
-
-    st.add_smartpath(sp3)
-
-    sp4 = get_test_sp(sensor='Sentinel-1_CSAR',
-                     mode='IWGRDH', group='products',
-                     datalog='datasets', product='resampled',
-                     wflow='A0202', grid='EQUI7_EU500M',
-                     tile='E048N012T6', var='sig0')
-
-    st.add_smartpath(sp4)
-
-    st.collect_level('datalog')
-
-    st.collect_level('wflow', pattern='C1003')
-
     pass
