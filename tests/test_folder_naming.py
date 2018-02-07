@@ -42,6 +42,9 @@ def get_test_sp(root,
                 var=None,
                 qlook=True,
                 make_dir=False):
+    '''
+    Function creating a SmartPath() for testing SmartPath().
+    '''
 
 
     # defining the levels in the directory tree (order could become shuffled around)
@@ -76,6 +79,10 @@ def get_test_sp_4_smarttree(sensor=None,
                 var=None,
                 qlook=True,
                 make_dir=False):
+    '''
+    Function creating a SmartPath() for testing SmartTree().
+    '''
+
 
     # defining the levels in the directory tree (order could become shuffled around)
     levels = {'sensor': sensor,
@@ -114,6 +121,9 @@ class TestSmartPath(unittest.TestCase):
 
 
     def test_get_dir(self):
+        '''
+        Testing the creation of the directory.
+        '''
 
         result = self.sp_obj.get_dir(make_dir=True)
 
@@ -121,6 +131,9 @@ class TestSmartPath(unittest.TestCase):
 
 
     def test_build_levels(self):
+        '''
+        Testing the level creation.
+        '''
 
         should = os.path.join(self.path, 'Sentinel-1_CSAR', 'IWGRDH', 'products',
                               'datasets', 'ssm', 'C1003')
@@ -133,6 +146,9 @@ class TestSmartPath(unittest.TestCase):
 
 
     def test_get_level(self):
+        '''
+        Testing the level query.
+        '''
 
         should = os.path.join(self.path, 'Sentinel-1_CSAR', 'IWGRDH')
 
@@ -142,6 +158,9 @@ class TestSmartPath(unittest.TestCase):
 
 
     def test_expand_full_path(self):
+        '''
+        Testing the path expansion
+        '''
 
         should = [os.path.join(self.path, 'Sentinel-1_CSAR', 'IWGRDH', 'MY_TEST.txt')]
 
@@ -151,6 +170,9 @@ class TestSmartPath(unittest.TestCase):
 
 
     def test_search_files(self):
+        '''
+        Testing the file search yielding file lists.
+        '''
 
         should = ['M20161218_051642--_SSM------_S1BIWGRDH1VVD_095_C1003_EU500M_E048N012T6.tif',
                   'M20170406_050911--_SSM------_S1AIWGRDH1VVD_022_C1003_EU500M_E048N012T6.tif']
@@ -167,6 +189,9 @@ class TestSmartPath(unittest.TestCase):
 
 
     def test_search_files_ts(self):
+        '''
+        Testing the file search yielding a pandas DataFrame().
+        '''
 
         files = ['M20161218_051642--_SSM------_S1BIWGRDH1VVD_095_C1003_EU500M_E048N012T6.tif']
         times = extract_times(files, date_position=1, date_format='%Y%m%d_%H%M%S')
@@ -186,6 +211,9 @@ class TestSmartPath(unittest.TestCase):
 
 
 class TestSmartTree(unittest.TestCase):
+    '''
+    Preliminary tests for SmartTree().
+    '''
 
     def setUp(self):
         self.path = os.path.join(cur_path(), 'test_temp_dir')

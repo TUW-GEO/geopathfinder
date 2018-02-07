@@ -15,18 +15,12 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import os
-import shutil
-import glob
-import unittest
-from datetime import date, datetime
 
-import numpy.testing as nptest
-import numpy as np
+import unittest
+from datetime import datetime
+
 import logging
 
-# from geopathfinder.sgrt_naming import get_full_sgrt_path
-# from geopathfinder.sgrt_naming import SgrtFolderName
 from geopathfinder.sgrt_naming import SgrtFilename
 
 logging.basicConfig(level=logging.INFO)
@@ -63,75 +57,6 @@ class TestSgrtFilename(unittest.TestCase):
         self.sgrt_fn['start_time'] = new_start_time
 
         self.assertEqual(self.sgrt_fn['start_time'], new_start_time)
-
-
-def curpath():
-    # pth, _ = os.path.split(os.path.abspath(__file__))
-    pth = r'R:\Projects_work\SAR_NRT_Code_Sprint\test_pathfinder'
-    return pth
-
-
-'''
-class TestSgrt(unittest.TestCase):
-
-    def setUp(self):
-        self.path = os.path.join(curpath())
-
-    def tearDown(self):
-        #if os.path.exists(self.path):
-        #    shutil.rmtree(self.path)
-        pass
-
-
-    def test_a_sgrt(self):
-
-        target = r'R:\Projects_work\SAR_NRT_Code_Sprint\test_pathfinder\Sentinel-1_CSAR\IWGRDH\products\datasets\ssm' \
-                 r'\C1003\EQUI7_EU500M\E048N006T6\ssm\qlooks'
-
-
-        root_path = curpath()
-        product_id = 'S1AIWGRDH'
-        wflow_id = 'C1003'
-        ptop_name = 'ssm'
-        grid = 'EQUI7'
-        ftile = 'EU500M_E048N006T6'
-        sgrt_var_name = 'SSM--'
-
-        sgrt_dir = get_full_sgrt_path(dir_root=root_path, product_id=product_id, wflow_id=wflow_id,
-                             ptop_name=ptop_name, grid=grid, ftile=ftile, sgrt_var_name=sgrt_var_name)
-
-        result = sgrt_dir.get_dir(make_dir=True)
-
-        # test correct path string
-        assert result == target
-
-        # test if directory was created
-        assert os.path.exists(result)
-
-
-        pass
-
-
-    def test_b_SgrtFolderName(self):
-
-        root_path = curpath()
-        product_id = 'S1AIWGRDH'
-        wflow_id = 'C1003'
-        ptop_name = 'ssm'
-        grid = 'EQUI7'
-        ftile = 'EU500M_E048N006T6'
-        sgrt_var_name = 'SSM--'
-
-        obj = SgrtFolderName(dir_root=root_path, product_id=product_id, wflow_id=wflow_id,
-                             ptop_name=ptop_name, grid=grid, ftile=ftile, sgrt_var_name=sgrt_var_name)
-
-
-        xtile = 'AF500M_E054N036T6'
-        obj.build_subdirs(ptop_name=ptop_name, grid=grid, ftile=xtile, sgrt_var_name=sgrt_var_name, makedir=True)
-
-        # test if directory was created
-        assert os.path.exists(obj.level_5)
-'''
 
 
 if __name__ == "__main__":

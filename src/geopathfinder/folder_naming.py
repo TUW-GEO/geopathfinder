@@ -211,6 +211,7 @@ class SmartPath(object):
         """
         return [os.path.join(self[level], f) for f in files]
 
+
     def search_files(self, level, pattern='', full_paths=False):
         """
         Searches files meeting the regex pattern at level in the SmartPath
@@ -466,25 +467,7 @@ def build_smarttree(root, hierarchy):
 
     '''
 
-    '''
-    levels = {'root': root}
-    level_count = 0
-
-    for xroot, subdir, _ in os.walk(root):
-        for name in subdir:
-            print(os.path.join(xroot, name))
-
-
-    smarttree = SmartTree(root, hierarchy=hierarchy)
-
-    for s in selection:
-      sp = SmartPath(levels='', hierarchy=hierarchy)
-      smarttree.add_smartpath(sp)
-    
-    return smarttree
-    '''
-
-    return None
+    pass
 
 def reduce_2_basename(files):
     """
