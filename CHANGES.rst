@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version v0.0.X
+==============
+
+- Switch to PyScaffold v2.5.11
+
 Version v0.0.1
 ==============
 
