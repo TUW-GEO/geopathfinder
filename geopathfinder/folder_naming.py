@@ -19,11 +19,12 @@ Module handling folder trees.
 """
 
 import os
-import re
+import regex as re
 import glob
 
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 
 
@@ -116,7 +117,7 @@ class SmartPath(object):
         path : str
             Full path of the SmartPath
         """
-        directory = ''
+        directory = u''
 
         for h in self.hierarchy:
             if self.levels[h] is None:
@@ -396,7 +397,7 @@ class SmartTree(object):
 
         Parameters
         ----------
-        pattern : str, optional
+        pattern : str
             string search pattern for file search
 
         Returns
@@ -452,7 +453,22 @@ class SmartTree(object):
         return set(result)
 
 
-def build_smarttree(root, hierarchy):
+    def collect_smartpaths_at_level(self, level, pattern=None):
+
+        smart_paths = []
+
+        paths = self.collect_level(level, pattern=pattern)
+
+        for p in paths:
+
+            sp = self.dirs.get([x for x in list(self.dirs) if p in x][0])
+            smart_paths.append(sp)
+            sp = None
+
+        return smart_paths
+
+
+def build_smarttree(root, hierarchy, level_depth=None):
     '''
     Function walking through directories in root path for
     building a structure of/for SmartPaths
@@ -467,7 +483,43 @@ def build_smarttree(root, hierarchy):
 
     '''
 
-    pass
+    smart_tree = SmartTree(root, ['root'] + hierarchy, make_dir=False)
+
+    root_depth = len(root.split(os.sep))
+
+    alldirs = []
+    depth = []
+
+    for dirpath, dirs, files in os.walk(root):
+        alldirs += [dirpath.replace(root, '')]
+        depth += [len(dirpath.split(os.sep)) - root_depth]
+
+    if level_depth is None:
+        max_depth = max(depth)
+    else:
+        max_depth = level_depth
+
+    full_paths = np.array(alldirs)[np.array(depth) == max_depth]
+
+    for fp in full_paths:
+        levels = {}
+        sub_levels = fp.split(os.sep)[1:]
+        tail_depth = len(sub_levels)
+        for p in range(len(hierarchy)):
+            if p < tail_depth:
+                levels.update({hierarchy[p]: sub_levels[p]})
+            else:
+                levels.update({hierarchy[p]: hierarchy[p]})
+
+        smart_path = SmartPath(levels, hierarchy)
+
+        smart_tree.add_smartpath(smart_path)
+
+        smart_path = None
+        levels = None
+
+    return smart_tree
+
 
 def reduce_2_basename(files):
     """
@@ -535,10 +587,10 @@ def patterns_2_regex(patterns):
     if isinstance(patterns, str):
         patterns = [patterns]
 
-    regex = ''
+    regex = r''
 
     for p in patterns:
-        regex += '.*{}'.format(p)
+        regex += r'.*{}'.format(p)
 
     return regex
 
