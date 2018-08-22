@@ -21,6 +21,7 @@ Module handling folder trees.
 import os
 import regex as re
 import glob
+import copy
 
 from datetime import datetime
 
@@ -243,7 +244,7 @@ class SmartPath(object):
         if full_paths:
             files = self.expand_full_path(level, files)
 
-        return files
+        return sorted(files)
 
     def search_files_ts(self, level, pattern='',
                         date_position=1, date_format='%Y%m%d_%H%M%S',
@@ -339,6 +340,117 @@ class SmartTree(object):
         return self.get_smartpath(pattern)
 
 
+    def get_all_smartpaths(self):
+
+        return list(self.dirs.values())
+
+
+    def get_all_directoris(self):
+
+        return sorted(list(self.dirs.keys()))
+
+
+    def count_dirs(self):
+
+        return len(self.dirs)
+
+
+    def get_smartpath(self, pattern):
+        '''
+        Returns one SmartPath-object from the SmartTree that matches with
+        the pattern. If more than one match, None is returned.
+
+        Parameters
+        ----------
+        pattern : str
+            strings defining search pattern for file search
+            e.g. get_smartpath(('C1003', 'E048N012T6'))
+
+        Returns
+        -------
+        SmartPath
+            The path object matching the pattern.
+        '''
+
+        pattern = patterns_2_regex(pattern)
+
+        paths = self.dirs.keys()
+
+        matching_paths = []
+
+        regex = re.compile(pattern)
+        matching_paths += [m for m in paths if regex.match(m)]
+
+        if len(matching_paths) == 0:
+            return None
+        elif len(matching_paths) > 1:
+            return None
+        else:
+            return self.dirs[matching_paths[0]]
+
+
+    def collect_level(self, level, pattern=None, unique=False):
+        '''
+        Returns a list of paths at given level.
+
+        Parameters
+        ----------
+        level : str
+            name of level in hierarchy
+        pattern : str, optional
+            string regex search pattern for file search
+        unique : bool, optional
+            if set, a list of unique paths is returned
+        Returns
+        -------
+        list of str
+            list of paths at given level, matching the given pattern
+        '''
+
+        result = []
+
+        for _, smartpath in self.dirs.items():
+            if smartpath.levels[level] is not None:
+
+                if pattern is not None:
+                    rpattern = patterns_2_regex(pattern)
+                    regex = re.compile(rpattern)
+                    if regex.match(smartpath.levels[level]):
+                        result.append(smartpath[level])
+                else:
+                    result.append(smartpath[level])
+
+        if unique:
+            result = list(set(result))
+
+        return sorted(result)
+
+
+    def collect_level_topnames(self, level, pattern=None, unique=True):
+
+        paths = self.collect_level(level, pattern=pattern, unique=unique)
+
+        topnames = [x.split(os.sep)[-1] for x in paths]
+
+        return topnames
+
+
+    #todo: obsolete?
+    def collect_smartpaths_to_level(self, level, pattern=None, unique=False):
+
+        smart_paths = []
+
+        paths = self.collect_level(level, pattern=pattern, unique=unique)
+
+        for p in paths:
+
+            sp = self.dirs.get([x for x in list(self.dirs) if p in x][0])
+            smart_paths.append(sp)
+            sp = None
+
+        return smart_paths
+
+
     def add_smartpath(self, smartpath, make_dir=False):
         '''
         Adds a SmartPath-object to the SmartTree.
@@ -368,7 +480,7 @@ class SmartTree(object):
                 smartpath.make_dir()
 
 
-    def remove_dir(self, key):
+    def remove_smartpath(self, key):
         '''
         Removes the SmartPath with 'key' from the SmartTree
 
@@ -381,6 +493,19 @@ class SmartTree(object):
         self.dirs.pop(key)
 
 
+    def trim2branch(self, level, pattern):
+
+        branch = copy.deepcopy(self)
+
+        branch_path = self.collect_level(level, pattern=pattern, unique=True)[0]
+
+        for d in self.dirs.keys():
+            if not branch_path in d:
+                branch.remove_smartpath(d)
+
+        return branch
+
+
     def make_dirs(self):
         '''
         Creates a full path for each of the contained SmartPaths.
@@ -390,85 +515,7 @@ class SmartTree(object):
             smartpath.make_dir()
 
 
-    def get_smartpath(self, pattern):
-        '''
-        Returns one SmartPath-object from the SmartTree that matches with
-        the pattern. If more than one match, None is returned.
-
-        Parameters
-        ----------
-        pattern : str
-            string search pattern for file search
-
-        Returns
-        -------
-        SmartPath
-            The path object matching the pattern.
-        '''
-
-        pattern = patterns_2_regex(pattern)
-
-        paths = self.dirs.keys()
-
-        matching_paths = []
-
-        regex = re.compile(pattern)
-        matching_paths += [m for m in paths if regex.match(m)]
-
-        if len(matching_paths) == 0:
-            return None
-        elif len(matching_paths) > 1:
-            return None
-        else:
-            return self.dirs[matching_paths[0]]
-
-
-    def collect_level(self, level, pattern=None):
-        '''
-        Returns a list of paths at given level.
-
-        Parameters
-        ----------
-        level : str
-            name of level in hierarchy
-        pattern : str, optional
-            string search pattern for file search
-        Returns
-        -------
-        list of str
-            unique set of paths at given level, matching the given pattern
-        '''
-
-        result = []
-
-        for _, smartpath in self.dirs.items():
-            if smartpath.levels[level] is not None:
-
-                if pattern is not None:
-                    if smartpath.levels[level] == pattern:
-                        result.append(smartpath[level])
-                else:
-                    result.append(smartpath[level])
-
-        return set(result)
-
-
-    def collect_smartpaths_at_level(self, level, pattern=None):
-
-        smart_paths = []
-
-        paths = self.collect_level(level, pattern=pattern)
-
-        for p in paths:
-
-            sp = self.dirs.get([x for x in list(self.dirs) if p in x][0])
-            smart_paths.append(sp)
-            sp = None
-
-        return smart_paths
-
-
-def build_smarttree(root, hierarchy, level_depth=None):
+def build_smarttree(root, hierarchy, deepest_level=None):
     '''
     Function walking through directories in root path for
     building a structure of/for SmartPaths
@@ -490,14 +537,14 @@ def build_smarttree(root, hierarchy, level_depth=None):
     alldirs = []
     depth = []
 
-    for dirpath, dirs, files in os.walk(root):
+    for dirpath, dirs, files in os.walk(root, topdown=False):
         alldirs += [dirpath.replace(root, '')]
         depth += [len(dirpath.split(os.sep)) - root_depth]
 
-    if level_depth is None:
+    if deepest_level is None:
         max_depth = max(depth)
     else:
-        max_depth = level_depth
+        max_depth = smart_tree.hierarchy.index(deepest_level)
 
     full_paths = np.array(alldirs)[np.array(depth) == max_depth]
 
@@ -577,7 +624,9 @@ def patterns_2_regex(patterns):
     Parameters
     ----------
     patterns : str or tuple of str
-        String patterns
+        string patterns for matching.
+        when starting with "-" it is interpreted as negative pattern
+        that should be excluded from the matches
 
     Returns
     -------
@@ -587,13 +636,46 @@ def patterns_2_regex(patterns):
     if isinstance(patterns, str):
         patterns = [patterns]
 
-    regex = r''
+    regex = ''
 
     for p in patterns:
-        regex += r'.*{}'.format(p)
+        if p.startswith('-'):
+            regex += '.((?!{}).)*$'.format(p[1:])
+        else:
+            regex += '.*{}'.format(p)
 
     return regex
 
+
+# def patterns_2_regex(patterns, negative_patterns=None):
+#     '''
+#     Converts any string, or tuple of strings, to a regex pattern.
+#
+#     Parameters
+#     ----------
+#     patterns : str or tuple of str
+#         string patterns
+#     negative_patterns : str or tuple of str
+#         string patterns that should be excluded from the matches
+#
+#     Returns
+#     -------
+#     str: regex string
+#     '''
+#
+#     if isinstance(patterns, str):
+#         patterns = [patterns]
+#
+#     regex = ''
+#
+#     for p in patterns:
+#         regex += '.*{}'.format(p)
+#
+#     if negative_patterns is not None:
+#         for n in negative_patterns:
+#             regex += '.((?!{}).)*$'.format(n)
+#
+#     return regex
 
 if __name__ == '__main__':
     pass

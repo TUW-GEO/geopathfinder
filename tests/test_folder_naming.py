@@ -292,5 +292,11 @@ class TestSmartTree(unittest.TestCase):
 
         assert should == result
 
+#
+# in_path['C1003', 'E048N012T6', 'noise'].get_dir()
+# 'R:\\Datapool_processed\\Sentinel-1_CSAR\\IWGRDH\\products\\datasets\\ssm\\C1003\\EQUI7_EU500M\\E048N012T6\\ssm-noise\\qlook'
+# in_path['C1003', 'E048N012T6', '-noise'].get_dir()
+# 'R:\\Datapool_processed\\Sentinel-1_CSAR\\IWGRDH\\products\\datasets\\ssm\\C1003\\EQUI7_EU500M\\E048N012T6\\ssm\\qlook'
+
 if __name__ == "__main__":
     unittest.main()
