@@ -41,7 +41,7 @@ class TestSgrtFilename(unittest.TestCase):
         """
         Test building SGRT file name.
         """
-        fn = ('-_20080101_122333_20080101_132333_------SSM_---_--_---_-_-_--_'
+        fn = ('-_20080101_122333_20080101_132333_SSM------_---_--_---_-_-_--_'
               '----_----_-----_---.tif')
 
         self.assertEqual(self.sgrt_fn.__repr__(), fn)
