@@ -72,10 +72,10 @@ class SmartFilename():
         for name, length in self.fields_def.items():
             if name in self.fields:
                 if filename == '':
-                    filename = self.fields[name].rjust(length, self.pad)
+                    filename = self.fields[name].ljust(length, self.pad)
                 else:
                     filename += self.delimiter + \
-                        self.fields[name].rjust(length, self.pad)
+                        self.fields[name].ljust(length, self.pad)
             else:
                 if filename == '':
                     filename = self.pad * length
