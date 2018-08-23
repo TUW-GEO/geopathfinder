@@ -211,7 +211,7 @@ class SmartPath(object):
         path : str
             Full file path.
         """
-        return [os.path.join(self[level], f) for f in files]
+        return expand_full_path(self[level], files)
 
 
     def search_files(self, level, pattern='', full_paths=False):
@@ -233,18 +233,9 @@ class SmartPath(object):
             File names at the level.
         """
 
-        pattern = patterns_2_regex(pattern)
+        return regex_file_search(self.build_levels(level), pattern,
+                                 full_paths=full_paths)[0]
 
-        paths = glob.glob(os.path.join(self.build_levels(level), '*.*'))
-        basenames = reduce_2_basename(paths)
-
-        regex = re.compile(pattern)
-        files = [f for f in basenames if regex.match(f)]
-
-        if full_paths:
-            files = self.expand_full_path(level, files)
-
-        return sorted(files)
 
     def search_files_ts(self, level, pattern='',
                         date_position=1, date_format='%Y%m%d_%H%M%S',
@@ -276,8 +267,6 @@ class SmartPath(object):
         df : pandas.DataFrame
             Dataframe holding the filenames and the datetimes
         """
-
-        pattern = patterns_2_regex(pattern)
 
         files = self.search_files(level, pattern=pattern)
         times = extract_times(
@@ -324,6 +313,9 @@ class SmartTree(object):
         self.root = root
         self.dirs = {}
         self.hierarchy = hierarchy
+        self.dir_count = 0
+        self.file_count = 0
+        self.file_register = []
 
         if make_dir:
             if not os.path.exists(self.root):
@@ -352,7 +344,7 @@ class SmartTree(object):
 
     def count_dirs(self):
 
-        return len(self.dirs)
+        self.dir_count = len(self.dirs)
 
 
     def get_smartpath(self, pattern):
@@ -471,6 +463,7 @@ class SmartTree(object):
             if self.hierarchy == smartpath.hierarchy:
 
                 self.dirs.update({smartpath.get_dir(): smartpath})
+                self.count_dirs()
 
             else:
                 print("SmartPath is not compatible with SmartTree: "
@@ -491,6 +484,7 @@ class SmartTree(object):
         '''
 
         self.dirs.pop(key)
+        self.count_dirs()
 
 
     def trim2branch(self, level, pattern):
@@ -502,6 +496,8 @@ class SmartTree(object):
         for d in self.dirs.keys():
             if not branch_path in d:
                 branch.remove_smartpath(d)
+
+        branch.count_dirs()
 
         return branch
 
@@ -515,7 +511,10 @@ class SmartTree(object):
             smartpath.make_dir()
 
 
-def build_smarttree(root, hierarchy, deepest_level=None):
+def build_smarttree(root,
+                    hierarchy,
+                    target_level=None,
+                    register_files=None):
     '''
     Function walking through directories in root path for
     building a structure of/for SmartPaths
@@ -524,12 +523,13 @@ def build_smarttree(root, hierarchy, deepest_level=None):
     ----------
     root
     hierarchy
+    target_level
+    register_files
 
     Returns
     -------
 
     '''
-
     smart_tree = SmartTree(root, ['root'] + hierarchy, make_dir=False)
 
     root_depth = len(root.split(os.sep))
@@ -540,13 +540,18 @@ def build_smarttree(root, hierarchy, deepest_level=None):
     for dirpath, dirs, files in os.walk(root, topdown=False):
         alldirs += [dirpath.replace(root, '')]
         depth += [len(dirpath.split(os.sep)) - root_depth]
+        if register_files is not None:
+            files, count = regex_file_search(dirpath, register_files,
+                                             full_paths=True)
+            smart_tree.file_register += files
+            smart_tree.file_count += count
 
-    if deepest_level is None:
-        max_depth = max(depth)
+    if target_level is None:
+        target_depth = max(depth)
     else:
-        max_depth = smart_tree.hierarchy.index(deepest_level)
+        target_depth = smart_tree.hierarchy.index(target_level)
 
-    full_paths = np.array(alldirs)[np.array(depth) == max_depth]
+    full_paths = np.array(alldirs)[np.array(depth) == target_depth]
 
     for fp in full_paths:
         levels = {}
@@ -565,7 +570,28 @@ def build_smarttree(root, hierarchy, deepest_level=None):
         smart_path = None
         levels = None
 
+    smart_tree.count_dirs()
+
     return smart_tree
+
+
+def expand_full_path(path, files):
+    """
+    Joins the path at level with given filenames.
+
+    Parameters
+    ----------
+    level : str
+        Name of level in hierarchy.
+    files : list of str
+        List of file names.
+
+    Returns
+    -------
+    path : str
+        Full file path.
+    """
+    return [os.path.join(path, f) for f in files]
 
 
 def reduce_2_basename(files):
@@ -647,35 +673,21 @@ def patterns_2_regex(patterns):
     return regex
 
 
-# def patterns_2_regex(patterns, negative_patterns=None):
-#     '''
-#     Converts any string, or tuple of strings, to a regex pattern.
-#
-#     Parameters
-#     ----------
-#     patterns : str or tuple of str
-#         string patterns
-#     negative_patterns : str or tuple of str
-#         string patterns that should be excluded from the matches
-#
-#     Returns
-#     -------
-#     str: regex string
-#     '''
-#
-#     if isinstance(patterns, str):
-#         patterns = [patterns]
-#
-#     regex = ''
-#
-#     for p in patterns:
-#         regex += '.*{}'.format(p)
-#
-#     if negative_patterns is not None:
-#         for n in negative_patterns:
-#             regex += '.((?!{}).)*$'.format(n)
-#
-#     return regex
+def regex_file_search(path, pattern, full_paths=True):
+
+    pattern = patterns_2_regex(pattern)
+
+    paths = glob.glob(os.path.join(path, '*.*'))
+    basenames = reduce_2_basename(paths)
+
+    regex = re.compile(pattern)
+    files = [f for f in basenames if regex.match(f)]
+
+    if full_paths:
+        files = expand_full_path(path, files)
+
+    return sorted(files), len(files)
+
 
 if __name__ == '__main__':
     pass
