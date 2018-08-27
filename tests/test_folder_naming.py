@@ -22,8 +22,8 @@ import pandas as pd
 
 from geopathfinder.folder_naming import SmartPath
 from geopathfinder.folder_naming import extract_times
-
 from geopathfinder.folder_naming import SmartTree
+from geopathfinder.sgrt_naming import sgrt_tree
 
 def cur_path():
     pth, _ = os.path.split(os.path.abspath(__file__))
@@ -123,8 +123,8 @@ class TestSmartPath(unittest.TestCase):
     def test_get_dir(self):
         '''
         Testing the creation of the directory.
-        '''
 
+        '''
         result = self.sp_obj.get_dir(make_dir=True)
 
         assert os.path.exists(result)
@@ -133,8 +133,8 @@ class TestSmartPath(unittest.TestCase):
     def test_build_levels(self):
         '''
         Testing the level creation.
-        '''
 
+        '''
         should = os.path.join(self.path, 'Sentinel-1_CSAR', 'IWGRDH', 'products',
                               'datasets', 'ssm', 'C1003')
 
@@ -148,8 +148,8 @@ class TestSmartPath(unittest.TestCase):
     def test_get_level(self):
         '''
         Testing the level query.
-        '''
 
+        '''
         should = os.path.join(self.path, 'Sentinel-1_CSAR', 'IWGRDH')
 
         result = self.sp_obj['mode']
@@ -160,8 +160,8 @@ class TestSmartPath(unittest.TestCase):
     def test_expand_full_path(self):
         '''
         Testing the path expansion
-        '''
 
+        '''
         should = [os.path.join(self.path, 'Sentinel-1_CSAR', 'IWGRDH', 'MY_TEST.txt')]
 
         result = self.sp_obj.expand_full_path('mode', ['MY_TEST.txt'])
@@ -172,8 +172,8 @@ class TestSmartPath(unittest.TestCase):
     def test_search_files(self):
         '''
         Testing the file search yielding file lists.
-        '''
 
+        '''
         should = ['M20161218_051642--_SSM------_S1BIWGRDH1VVD_095_C1003_EU500M_E048N012T6.tif',
                   'M20170406_050911--_SSM------_S1AIWGRDH1VVD_022_C1003_EU500M_E048N012T6.tif']
 
@@ -191,8 +191,8 @@ class TestSmartPath(unittest.TestCase):
     def test_search_files_ts(self):
         '''
         Testing the file search yielding a pandas DataFrame().
-        '''
 
+        '''
         files = ['M20161218_051642--_SSM------_S1BIWGRDH1VVD_095_C1003_EU500M_E048N012T6.tif']
         times = extract_times(files, date_position=1, date_format='%Y%m%d_%H%M%S')
         should = pd.DataFrame({'Files': files}, index=times)
@@ -211,92 +211,52 @@ class TestSmartPath(unittest.TestCase):
 
 
 class TestSmartTree(unittest.TestCase):
-    '''
-    Preliminary tests for SmartTree().
-    '''
+    """
+    Tests function of the SmartTree() class, applied for testing to the
+    SGRT convention.
 
+    """
     def setUp(self):
-        self.path = os.path.join(cur_path(), 'test_temp_dir')
-
-    def tearDown(self):
-        if os.path.exists(self.path):
-            shutil.rmtree(self.path)
+        self.test_dir = os.path.join(os.path.dirname(
+            os.path.abspath(__file__)), r'test_data\Sentinel-1_CSAR')
+        self.stt_1 = sgrt_tree(self.test_dir, register_file_pattern='.tif')
 
 
-    def test_everything(self):
+    def test_tree_integrity(self):
+        """
+        Tests of only valid paths are added to the SmartTree()
 
-        hierarchy = ['root', 'sensor', 'mode', 'group',
-                     'datalog', 'product', 'wflow', 'grid',
-                     'tile', 'var', 'qlook']
-
-        st = SmartTree(self.path,
-                       hierarchy, make_dir=True)
-
-        sp = get_test_sp_4_smarttree(sensor='Sentinel-1_CSAR',
-                         mode='IWGRDH', group='products',
-                         datalog='datasets', product='ssm',
-                         wflow='C1003', grid='EQUI7_EU500M',
-                         tile='E048N012T6', var='ssm')
-
-        st.add_smartpath(sp)
-
-        sp5 = get_test_sp_4_smarttree(sensor='Sentinel-1_CSAR',
-                         mode='IWGRDH', group='products',
-                         datalog='datasets', product='ssm',
-                         wflow='C1003', grid='EQUI7_EU500M',
-                         tile='E054N018T6', var='ssm')
-
-        st.add_smartpath(sp5, make_dir=True)
-
-        sp2 = get_test_sp_4_smarttree(sensor='Sentinel-1_CSAR',
-                         mode='IWGRDH', group='products',
-                         datalog='datasets', product='ssm',
-                         wflow='C1077', grid='EQUI7_EU500M',
-                         tile='E048N012T6', var='ssm')
-
-        st.add_smartpath(sp2)
-
-        sp3 = get_test_sp_4_smarttree(sensor='Sentinel-1_CSAR',
-                         mode='IWGRDH', group='products',
-                         datalog='logfiles')
-
-        st.add_smartpath(sp3)
-
-        sp4 = get_test_sp_4_smarttree(sensor='Sentinel-1_CSAR',
-                         mode='IWGRDH', group='products',
-                         datalog='datasets', product='resampled',
-                         wflow='A0202', grid='EQUI7_EU500M',
-                         tile='E048N012T6', var='sig0')
-
-        st.add_smartpath(sp4)
-
-        st.collect_level('datalog')
-
-        st.collect_level('wflow', pattern='C1003')
-
-        a = st['C1003', 'E048N012T6']
-        b = st['']
+        """
+        self.assertTrue(
+            all([True for x in self.stt_1.get_all_dirs() if self.test_dir in x]))
 
 
-        should = ['M20161218_051642--_SSM------_S1BIWGRDH1VVD_095_C1003_EU500M_E048N012T6.tif',
-                  'M20170405_171401--_SSX------_S1AIWGRDH1VVA_015_C1003_EU500M_E048N012T6.tif',
-                  'M20170406_050911--_SSM------_S1AIWGRDH1VVD_022_C1003_EU500M_E048N012T6.tif']
+    def test_tree_dir_n_file_count(self):
+        """
+        Tests the dir_ and file_count of SmartTree()
 
-        src = os.listdir(os.path.join(cur_path(), 'test_data'))
-        dest = sp.build_levels(level='var', make_dir=True)
+        """
+        self.assertEqual(self.stt_1.dir_count, 9)
+        self.assertEqual(self.stt_1.file_count, 16)
 
-        for file in src:
-            shutil.copy(os.path.join(cur_path(), 'test_data', file), dest)
 
-        result = st['C1003', 'E048N012T6'].search_files('var')
+    def test_get_smartpath(self):
+        """
+        Tests the selection of a SmartPath matching regex search patterns.
 
-        assert should == result
+        """
+        # test postive search pattern
+        should = (self.test_dir + '\\IWGRDH\\products\\datasets\\ssm\\'
+                        'C1003\\EQUI7_EU500M\\E048N012T6\\ssm-noise\\qlooks')
+        result = self.stt_1['C1003', 'E048N012T6', 'noise'].get_dir()
 
-#
-# in_path['C1003', 'E048N012T6', 'noise'].get_dir()
-# 'R:\\Datapool_processed\\Sentinel-1_CSAR\\IWGRDH\\products\\datasets\\ssm\\C1003\\EQUI7_EU500M\\E048N012T6\\ssm-noise\\qlook'
-# in_path['C1003', 'E048N012T6', '-noise'].get_dir()
-# 'R:\\Datapool_processed\\Sentinel-1_CSAR\\IWGRDH\\products\\datasets\\ssm\\C1003\\EQUI7_EU500M\\E048N012T6\\ssm\\qlook'
+
+        # test negative search pattern
+        should = (self.test_dir + '\\IWGRDH\\products\\datasets\\ssm\\'
+                        'C1003\\EQUI7_EU500M\\E048N012T6\\ssm\\qlooks')
+        result = self.stt_1['C1003', 'E048N012T6', '-noise'].get_dir()
+        self.assertEqual(should, result)
+        pass
 
 if __name__ == "__main__":
     unittest.main()

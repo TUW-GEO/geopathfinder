@@ -136,7 +136,7 @@ class SmartPath(object):
         path : str
             Full path of the SmartPath (to the deepest level)
         """
-        directory = u''
+        directory = r''
 
         for h in self.hierarchy:
             if self.levels[h] is None:
@@ -372,7 +372,7 @@ class SmartTree(object):
         self.root = root
         self.dirs = {}
         self.hierarchy = hierarchy
-        self.dirs_count = 0
+        self.dir_count = 0
         self.file_count = 0
         self.file_register = []
 
@@ -454,10 +454,10 @@ class SmartTree(object):
 
     def count_dirs(self):
         '''
-        Sets the dirs_count the SmartTree
+        Sets the dir_count the SmartTree
         '''
 
-        self.dirs_count = len(self.dirs)
+        self.dir_count = len(self.dirs)
 
 
     def get_smartpath(self, pattern):
@@ -669,6 +669,8 @@ def build_smarttree(root,
     register_file_pattern : str tuple, optional
         strings defining search pattern for file search for file_register
         e.g. ('C1003', 'E048N012T6')
+        No asterisk is needed ('*')!
+        Sequence of strings in given tuple is crucial!
         Be careful: If the tree is large, this can take a while!
 
     Returns

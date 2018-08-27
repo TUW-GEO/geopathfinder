@@ -19,11 +19,15 @@ SGRT folder and file name definition.
 
 """
 
+import os
+import glob
+
 from datetime import datetime
 from collections import OrderedDict
 
 from geopathfinder.folder_naming import SmartPath
 from geopathfinder.file_naming import SmartFilename
+from geopathfinder.folder_naming import build_smarttree
 
 
 class SgrtFilename(SmartFilename):
@@ -88,9 +92,9 @@ class SgrtFilename(SmartFilename):
 
 
 
-def full_sgrt_tree(root, sensor=None, mode=None, group=None, datalog=None,
-                   product=None, wflow=None, grid=None, tile=None, var=None,
-                   qlook=True, make_dir=False):
+def sgrt_path(root, sensor=None, mode=None, group=None, datalog=None,
+              product=None, wflow=None, grid=None, tile=None, var=None,
+              qlook=True, make_dir=False):
     '''
     Realisation of the full SGRT folder naming convention, yielding a single
     SmartPath.
@@ -127,6 +131,60 @@ def full_sgrt_tree(root, sensor=None, mode=None, group=None, datalog=None,
                  'tile', 'var', 'qlook']
 
     return SmartPath(levels, hierarchy, make_dir=make_dir)
+
+
+def sgrt_tree(root, target_level=None, register_file_pattern=None):
+
+    '''
+    Realisation of the full SGRT folder naming convention, yielding a
+    SmartTree(), reflecting all subfolders as SmartPath()
+
+    Parameters
+    ----------
+    root : str
+        top level directory of the SGRT dataset, which is the sensor name in
+        the SGRT naming convention.
+        E.g.: "R:\Datapool_processed\Sentinel-1_CSAR"
+    target_level : str, optional
+        Can speed up things: Level name of target tree-depth.
+        The SmartTree is only built from directories reaching this level,
+        and only built down to this level. If not set, all directories are
+        built down to deepest depth.
+    register_file_pattern : str tuple, optional
+        strings defining search pattern for file search for file_register
+        e.g. ('C1003', 'E048N012T6').
+        No asterisk is needed ('*')!
+        Sequence of strings in given tuple is crucial!
+        Be careful: If the tree is large, this can take a while!
+
+    Returns
+    -------
+    SmartTree
+        Object for the SGRT tree.
+    '''
+
+    # defining the hierarchy
+    hierarchy = ['mode', 'group','datalog',
+                 'product', 'wflow', 'grid',
+                 'tile', 'var', 'qlook']
+
+    # Allowed directory topnames for "root".
+    # Please add here new sensors if they follow the SGRT naming convention.
+    allowed_sensor_dirs = ['Sentinel-1_CSAR',
+                           'SCATSAR',
+                           'METOP_ASCAT',
+                           'Envisat_ASAR']
+
+    if root.split(os.sep)[-1] in allowed_sensor_dirs:
+        sgrt_tree = build_smarttree(root, hierarchy,
+                                    target_level=target_level,
+                                    register_file_pattern=register_file_pattern)
+    else:
+        raise ValueError('Root-directory "{}" does is '
+                         'not a valid SGRT folder!'.format(root))
+
+    return sgrt_tree
+
 
 
 if __name__ == '__main__':
