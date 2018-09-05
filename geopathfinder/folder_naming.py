@@ -617,7 +617,7 @@ class SmartTree(object):
         self.count_dirs()
 
 
-    def trim2branch(self, level, pattern):
+    def trim2branch(self, level, pattern, build_file_register=True):
         '''
         Returns a branch (a subtree) of a SmartTree that matches with
         the pattern at the given level.
@@ -643,18 +643,32 @@ class SmartTree(object):
         branch_path = self.collect_level(level, pattern=pattern, unique=True)
 
         if len(branch_path) == 0:
-            warnings.warn('trim2branch(): No matches for "pattern"!')
-            return NullSmartPath()
+            warnings.warn('trim2branch(): No matches for "pattern" at "level"!')
+            return NullSmartTree(self.root)
         elif len(branch_path) > 1:
-            warnings.warn('trim2branch(): Multiple matches for "pattern"!')
-            return NullSmartPath()
-        for d in self.dirs.keys():
-            if not branch_path in d:
-                branch.remove_smartpath(d)
+            warnings.warn('trim2branch(): Multiple matches for "pattern" at "level"!')
+            return NullSmartTree(self.root)
+        else:
+            for d in self.dirs.keys():
+                if not branch_path[0] in d:
+                    branch.remove_smartpath(d)
 
-        branch.count_dirs()
+            # update dir_count
+            branch.count_dirs()
 
-        return branch
+            file_register = []
+            file_count = 0
+            # update file_register
+            if build_file_register:
+                for sp in branch.dirs.values():
+                    sp.build_file_register()
+                    file_register += sp.file_register
+                    file_count += sp.file_count
+
+            branch.file_register = file_register
+            branch.file_count = file_count
+
+            return branch
 
 
     def make_dirs(self):
@@ -666,14 +680,47 @@ class SmartTree(object):
             smartpath.make_dir()
 
 
-    def copy_tree(self, target_dir, base_level=None, pattern=None):
+    def copy_smarttree_on_fs(self, target_dir, level=None, pattern=''):
+        """
+        Copies all files and directories in the SmartTree to a target
+        directory, using shutil.copytree().
 
-        if base_level is None:
+        Parameters
+        ----------
+        target_dir : str
+            the target directory
+        level : str, optional
+            if set, only the branch at given "level" and matching given
+            "pattern" will be copied. e.g. 'wflow'.
+            Otherwise all below root directory will be copied.
+        pattern : str
+            string defining search pattern at given level
+            e.g. 'A0202'
+
+        Returns
+        -------
+
+        """
+
+        if level is None:
             source_dir = self.root
+            base_folder = self.collect_level_topnames('root')[0]
+        else:
+            branch = self.trim2branch(level, pattern, build_file_register=True)
+            source_dir = branch.collect_level(level, pattern, unique=True)[0]
+            base_folder = branch.collect_level_topnames(level)[0]
 
-        shutil.copytree(source_dir, target_dir)
+        shutil.copytree(source_dir,
+                        os.path.join(target_dir, base_folder))
 
-        pass
+
+
+class NullSmartTree(SmartTree):
+    '''
+    Class for non-exiting paths. Helps to avoid errors.
+    '''
+    def __init__(self, root):
+        super(NullSmartTree, self).__init__(root, [], make_dir=False)
 
 
 def build_smarttree(root,

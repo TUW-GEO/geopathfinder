@@ -216,7 +216,17 @@ class TestSmartTree(unittest.TestCase):
     def setUp(self):
         self.test_dir = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), os.path.join('test_data', 'Sentinel-1_CSAR'))
+        self.copy_dir = os.path.join(os.path.dirname(
+            os.path.abspath(__file__)), os.path.join('test_data', 'copy_target'))
+        if os.path.exists(self.copy_dir):
+            shutil.rmtree(self.copy_dir)
+        os.mkdir(self.copy_dir)
         self.stt_1 = sgrt_tree(self.test_dir, register_file_pattern='.tif')
+
+
+    def tearDown(self):
+        if os.path.exists(self.copy_dir):
+            shutil.rmtree(self.copy_dir)
 
 
     def test_tree_integrity(self):
@@ -315,13 +325,51 @@ class TestSmartTree(unittest.TestCase):
         """
 
         branch1 = self.stt_1.trim2branch('wflow', 'C1003')
+        self.assertEqual(branch1.collect_level_topnames('wflow'), ['C1003'])
+
         self.assertEqual(branch1.dir_count, 4)
+        self.assertEqual(len(branch1.file_register), 12)
+        self.assertEqual(branch1.file_count, 12)
 
+        should = ['E006N006T6', 'E006N012T6', 'E048N012T6']
+        self.assertEqual(sorted(branch1.collect_level_topnames('tile')), should)
+
+        # handling of multiple matches
         branch2 = self.stt_1.trim2branch('grid', 'EQUI7_EU500M')
+        self.assertEqual(branch2.dir_count, 0)
+        self.assertEqual(len(branch2.file_register), 0)
+        self.assertEqual(branch2.file_count, 0)
 
-        self.stt_1.copy_tree(r'D:\Arbeit\atasks\CGLS_SNRT\tests\cgls_ssm_interim\copy')
 
-        pass
+    def test_copy_smarttree_on_fs(self):
+        """
+        Tests if the copy functions works properly.
+
+        """
+        self.stt_1.copy_smarttree_on_fs(self.copy_dir)
+
+        files = next(os.walk(self.copy_dir))[2]
+        file_count = sum([len(files) for r, d, files in os.walk(self.copy_dir)])
+
+        self.assertEqual(file_count, 22)
+
+
+    def test_copy_smarttree_on_fs_level_pattern(self):
+        """
+        Tests if the copy functions works properly for given level and pattern.
+
+        """
+        self.stt_1.copy_smarttree_on_fs(self.copy_dir,
+                                        level='wflow', pattern='A0202')
+
+        files = next(os.walk(self.copy_dir))[2]
+        file_count = sum(
+            [len(files) for r, d, files in os.walk(self.copy_dir)])
+
+        self.assertEqual(file_count, 4)
+
+
+
 
 if __name__ == "__main__":
     unittest.main()
