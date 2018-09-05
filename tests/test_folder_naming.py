@@ -215,7 +215,7 @@ class TestSmartTree(unittest.TestCase):
     """
     def setUp(self):
         self.test_dir = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), r'test_data\Sentinel-1_CSAR')
+            os.path.abspath(__file__)), os.path.join('test_data', 'Sentinel-1_CSAR'))
         self.stt_1 = sgrt_tree(self.test_dir, register_file_pattern='.tif')
 
 
@@ -256,14 +256,12 @@ class TestSmartTree(unittest.TestCase):
         self.assertEqual(should, result)
 
         # test postive search pattern
-        should = (self.test_dir + '\\IWGRDH\\products\\datasets\\ssm\\'
-                        'C1003\\EQUI7_EU500M\\E048N012T6\\ssm-noise\\qlooks')
+        should = os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1003', 'EQUI7_EU500M', 'E048N012T6', 'ssm-noise', 'qlooks')
         result = self.stt_1.get_smartpath(('C1003', 'E048N012T6', 'noise')).get_dir()
         self.assertEqual(should, result)
 
         # test negative search pattern
-        should = (self.test_dir + '\\IWGRDH\\products\\datasets\\ssm\\'
-                        'C1003\\EQUI7_EU500M\\E048N012T6\\ssm\\qlooks')
+        should = os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1003', 'EQUI7_EU500M', 'E048N012T6', 'ssm', 'qlooks')
         result = self.stt_1['C1003', 'E048N012T6', '-noise'].get_dir()
         self.assertEqual(should, result)
 
@@ -273,6 +271,57 @@ class TestSmartTree(unittest.TestCase):
         # handling of multiple matches
         self.assertTrue(isinstance(self.stt_1['A0202'], NullSmartPath))
 
+
+    def test_collect_level(self):
+        """
+        Test the collect level functions
+
+        """
+
+        # unique case for the folder topnames
+        should = ['E006N006T1', 'E006N006T6', 'E006N006T6',
+                  'E006N006T6', 'E006N012T6', 'E048N012T6']
+        result = sorted(self.stt_1.collect_level_topnames('tile', unique=True))
+        self.assertEqual(should, result)
+
+        # non-unique case for the folder topnames
+        should = ['E006N006T1', 'E006N006T6', 'E006N006T6',
+                  'E006N006T6', 'E006N006T6', 'E006N012T6',
+                  'E048N012T6', 'E048N012T6']
+        result = sorted(self.stt_1.collect_level_topnames('tile', unique=False))
+        self.assertEqual(should, result)
+
+        # unique case for full dirs
+        should = [os.path.join(self.test_dir, 'IWGRDH', 'preprocessed', 'datasets', 'resampled', 'A0202', 'EQUI7_EU500M'),
+                  os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1001', 'EQUI7_AF010M'),
+                  os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1001', 'EQUI7_EU500M'),
+                  os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1003', 'EQUI7_EU500M')]
+        result = sorted(self.stt_1.collect_level('grid', unique=True))
+        self.assertEqual(should, result)
+
+        # test if unique full dirs deliver correct number of topnames
+        should = ['EQUI7_AF010M',
+                  'EQUI7_EU500M',
+                  'EQUI7_EU500M',
+                  'EQUI7_EU500M']
+        result = sorted(self.stt_1.collect_level_topnames('grid', unique=True))
+        self.assertEqual(should, result)
+
+
+    def test_trim2branch(self):
+        """
+        Test the function for returning a branch (subtree).
+
+        """
+
+        branch1 = self.stt_1.trim2branch('wflow', 'C1003')
+        self.assertEqual(branch1.dir_count, 4)
+
+        branch2 = self.stt_1.trim2branch('grid', 'EQUI7_EU500M')
+
+        self.stt_1.copy_tree(r'D:\Arbeit\atasks\CGLS_SNRT\tests\cgls_ssm_interim\copy')
+
+        pass
 
 if __name__ == "__main__":
     unittest.main()

@@ -85,13 +85,14 @@ class TestSgrtPath(unittest.TestCase):
         Tests the SmartPath() for the SGRT naming conventions
         """
 
+        should = os.path.join(self.test_dir, 'Sentinel-1_CSAR', 'IWGRDH', 'products', 'datasets', 'ssm', 'C1003', 'EQUI7_EU500M', 'E048N012T6', 'ssm', 'qlooks')
         stp1 = sgrt_path(self.test_dir, sensor='Sentinel-1_CSAR',
                          mode='IWGRDH', group='products', datalog='datasets',
                          product='ssm', wflow='C1003', grid='EQUI7_EU500M',
                          tile='E048N012T6', var='ssm',
                          qlook=True, make_dir=False)
 
-        self.assertEqual(stp1.directory, r'C:\code\cgls_s1_ssm\geopathfinder\tests\test_data\Sentinel-1_CSAR\IWGRDH\products\datasets\ssm\C1003\EQUI7_EU500M\E048N012T6\ssm\qlooks')
+        self.assertEqual(stp1.directory, should)
 
         # giving no specifications on group and datalog levels
         stp2 = sgrt_path(self.test_dir, sensor='Sentinel-1_CSAR',
@@ -99,7 +100,7 @@ class TestSgrtPath(unittest.TestCase):
                          grid='EQUI7_EU500M', tile='E048N012T6', var='ssm',
                          qlook=True, make_dir=False)
 
-        self.assertEqual(stp2.directory, r'C:\code\cgls_s1_ssm\geopathfinder\tests\test_data\Sentinel-1_CSAR\IWGRDH\products\datasets\ssm\C1003\EQUI7_EU500M\E048N012T6\ssm\qlooks')
+        self.assertEqual(stp2.directory, should)
 
         pass
 
@@ -116,7 +117,7 @@ class TestSgrtTree(unittest.TestCase):
         """
 
         self.test_dir = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), r'test_data\Sentinel-1_CSAR')
+            os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR')
         self.hierarchy_should = ['root', 'mode', 'group', 'datalog', 'product',
                                  'wflow', 'grid', 'tile', 'var', 'qlook']
         self.stt = sgrt_tree(self.test_dir, register_file_pattern='.tif')

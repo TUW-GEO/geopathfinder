@@ -22,6 +22,8 @@ import os
 import regex as re
 import glob
 import copy
+import shutil
+import warnings
 
 from datetime import datetime
 
@@ -496,8 +498,6 @@ class SmartTree(object):
         regex = re.compile(pattern)
         matching_paths += [m for m in paths if regex.match(m)]
 
-        import warnings
-
         if len(matching_paths) == 0:
             warnings.warn('get_smartpath(): No matches for "pattern"!')
             return NullSmartPath()
@@ -626,9 +626,10 @@ class SmartTree(object):
         ----------
         level : str
             Name of level in hierarchy.
-        pattern : str tuple
-            strings defining search pattern for path search
-            e.g. ('C1003', 'E048N012T6')
+            e.g. 'wflow'
+        pattern : str
+            string defining search pattern at given level
+            e.g. 'C1003'
 
         Returns
         -------
@@ -639,8 +640,14 @@ class SmartTree(object):
 
         branch = copy.deepcopy(self)
 
-        branch_path = self.collect_level(level, pattern=pattern, unique=True)[0]
+        branch_path = self.collect_level(level, pattern=pattern, unique=True)
 
+        if len(branch_path) == 0:
+            warnings.warn('trim2branch(): No matches for "pattern"!')
+            return NullSmartPath()
+        elif len(branch_path) > 1:
+            warnings.warn('trim2branch(): Multiple matches for "pattern"!')
+            return NullSmartPath()
         for d in self.dirs.keys():
             if not branch_path in d:
                 branch.remove_smartpath(d)
@@ -657,6 +664,16 @@ class SmartTree(object):
 
         for _, smartpath in self.dirs.items():
             smartpath.make_dir()
+
+
+    def copy_tree(self, target_dir, base_level=None, pattern=None):
+
+        if base_level is None:
+            source_dir = self.root
+
+        shutil.copytree(source_dir, target_dir)
+
+        pass
 
 
 def build_smarttree(root,
