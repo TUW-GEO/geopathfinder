@@ -19,11 +19,9 @@ import unittest
 import os
 import glob
 import shutil
-import pandas as pd
 
 from geopathfinder.folder_naming import SmartPath
-from geopathfinder.folder_naming import extract_times
-from geopathfinder.folder_naming import SmartTree
+from geopathfinder.folder_naming import NullSmartPath
 from geopathfinder.sgrt_naming import sgrt_tree
 
 def cur_path():
@@ -246,18 +244,35 @@ class TestSmartTree(unittest.TestCase):
         Tests the selection of a SmartPath matching regex search patterns.
 
         """
+        # typical use case
+        should = ['M20160831_163321--_SIG0-----_S1AIWGRDH1VVA_175_A0201_EU500M_E048N006T6.tif']
+        result = self.stt_1.get_smartpath(('A0202', 'sig0')).search_files(
+            level='var')
+        self.assertEqual(should, result)
+
+        # typical use case
+        should = ['Q20160831_163321--_SIG0-----_S1AIWGRDH1VVA_175_A0201_EU500M_E006N006T6.tif']
+        result = self.stt_1[('A0202', 'sig0')].search_files(level='qlook')
+        self.assertEqual(should, result)
+
         # test postive search pattern
         should = (self.test_dir + '\\IWGRDH\\products\\datasets\\ssm\\'
                         'C1003\\EQUI7_EU500M\\E048N012T6\\ssm-noise\\qlooks')
-        result = self.stt_1['C1003', 'E048N012T6', 'noise'].get_dir()
-
+        result = self.stt_1.get_smartpath(('C1003', 'E048N012T6', 'noise')).get_dir()
+        self.assertEqual(should, result)
 
         # test negative search pattern
         should = (self.test_dir + '\\IWGRDH\\products\\datasets\\ssm\\'
                         'C1003\\EQUI7_EU500M\\E048N012T6\\ssm\\qlooks')
         result = self.stt_1['C1003', 'E048N012T6', '-noise'].get_dir()
         self.assertEqual(should, result)
-        pass
+
+        # handling of no matches
+        self.assertTrue(isinstance(self.stt_1['nonsense'], NullSmartPath))
+
+        # handling of multiple matches
+        self.assertTrue(isinstance(self.stt_1['A0202'], NullSmartPath))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -496,9 +496,13 @@ class SmartTree(object):
         regex = re.compile(pattern)
         matching_paths += [m for m in paths if regex.match(m)]
 
+        import warnings
+
         if len(matching_paths) == 0:
+            warnings.warn('get_smartpath(): No matches for "pattern"!')
             return NullSmartPath()
         elif len(matching_paths) > 1:
+            warnings.warn('get_smartpath(): Multiple matches for "pattern"!')
             return NullSmartPath()
         else:
             return self.dirs[matching_paths[0]]
