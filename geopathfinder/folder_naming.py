@@ -95,6 +95,14 @@ class SmartPath(object):
         print('\n'.join(self.file_register))
 
 
+    def print_dir(self):
+        '''
+        Nice function to print nicely the directory of the path.
+        '''
+
+        print(self.directory)
+
+
     def get_dir(self, make_dir=False):
         """
         Get directory.
@@ -316,6 +324,8 @@ class SmartPath(object):
 
         Parameters
         ----------
+        level : str, optional
+            deepest level that should be included in the file register
         pattern : str tuple, optional
             strings defining search pattern for file search
             e.g. ('C1003', 'E048N012T6')
@@ -325,7 +335,7 @@ class SmartPath(object):
         if level is None:
             idx = self.hierarchy
         else:
-            idx = self.levels.index(level)
+            idx = self.hierarchy[0:self.hierarchy.index(level) + 1]
         for h in idx:
             if self.levels[h] is not None:
                 r, c = regex_file_search(

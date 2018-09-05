@@ -116,6 +116,15 @@ class TestSmartPath(unittest.TestCase):
                                   tile='E048N012T6', var='ssm',
                                   make_dir=True)
 
+        self.path_perm = os.path.join(cur_path(), 'test_data')
+        self.sp_obj_perm = get_test_sp(self.path_perm,
+                                       sensor='Sentinel-1_CSAR',
+                                       mode='IWGRDH', group='products',
+                                       datalog='datasets', product='ssm',
+                                       wflow='C1003', grid='EQUI7_EU500M',
+                                       tile='E048N012T6', var='ssm',
+                                       make_dir=True)
+
     def tearDown(self):
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
@@ -189,26 +198,15 @@ class TestSmartPath(unittest.TestCase):
         assert should == result
 
 
-    def test_search_files_ts(self):
+    def test_build_file_register(self):
         '''
-        Testing the file search yielding a pandas DataFrame().
+        Testing the file register.
 
         '''
-        files = ['M20161218_051642--_SSM------_S1BIWGRDH1VVD_095_C1003_EU500M_E048N012T6.tif']
-        times = extract_times(files, date_position=1, date_format='%Y%m%d_%H%M%S')
-        should = pd.DataFrame({'Files': files}, index=times)
 
-        src = glob.glob(os.path.join(cur_path(), 'test_data', '*.*'))
-        dest = self.sp_obj.build_levels(level='var', make_dir=True)
+        self.sp_obj_perm.build_file_register(level='var')
 
-        for file in src:
-            shutil.copy(file, dest)
-
-        result = self.sp_obj.search_files_ts('var', pattern='SSM',
-                                             starttime='20161218_000000',
-                                             endtime='20161224_000000')
-
-        assert all(should == result)
+        self.assertEqual(self.sp_obj_perm.file_count, 5)
 
 
 class TestSmartTree(unittest.TestCase):

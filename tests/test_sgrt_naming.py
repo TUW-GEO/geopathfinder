@@ -23,6 +23,7 @@ import logging
 
 from geopathfinder.sgrt_naming import SgrtFilename
 from geopathfinder.sgrt_naming import sgrt_tree
+from geopathfinder.sgrt_naming import sgrt_path
 
 logging.basicConfig(level=logging.INFO)
 
@@ -63,6 +64,45 @@ class TestSgrtFilename(unittest.TestCase):
         self.sgrt_fn['start_time'] = new_start_time
 
         self.assertEqual(self.sgrt_fn['start_time'], new_start_time)
+
+
+class TestSgrtPath(unittest.TestCase):
+    """
+    Tests checking if a SGRT path is correctly reflected by sgrt_tree.
+    """
+
+    def setUp(self):
+        """
+        Setting up the test sgrt_tree.
+        """
+
+        self.test_dir = os.path.join(os.path.dirname(
+            os.path.abspath(__file__)), r'test_data')
+
+
+    def test_full_path(self):
+        """
+        Tests the SmartPath() for the SGRT naming conventions
+        """
+
+        stp1 = sgrt_path(self.test_dir, sensor='Sentinel-1_CSAR',
+                         mode='IWGRDH', group='products', datalog='datasets',
+                         product='ssm', wflow='C1003', grid='EQUI7_EU500M',
+                         tile='E048N012T6', var='ssm',
+                         qlook=True, make_dir=False)
+
+        self.assertEqual(stp1.directory, r'C:\code\cgls_s1_ssm\geopathfinder\tests\test_data\Sentinel-1_CSAR\IWGRDH\products\datasets\ssm\C1003\EQUI7_EU500M\E048N012T6\ssm\qlooks')
+
+        # giving no specifications on group and datalog levels
+        stp2 = sgrt_path(self.test_dir, sensor='Sentinel-1_CSAR',
+                         mode='IWGRDH', product='ssm', wflow='C1003',
+                         grid='EQUI7_EU500M', tile='E048N012T6', var='ssm',
+                         qlook=True, make_dir=False)
+
+        self.assertEqual(stp2.directory, r'C:\code\cgls_s1_ssm\geopathfinder\tests\test_data\Sentinel-1_CSAR\IWGRDH\products\datasets\ssm\C1003\EQUI7_EU500M\E048N012T6\ssm\qlooks')
+
+        pass
+
 
 
 class TestSgrtTree(unittest.TestCase):

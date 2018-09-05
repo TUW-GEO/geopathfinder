@@ -30,6 +30,13 @@ from geopathfinder.file_naming import SmartFilename
 from geopathfinder.folder_naming import build_smarttree
 
 
+# Please add here new sensors if they follow the SGRT naming convention.
+allowed_sensor_dirs = ['Sentinel-1_CSAR',
+                       'SCATSAR',
+                       'METOP_ASCAT',
+                       'Envisat_ASAR']
+
+
 class SgrtFilename(SmartFilename):
 
     """
@@ -102,23 +109,68 @@ def sgrt_path(root, sensor=None, mode=None, group=None, datalog=None,
     Parameters
     ----------
     root : str
+        e.g. "R:\Datapool_processed"
     sensor : str
+        e.g. "Sentinel-1_CSAR"
     mode : str
-    group : str
-    datalog : str
+        e.g "IWGRDH"
+    group : str, optional
+        "preprocessed" or "parameters" or "products"
+    datalog : str, optional
+        must be "datasets" or "logfiles"
     product : str
+        e.g. "ssm"
     wflow : str
+        e.g. "C1003"
     grid : str
+        e.g. "EQUI7_EU500M"
     tile : str
+        e.g. "E048N012T6"
     var : str
+        e.g. "ssm"
     qlook : bool
+        if the quicklook subdir should be integrated
     make_dir : bool
+        if the directory should be created on the filesystem
 
     Returns
     -------
     SmartPath
         Object for the path
     '''
+
+    # check the sensor folder name
+    if sensor not in allowed_sensor_dirs:
+        raise ValueError('Wrong input for "sensor" level!')
+
+    # define the datalog folder name
+    if datalog is None:
+        if isinstance(wflow, str):
+            datalog = 'datasets'
+    elif datalog == 'logfiles':
+        product = None
+        wflow = None
+        grid = None
+        tile = None
+        var = None
+        qlook = False
+    elif datalog == 'datasets':
+        pass
+    else:
+        raise ValueError('Wrong input for "datalog" level!')
+
+
+    # define the group folder name
+    if group is None:
+        if wflow.startswith('A'):
+            group = 'preprocessed'
+        elif wflow.startswith('B'):
+            group = 'parameters'
+        elif wflow.startswith('C'):
+            group = 'products'
+        else:
+            raise ValueError('Wrong input for "wflow" level!')
+
 
     # defining the folder levels
     levels = {'root': root, 'sensor': sensor, 'mode': mode, 'group': group,
@@ -168,13 +220,7 @@ def sgrt_tree(root, target_level=None, register_file_pattern=None):
                  'product', 'wflow', 'grid',
                  'tile', 'var', 'qlook']
 
-    # Allowed directory topnames for "root".
-    # Please add here new sensors if they follow the SGRT naming convention.
-    allowed_sensor_dirs = ['Sentinel-1_CSAR',
-                           'SCATSAR',
-                           'METOP_ASCAT',
-                           'Envisat_ASAR']
-
+    # Check for allowed directory topnames for "root".
     if root.split(os.sep)[-1] in allowed_sensor_dirs:
         sgrt_tree = build_smarttree(root, hierarchy,
                                     target_level=target_level,
