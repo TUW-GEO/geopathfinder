@@ -204,7 +204,31 @@ class SmartPath(object):
         else:
             print('Level \'{}\' is not in hierarchy!')
 
-    def rebase_onto_root(self, root):
+
+    def cutoff_level(self, level):
+        '''
+        Removes all levels that are higher or equal to given level.
+
+        Parameters
+        ----------
+        level : str
+            String of the level that should be removed, together will all
+            higher levels.
+        '''
+        if level in self.hierarchy:
+
+            for h in copy.copy(self.hierarchy):
+                if h != level:
+                    self.remove_level(h)
+                else:
+                    self.remove_level(h)
+                    break
+
+        else:
+            print('Level \'{}\' is not in hierarchy!')
+
+
+    def base_onto_root(self, root):
         '''
         Adds as first level 'root' to the SmartPath-instance.
 
@@ -588,7 +612,7 @@ class SmartTree(object):
 
         if isinstance(smartpath, SmartPath):
 
-            smartpath.rebase_onto_root(self.root)
+            smartpath.base_onto_root(self.root)
 
             if self.hierarchy == smartpath.hierarchy:
 
@@ -652,9 +676,22 @@ class SmartTree(object):
             for d in self.dirs.keys():
                 if not branch_path[0] in d:
                     branch.remove_smartpath(d)
+                else:
+                    branch.dirs.get(d).cutoff_level(level)
+                    branch.dirs.get(d).base_onto_root(branch_path[0])
 
             # update dir_count
             branch.count_dirs()
+            # update tree root
+            branch.root = branch_path[0]
+            # update tree hierarchy
+            for h in copy.copy(branch.hierarchy):
+                if h != level:
+                    branch.hierarchy.remove(h)
+                else:
+                    branch.hierarchy.remove(h)
+                    break
+            branch.hierarchy = ['root'] + branch.hierarchy
 
             file_register = []
             file_count = 0
@@ -680,7 +717,8 @@ class SmartTree(object):
             smartpath.make_dir()
 
 
-    def copy_smarttree_on_fs(self, target_dir, level=None, pattern=''):
+    def copy_smarttree_on_fs(self, target_dir, level=None, level_pattern='',
+                             file_pattern=None):
         """
         Copies all files and directories in the SmartTree to a target
         directory, using shutil.copytree().
@@ -693,9 +731,14 @@ class SmartTree(object):
             if set, only the branch at given "level" and matching given
             "pattern" will be copied. e.g. 'wflow'.
             Otherwise all below root directory will be copied.
-        pattern : str
+        level_pattern : str
             string defining search pattern at given level
             e.g. 'A0202'
+        file_pattern : str or tuple of str, optional
+            string patterns for file matching.
+            when starting with "-" it is interpreted as negative pattern
+            that should be excluded from the matches
+
 
         Returns
         -------
@@ -706,13 +749,13 @@ class SmartTree(object):
             source_dir = self.root
             base_folder = self.collect_level_topnames('root')[0]
         else:
-            branch = self.trim2branch(level, pattern, build_file_register=True)
-            source_dir = branch.collect_level(level, pattern, unique=True)[0]
-            base_folder = branch.collect_level_topnames(level)[0]
+            branch = self.trim2branch(level, level_pattern, build_file_register=True)
+            source_dir = branch.collect_level('root', level_pattern, unique=True)[0]
+            base_folder = branch.collect_level_topnames('root')[0]
 
-        shutil.copytree(source_dir,
-                        os.path.join(target_dir, base_folder))
+        target_dir = os.path.join(target_dir, base_folder)
 
+        copy_tree(source_dir, target_dir, file_pattern=file_pattern)
 
 
 class NullSmartTree(SmartTree):
@@ -973,6 +1016,61 @@ def regex_file_search(path, pattern, full_paths=True):
         files = expand_full_path(path, files)
 
     return sorted(files), len(files)
+
+
+def copy_tree(source, dest, file_pattern=None, overwrite=False):
+    """
+    Copies a directory tree structure.
+
+    Parameters
+    ----------
+    source : str
+        directory that should be copied, recursively
+    dest : str
+        where the tree should be copied to
+    file_pattern : str or tuple of str, optional
+        string patterns for file matching.
+        when starting with "-" it is interpreted as negative pattern
+        that should be excluded from the matches
+    overwrite : bool, optional
+        should existing files be overwritten? default: False
+
+    """
+
+    # only files matching regex pattern are copied
+    if file_pattern is not None:
+        fpattern = patterns_2_regex(file_pattern)
+        regex = re.compile(fpattern)
+
+    for root, dirs, files in os.walk(source):
+        if not os.path.isdir(root):
+            os.makedirs(root)
+
+        # all files found
+        for file in files:
+
+            if file_pattern is not None:
+                include = regex.match(file)
+            else:
+                include = True
+
+            # proceed if match is given or not required
+            if include:
+                rel_path = root.replace(source, '').lstrip(os.sep)
+                dest_path = os.path.join(dest, rel_path)
+
+                # clarify status for over(writing)
+                file2write = os.path.join(dest_path, file)
+                file_exists = (os.path.exists(file2write))
+                do_writing = file_exists and overwrite or not file_exists
+                if do_writing:
+
+                    if not os.path.isdir(dest_path):
+                        os.makedirs(dest_path)
+
+                    # do it. with file metadata (copy2)
+                    shutil.copy2(os.path.join(root, file), file2write)
+
 
 
 if __name__ == '__main__':

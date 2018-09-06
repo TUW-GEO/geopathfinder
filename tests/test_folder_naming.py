@@ -325,7 +325,7 @@ class TestSmartTree(unittest.TestCase):
         """
 
         branch1 = self.stt_1.trim2branch('wflow', 'C1003')
-        self.assertEqual(branch1.collect_level_topnames('wflow'), ['C1003'])
+        self.assertEqual(branch1.collect_level_topnames('root'), ['C1003'])
 
         self.assertEqual(branch1.dir_count, 4)
         self.assertEqual(len(branch1.file_register), 12)
@@ -360,7 +360,7 @@ class TestSmartTree(unittest.TestCase):
 
         """
         self.stt_1.copy_smarttree_on_fs(self.copy_dir,
-                                        level='wflow', pattern='A0202')
+                                        level='wflow', level_pattern='A0202')
 
         files = next(os.walk(self.copy_dir))[2]
         file_count = sum(
