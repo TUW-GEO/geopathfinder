@@ -462,6 +462,18 @@ class SmartTree(object):
                                                     unique=unique)))
 
 
+    def file_register_search(self, pattern, full_paths=True):
+
+        pattern = patterns_2_regex(pattern)
+
+        regex = re.compile(pattern)
+        files = [f for f in self.file_register if regex.match(os.path.basename(f))]
+
+        if not full_paths:
+            files = [os.path.basename(f) for f in files]
+
+        return sorted(files)
+
     def get_all_smartpaths(self):
         '''
         Returns SmartPaths in the SmartTree

@@ -182,6 +182,10 @@ def sgrt_path(root, sensor=None, mode=None, group=None, datalog=None,
                  'datalog', 'product', 'wflow', 'grid',
                  'tile', 'var', 'qlook']
 
+    if qlook is False:
+        levels.pop('qlook')
+        hierarchy.remove('qlook')
+
     return SmartPath(levels, hierarchy, make_dir=make_dir)
 
 
