@@ -20,7 +20,7 @@ Heritage SGRT (experimental) classes.
 
 import os
 
-from geopathfinder.sgrt_naming import full_sgrt_tree
+from geopathfinder.sgrt_naming import sgrt_path
 
 
 
@@ -52,7 +52,7 @@ class SgrtFolderName_old_interface():
             Working directory (default: None).
         """
 
-        self.all_levels = full_sgrt_tree(
+        self.all_levels = sgrt_path(
             dir_root=dir_root, product_id=product_id, wflow_id=wflow_id,
             **kwargs)
 
@@ -227,7 +227,7 @@ class SGRTFolderName():
 def test_folders():
     root_path = r'R:\Projects_work\SAR_NRT_Code_Sprint\Testdata'
 
-    ftf = full_sgrt_tree(
+    ftf = sgrt_path(
         root_path, sensor='Sentinel-1_CSAR', mode='IWGRDH', group='products', datalog='datasets',
         product='ssm', wflow='C1003', grid='EQUI7_EU500M', tile='E048N012T6', var='ssm',
         make_dir=True)
