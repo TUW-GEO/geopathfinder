@@ -20,7 +20,6 @@ SGRT folder and file name definition.
 """
 
 import os
-import glob
 
 from datetime import datetime
 from collections import OrderedDict
@@ -99,7 +98,7 @@ class SgrtFilename(SmartFilename):
 
 
 
-def sgrt_path(root, sensor=None, mode=None, group=None, datalog=None,
+def sgrt_path(root, mode=None, group=None, datalog=None,
               product=None, wflow=None, grid=None, tile=None, var=None,
               qlook=True, make_dir=False):
     '''
@@ -109,9 +108,8 @@ def sgrt_path(root, sensor=None, mode=None, group=None, datalog=None,
     Parameters
     ----------
     root : str
-        e.g. "R:\Datapool_processed"
-    sensor : str
-        e.g. "Sentinel-1_CSAR"
+        root directory of the path. must contain satellite sensor at toplevel.
+        e.g. "R:\Datapool_processed\Sentinel-1_CSAR"
     mode : str
         e.g "IWGRDH"
     group : str, optional
@@ -140,8 +138,8 @@ def sgrt_path(root, sensor=None, mode=None, group=None, datalog=None,
     '''
 
     # check the sensor folder name
-    if sensor not in allowed_sensor_dirs:
-        raise ValueError('Wrong input for "sensor" level!')
+    if root.split(os.sep)[-1] not in allowed_sensor_dirs:
+        raise ValueError('Wrong input for "root"!')
 
     # define the datalog folder name
     if datalog is None:
@@ -173,12 +171,12 @@ def sgrt_path(root, sensor=None, mode=None, group=None, datalog=None,
 
 
     # defining the folder levels
-    levels = {'root': root, 'sensor': sensor, 'mode': mode, 'group': group,
+    levels = {'root': root, 'mode': mode, 'group': group,
               'datalog': datalog, 'product': product, 'wflow': wflow,
               'grid': grid, 'tile': tile, 'var': var, 'qlook': 'qlooks'}
 
     # defining the hierarchy
-    hierarchy = ['root', 'sensor', 'mode', 'group',
+    hierarchy = ['root', 'mode', 'group',
                  'datalog', 'product', 'wflow', 'grid',
                  'tile', 'var', 'qlook']
 

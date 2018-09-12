@@ -77,7 +77,7 @@ class TestSgrtPath(unittest.TestCase):
         """
 
         self.test_dir = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), r'test_data')
+            os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR')
 
 
     def test_full_path(self):
@@ -85,8 +85,11 @@ class TestSgrtPath(unittest.TestCase):
         Tests the SmartPath() for the SGRT naming conventions
         """
 
-        should = os.path.join(self.test_dir, 'Sentinel-1_CSAR', 'IWGRDH', 'products', 'datasets', 'ssm', 'C1003', 'EQUI7_EU500M', 'E048N012T6', 'ssm', 'qlooks')
-        stp1 = sgrt_path(self.test_dir, sensor='Sentinel-1_CSAR',
+        should = os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets',
+                              'ssm', 'C1003', 'EQUI7_EU500M', 'E048N012T6',
+                              'ssm', 'qlooks')
+
+        stp1 = sgrt_path(self.test_dir,
                          mode='IWGRDH', group='products', datalog='datasets',
                          product='ssm', wflow='C1003', grid='EQUI7_EU500M',
                          tile='E048N012T6', var='ssm',
@@ -95,7 +98,7 @@ class TestSgrtPath(unittest.TestCase):
         self.assertEqual(stp1.directory, should)
 
         # giving no specifications on group and datalog levels
-        stp2 = sgrt_path(self.test_dir, sensor='Sentinel-1_CSAR',
+        stp2 = sgrt_path(self.test_dir,
                          mode='IWGRDH', product='ssm', wflow='C1003',
                          grid='EQUI7_EU500M', tile='E048N012T6', var='ssm',
                          qlook=True, make_dir=False)

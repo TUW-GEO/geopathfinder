@@ -164,7 +164,7 @@ class SmartPath(object):
 
     def get_level(self, level):
         """
-        Get level.
+        Gets the path to the level.
 
         Parameters
         ----------
@@ -463,7 +463,22 @@ class SmartTree(object):
 
 
     def file_register_search(self, pattern, full_paths=True):
+        """
+        Searches files in register meeting the regex pattern
 
+        Parameters
+        ----------
+        pattern : str tuple, optional
+            strings defining search pattern for file search
+            e.g. ('C1003', 'E048N012T6')
+        full_paths : bool, optional
+            If True, full paths will be included in dataframe (default: False)
+        Returns
+        -------
+        filenames : str or list of str
+            File names
+
+        """
         pattern = patterns_2_regex(pattern)
 
         regex = re.compile(pattern)
@@ -472,7 +487,12 @@ class SmartTree(object):
         if not full_paths:
             files = [os.path.basename(f) for f in files]
 
-        return sorted(files)
+        if len(files) == 1:
+            file = files[0]
+            return file
+        else:
+            return sorted(files)
+
 
     def get_all_smartpaths(self):
         '''
