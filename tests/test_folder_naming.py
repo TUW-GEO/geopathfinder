@@ -351,7 +351,7 @@ class TestSmartTree(unittest.TestCase):
         files = next(os.walk(self.copy_dir))[2]
         file_count = sum([len(files) for r, d, files in os.walk(self.copy_dir)])
 
-        self.assertEqual(file_count, 22)
+        self.assertEqual(file_count, 24)
 
 
     def test_copy_smarttree_on_fs_level_pattern(self):
