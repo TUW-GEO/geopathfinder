@@ -999,19 +999,19 @@ def patterns_2_regex(patterns):
     if isinstance(patterns, str):
         patterns = [patterns]
 
-    regex = ''
+    regex = [''] * len(patterns)
 
-    for p in patterns:
+    for n, p in enumerate(patterns):
 
         # negative pattern (leads to exclusion)
         if p.startswith('-'):
-            regex += '.((?!{}).)*$'.format(p[1:])
+            regex[n] = '((?!{}).)*$'.format(p[1:])
 
         # positive pattern (leads to inclusion)
         else:
-            regex += '.*{}'.format(p)
+            regex[n] = '.*{}'.format(p)
 
-    return regex
+    return ''.join(regex)
 
 
 def regex_file_search(path, pattern, full_paths=True):
