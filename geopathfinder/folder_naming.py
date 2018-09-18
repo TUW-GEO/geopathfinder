@@ -673,7 +673,7 @@ class SmartTree(object):
         self.count_dirs()
 
 
-    def trim2branch(self, level, pattern, build_file_register=True):
+    def trim2branch(self, level, pattern, register_file_pattern=None):
         '''
         Returns a branch (a subtree) of a SmartTree that matches with
         the pattern at the given level.
@@ -728,9 +728,9 @@ class SmartTree(object):
             file_register = []
             file_count = 0
             # update file_register
-            if build_file_register:
+            if register_file_pattern is not None:
                 for sp in branch.dirs.values():
-                    sp.build_file_register()
+                    sp.build_file_register(pattern=register_file_pattern)
                     file_register += sp.file_register
                     file_count += sp.file_count
 
@@ -781,7 +781,7 @@ class SmartTree(object):
             source_dir = self.root
             base_folder = self.collect_level_topnames('root')[0]
         else:
-            branch = self.trim2branch(level, level_pattern, build_file_register=True)
+            branch = self.trim2branch(level, level_pattern, register_file_pattern=file_pattern)
             source_dir = branch.collect_level('root', level_pattern, unique=True)[0]
             base_folder = branch.collect_level_topnames('root')[0]
 
@@ -798,10 +798,45 @@ class NullSmartTree(SmartTree):
         super(NullSmartTree, self).__init__(root, [], make_dir=False)
 
 
+def create_smartpath(root, hierarchy, levels, make_dir=False):
+    '''
+    Function for creating a SmartPath().
+
+    Parameters
+    ----------
+    root : str
+        root path of the SmartPath. Gets added as level 'root' in hierarchy.
+    hierarchy : list of str
+        list defining the order of the levels
+    levels : list
+        list of the names of levels in the hierarchy
+    make_dir : bool, optional
+        if set to True, then the full path of
+        the SmartPath is created in the filesystem (default: False).
+
+    Returns
+    -------
+    SmartPath
+
+    '''
+
+    hierarchy = ['root'] + hierarchy
+    levels = [root] + levels
+
+    # defining the levels in the directory
+    xlevels = {}
+    for p in range(len(hierarchy)):
+        xlevels.update({hierarchy[p]: levels[p]})
+
+    return SmartPath(xlevels, hierarchy, make_dir=make_dir)
+
+
 def build_smarttree(root,
                     hierarchy,
                     target_level=None,
-                    register_file_pattern=None):
+                    register_file_pattern=None,
+                    trim_level=None,
+                    trim_pattern=None):
     '''
     Function walking through directories in root path for building a structure
     of SmartPaths. Can also search for files.
@@ -825,6 +860,14 @@ def build_smarttree(root,
         No asterisk is needed ('*')!
         Sequence of strings in given tuple is crucial!
         Be careful: If the tree is large, this can take a while!
+    trim_level : str
+        Name of level in hierarchy that is subject to the trimming
+        e.g. 'grid'
+    trim_pattern : str or list of str
+        string defining search pattern at trimming level, meaning only paths
+        matching this pattern at "trim_level" will be included in the
+        SmartTree()
+        e.g. 'EQUI7_EU500M'
 
     Returns
     -------
@@ -846,11 +889,13 @@ def build_smarttree(root,
         depth += [len(dirpath.split(os.sep)) - root_depth]
         # if set, then files are registered
         # (they are in the memory anyway at this moment)
-        if register_file_pattern is not None:
-            files, count = regex_file_search(dirpath, register_file_pattern,
-                                             full_paths=True)
-            smart_tree.file_register += files
-            smart_tree.file_count += count
+        if trim_level is None:
+            if register_file_pattern is not None:
+                files, count = regex_file_search(dirpath,
+                                                 register_file_pattern,
+                                                 full_paths=True)
+                smart_tree.file_register += files
+                smart_tree.file_count += count
     alldirs = np.array(alldirs)
 
     # only select paths reaching given target level
@@ -893,10 +938,11 @@ def build_smarttree(root,
         smart_tree.add_smartpath(smart_path)
 
         # to register only files down to target level
-        if register_file_pattern is not None and target_level is not None:
-            smart_path.build_file_register(level=target_level,
-                                           pattern=register_file_pattern)
-            file_register += smart_path.file_register
+        if trim_level is None:
+            if register_file_pattern is not None and target_level is not None:
+                smart_path.build_file_register(level=target_level,
+                                               pattern=register_file_pattern)
+                file_register += smart_path.file_register
 
         smart_path = None
         levels = None
@@ -905,9 +951,14 @@ def build_smarttree(root,
     smart_tree.count_dirs()
 
     # register only files in paths down to target level
-    if register_file_pattern is not None and target_level is not None:
-        smart_tree.file_register = list(set(file_register))
-        smart_tree.file_count = len(smart_tree.file_register)
+    if trim_level is None:
+        if register_file_pattern is not None and target_level is not None:
+            smart_tree.file_register = list(set(file_register))
+            smart_tree.file_count = len(smart_tree.file_register)
+
+    if trim_level is not None and trim_pattern is not None:
+        smart_tree = smart_tree.trim2branch(trim_level, pattern=trim_pattern,
+                                            register_file_pattern=register_file_pattern)
 
     return smart_tree
 

@@ -27,6 +27,7 @@ from collections import OrderedDict
 from geopathfinder.folder_naming import SmartPath
 from geopathfinder.file_naming import SmartFilename
 from geopathfinder.folder_naming import build_smarttree
+from geopathfinder.folder_naming import create_smartpath
 
 
 # Please add here new sensors if they follow the SGRT naming convention.
@@ -171,20 +172,21 @@ def sgrt_path(root, mode=None, group=None, datalog=None,
 
 
     # defining the folder levels
-    levels = {'root': root, 'mode': mode, 'group': group,
-              'datalog': datalog, 'product': product, 'wflow': wflow,
-              'grid': grid, 'tile': tile, 'var': var, 'qlook': 'qlooks'}
+    levels = [mode, group,
+              datalog, product, wflow, grid,
+              tile,  var, 'qlooks']
 
     # defining the hierarchy
-    hierarchy = ['root', 'mode', 'group',
+    hierarchy = ['mode', 'group',
                  'datalog', 'product', 'wflow', 'grid',
                  'tile', 'var', 'qlook']
 
     if qlook is False:
-        levels.pop('qlook')
+        levels.remove('qlooks')
         hierarchy.remove('qlook')
 
-    return SmartPath(levels, hierarchy, make_dir=make_dir)
+    return create_smartpath(root, hierarchy=hierarchy, levels=levels,
+                     make_dir=make_dir)
 
 
 def sgrt_tree(root, target_level=None, register_file_pattern=None):

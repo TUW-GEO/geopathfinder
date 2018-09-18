@@ -324,7 +324,7 @@ class TestSmartTree(unittest.TestCase):
 
         """
 
-        branch1 = self.stt_1.trim2branch('wflow', 'C1003')
+        branch1 = self.stt_1.trim2branch('wflow', 'C1003', register_file_pattern='.')
         self.assertEqual(branch1.collect_level_topnames('root'), ['C1003'])
 
         self.assertEqual(branch1.dir_count, 4)
