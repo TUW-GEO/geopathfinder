@@ -46,18 +46,23 @@ class SmartFilename():
         self.pad = pad
         self._check_def()
 
+
     def _check_def(self):
         """
         Check if fields names and length comply with definition.
+
         """
         for key, value in self.fields.items():
             if key in self.fields_def:
-                if len(value) > self.fields_def[key]:
+                if len(value) > self.fields_def[key]['len']:
                     raise ValueError("Length does not comply with "
                                      "definition: {:} > {:}".format(
-                                         len(value), self.fields_def[key]))
+                                         len(value), self.fields_def[key]['len']))
+                if 'delim' not in self.fields_def[key].keys():
+                    self.fields_def[key]['delim'] = True
             else:
                 raise KeyError("Field name undefined: {:}".format(key))
+
 
     def _build_fn(self):
         """
@@ -67,39 +72,70 @@ class SmartFilename():
         -------
         filename : str
             Filled file name.
+
         """
         filename = ''
-        for name, length in self.fields_def.items():
+        for name, keys in self.fields_def.items():
+
+            length = keys['len']
+            delimiter = self.delimiter if keys['delim'] else ''
+
             if name in self.fields:
                 if filename == '':
                     filename = self.fields[name].ljust(length, self.pad)
                 else:
-                    filename += self.delimiter + \
+                    filename += delimiter + \
                         self.fields[name].ljust(length, self.pad)
             else:
                 if filename == '':
                     filename = self.pad * length
                 else:
-                    filename += self.delimiter + self.pad * length
+                    filename += delimiter + self.pad * length
 
         if self.ext is not None:
             filename += self.ext
 
         return filename
 
+
+    def get_field(self, key):
+        '''
+        Returns the string of the field with given key.
+
+        Parameters
+        ----------
+        key : str
+            name of the field
+
+        Returns
+        -------
+        str
+            part of the filename associated with given key
+
+        '''
+        field = self.fields[key]
+
+        return field.replace(self.pad, '')
+
+
     def __getitem__(self, key):
-        return self.fields[key]
+
+        return self.get_field(key)
+
 
     def __setitem__(self, key, value):
+
         if key in self.fields_def:
-            if len(value) > self.fields_def[key]:
+            if len(value) > self.fields_def[key]['len']:
                 raise ValueError("Length does not comply with "
                                  "definition: {:} > {:}".format(
-                                     len(value), self.fields_def[key]))
+                                     len(value), self.fields_def[key]['len']))
             else:
                 self.fields[key] = value
         else:
             raise KeyError("Field name undefined: {:}".format(key))
 
+
     def __repr__(self):
+
         return self._build_fn()

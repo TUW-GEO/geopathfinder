@@ -24,6 +24,7 @@ import logging
 from geopathfinder.sgrt_naming import SgrtFilename
 from geopathfinder.sgrt_naming import sgrt_tree
 from geopathfinder.sgrt_naming import sgrt_path
+from geopathfinder.sgrt_naming import create_sgrt_filename
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,38 +33,106 @@ class TestSgrtFilename(unittest.TestCase):
 
 
     def setUp(self):
-        self.start_time = datetime(2008, 1, 1, 12, 23, 33)
-        self.end_time = datetime(2008, 1, 1, 13, 23, 33)
+        self.dtime_1 = datetime(2008, 1, 1, 12, 23, 33)
+        self.dtime_2 = datetime(2009, 2, 2, 22, 1, 1)
 
-        fields = {'start_time': self.start_time, 'end_time': self.end_time,
+        fields = {'dtime_1': self.dtime_1, 'dtime_2': self.dtime_2,
                   'var_name': 'SSM'}
 
         self.sgrt_fn = SgrtFilename(fields)
 
+        fields = {'dtime_1': self.dtime_1,
+                  'var_name': 'SSM'}
 
-    def test_build_sgrt_filename(self):
+        self.sgrt_fn2 = SgrtFilename(fields)
+
+
+    def test1_build_sgrt_filename(self):
         """
         Test building SGRT file name.
+
         """
 
-        fn = ('-_20080101_122333_20080101_132333_SSM------_---_--_---_-_-_--_'
-              '----_----_-----_---.tif')
+        fn = ('-20080101_20090202_SSM------_-------------_---_-----_------_----------.tif')
 
         self.assertEqual(self.sgrt_fn.__repr__(), fn)
 
 
-    def test_set_and_get_datetime(self):
+    def test2_set_and_get_date(self):
         """
-        Test set and get start and end time.
+        Test set and get start and end date.
+
         """
 
-        self.assertEqual(self.sgrt_fn['start_time'], self.start_time)
-        self.assertEqual(self.sgrt_fn['end_time'], self.end_time)
+        self.assertEqual(self.sgrt_fn['dtime_1'].date(), self.dtime_1.date())
+        self.assertEqual(self.sgrt_fn['dtime_2'].date(), self.dtime_2.date())
 
         new_start_time = datetime(2009, 1, 1, 12, 23, 33)
-        self.sgrt_fn['start_time'] = new_start_time
+        self.sgrt_fn['dtime_1'] = new_start_time
 
-        self.assertEqual(self.sgrt_fn['start_time'], new_start_time)
+        self.assertEqual(self.sgrt_fn['dtime_1'].date(), new_start_time.date())
+
+
+    def test3_set_and_get_date_n_time(self):
+        """
+        Test set and get date and time for a single datetime.
+
+        """
+
+        self.assertEqual(self.sgrt_fn2['dtime_1'].date(), self.dtime_1.date())
+        self.assertEqual(self.sgrt_fn2['dtime_2'].time(), self.dtime_1.time())
+
+        new_start_time = datetime(2009, 1, 1, 12, 23, 33)
+        self.sgrt_fn2['dtime_1'] = new_start_time
+        self.sgrt_fn2['dtime_2'] = new_start_time
+
+        self.assertEqual(self.sgrt_fn2['dtime_1'].date(), new_start_time.date())
+        self.assertEqual(self.sgrt_fn2['dtime_2'].time(), new_start_time.time())
+
+
+    def test4_create_sgrt_filename(self):
+        """
+        Tests the creation of a SmartFilename from a given string filename.
+
+        """
+
+        # testing for single datetime
+        fn = 'M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif'
+        should = create_sgrt_filename(fn)
+
+        self.assertEqual(should.get_field('pflag'), 'M')
+        self.assertEqual(should.get_field('dtime_1'), '20170725')
+        self.assertEqual(should.get_field('dtime_2'), '165004')
+        self.assertEqual(should.get_field('var_name'), 'SIG0')
+        self.assertEqual(should.get_field('mission_id'), 'S1')
+        self.assertEqual(should.get_field('spacecraft_id'), 'B')
+        self.assertEqual(should.get_field('mode_id'), 'IW')
+        self.assertEqual(should.get_field('product_type'), 'GRD')
+        self.assertEqual(should.get_field('res_class'), 'H')
+        self.assertEqual(should.get_field('level'), '1')
+        self.assertEqual(should.get_field('pol'), 'VV')
+        self.assertEqual(should.get_field('orbit_direction'), 'A')
+        self.assertEqual(should.get_field('relative_orbit'), '146')
+        self.assertEqual(should.get_field('workflow_id'), 'A0104')
+        self.assertEqual(should.get_field('grid_name'), 'EU500M')
+        self.assertEqual(should.get_field('tile_name'), 'E048N012T6')
+        self.assertEqual(should.ext, '.tif'
+                                     '')
+
+        # testing for empty fields and two dates
+        fn = 'M20170725_20181225_TMENSIG40_ASAWS---M1--D_146_A0104_EU500M_E048N012T6.tif'
+        should = create_sgrt_filename(fn)
+
+        self.assertEqual(should.get_field('dtime_1'), '20170725')
+        self.assertEqual(should.get_field('dtime_2'), '20181225')
+        self.assertEqual(should.get_field('var_name'), 'TMENSIG40')
+        self.assertEqual(should.get_field('mission_id'), 'AS')
+        self.assertEqual(should.get_field('spacecraft_id'), 'A')
+        self.assertEqual(should.get_field('mode_id'), 'WS')
+        self.assertEqual(should.get_field('product_type'), '')
+        self.assertEqual(should.get_field('res_class'), 'M')
+        self.assertEqual(should.get_field('level'), '1')
+        self.assertEqual(should.get_field('pol'), '')
 
 
 class TestSgrtPath(unittest.TestCase):

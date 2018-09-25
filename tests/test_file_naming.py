@@ -23,13 +23,14 @@ from geopathfinder.file_naming import SmartFilename
 class TestSmartFilename(unittest.TestCase):
 
     def setUp(self):
-        self.fields_def = OrderedDict([('pflag', 1), ('start_time', 14)])
+        self.fields_def = OrderedDict([('pflag', {'len': 1, 'delim': True}),
+                                       ('dtime_1', {'len': 14})])
 
     def test_build_filename_wihout_ext(self):
         """
         Test building file naming without extension.
         """
-        fields = {'pflag': 'M', 'start_time': '20180101120000'}
+        fields = {'pflag': 'M', 'dtime_1': '20180101120000'}
         smrtf = SmartFilename(fields, self.fields_def)
 
         self.assertEqual(smrtf.__repr__(), 'M_20180101120000')
@@ -38,7 +39,7 @@ class TestSmartFilename(unittest.TestCase):
         """
         Test building file naming with extension.
         """
-        fields = {'pflag': 'M', 'start_time': '20180101120000'}
+        fields = {'pflag': 'M', 'dtime_1': '20180101120000'}
         smrtf = SmartFilename(fields, self.fields_def, ext='.tif')
 
         self.assertEqual(smrtf.__repr__(), 'M_20180101120000.tif')
@@ -65,7 +66,7 @@ class TestSmartFilename(unittest.TestCase):
         """
         Test setting field which is non-existing in definition.
         """
-        fields = {'pflag': 'M', 'start_time': '20180101120000'}
+        fields = {'pflag': 'M', 'dtime_1': '20180101120000'}
         smrtf = SmartFilename(fields, self.fields_def, ext='.tif')
 
         with self.assertRaises(KeyError):
@@ -75,7 +76,7 @@ class TestSmartFilename(unittest.TestCase):
         """
         Test setting field with wrong length.
         """
-        fields = {'pflag': 'M', 'start_time': '20180101120000'}
+        fields = {'pflag': 'M', 'dtime_1': '20180101120000'}
         smrtf = SmartFilename(fields, self.fields_def, ext='.tif')
 
         with self.assertRaises(ValueError):
@@ -85,17 +86,17 @@ class TestSmartFilename(unittest.TestCase):
         """
         Test set and get file name fields.
         """
-        fields = {'pflag': 'M', 'start_time': '20180101120000'}
+        fields = {'pflag': 'M', 'dtime_1': '20180101120000'}
         smrtf = SmartFilename(fields, self.fields_def, ext='.tif')
 
         self.assertEqual(smrtf['pflag'], 'M')
-        self.assertEqual(smrtf['start_time'], '20180101120000')
+        self.assertEqual(smrtf['dtime_1'], '20180101120000')
 
         smrtf['pflag'] = 'D'
-        smrtf['start_time'] = '20180101130000'
+        smrtf['dtime_1'] = '20180101130000'
 
         self.assertEqual(smrtf['pflag'], 'D')
-        self.assertEqual(smrtf['start_time'], '20180101130000')
+        self.assertEqual(smrtf['dtime_1'], '20180101130000')
 
 
 if __name__ == '__main__':

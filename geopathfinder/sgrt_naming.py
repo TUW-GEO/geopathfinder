@@ -45,20 +45,55 @@ class SgrtFilename(SmartFilename):
 
     def __init__(self, fields):
 
-        self.date_format = "%Y%m%d_%H%M%S"
+        self.date_format = "%Y%m%d"
+        self.time_format = "%H%M%S"
 
-        fields_def = OrderedDict(
-            [('pflag', 1), ('start_time', 15), ('end_time', 15),
-             ('var_name', 9), ('sensor_id', 3), ('mode_id', 2),
-             ('product_type', 3), ('res_class', 1), ('level', 1),
-             ('pol', 2), ('direction', 4), ('relative_orbit', 4),
-             ('workflow_id', 5), ('ftile_name', 3)])
+        if 'dtime_2' not in fields.keys():
+            self.single_date = True
+            apply_dtime_2 = False
+        else:
+            self.single_date = False
+            apply_dtime_2 = True
+            if fields['dtime_2'].year < 1950:
+                self.single_date = True
 
-        for v in ['start_time', 'end_time']:
-            if v in fields:
-                fields[v] = fields[v].strftime(self.date_format)
 
-        super(SgrtFilename, self).__init__(fields, fields_def, ext='.tif')
+
+        fields_def = OrderedDict([
+                     ('pflag', {'len': 1, 'delim': False}),
+                     ('dtime_1', {'len': 8, 'delim': False}),
+                     ('dtime_2', {'len': 8, 'delim': True}),
+                     ('var_name', {'len': 9, 'delim': True}),
+                     ('mission_id', {'len': 2, 'delim': True}),
+                     ('spacecraft_id', {'len': 1, 'delim': False}),
+                     ('mode_id', {'len': 2, 'delim': False}),
+                     ('product_type', {'len': 3, 'delim': False}),
+                     ('res_class', {'len': 1, 'delim': False}),
+                     ('level', {'len': 1, 'delim': False}),
+                     ('pol', {'len': 2, 'delim': False}),
+                     ('orbit_direction', {'len': 1, 'delim': False}),
+                     ('relative_orbit', {'len': 3, 'delim': True}),
+                     ('workflow_id', {'len': 5, 'delim': True}),
+                     ('grid_name', {'len': 6, 'delim': True}),
+                     ('tile_name', {'len': 10, 'delim': True})
+                    ])
+
+        if 'dtime_1' in fields.keys():
+            if self.single_date:
+                date = fields['dtime_1'].strftime(self.date_format)
+                if apply_dtime_2:
+                    time = fields['dtime_2'].strftime(self.time_format)
+                else:
+                    time = fields['dtime_1'].strftime(self.time_format)
+                fields['dtime_1'] = date
+                fields['dtime_2'] = time
+            else:
+                fields['dtime_1'] = \
+                    fields['dtime_1'].strftime(self.date_format)
+                fields['dtime_2'] = \
+                    fields['dtime_2'].strftime(self.date_format)
+
+        super(SgrtFilename, self).__init__(fields, fields_def, pad='-', ext='.tif')
 
     def __getitem__(self, key):
         """
@@ -76,8 +111,13 @@ class SgrtFilename(SmartFilename):
         """
         item = super(SgrtFilename, self).__getitem__(key)
 
-        if key in ['start_time', 'end_time']:
+        if key == 'dtime_1':
             item = datetime.strptime(item, self.date_format)
+        if key == 'dtime_2':
+            if self.single_date:
+                item = datetime.strptime(item, self.time_format)
+            else:
+                item = datetime.strptime(item, self.date_format)
 
         return item
 
@@ -91,11 +131,69 @@ class SgrtFilename(SmartFilename):
             Field name.
         value : str or datetime
             Field value.
+
         """
-        if key in ['start_time', 'end_time'] and isinstance(value, datetime):
+        if key == 'dtime_1' and isinstance(value, datetime):
             value = value.strftime(self.date_format)
+        if key == 'dtime_2' and isinstance(value, datetime):
+            if self.single_date:
+                value = value.strftime(self.time_format)
+            else:
+                value = value.strftime(self.date_format)
 
         super(SgrtFilename, self).__setitem__(key, value)
+
+
+def create_sgrt_filename(filename_string):
+    """
+    Creates a SgrtFilename() object from a given string filename
+
+    Parameters
+    ----------
+    filename_string : str
+        filename following the SGRT filename convention.
+        e.g. 'M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif'
+
+    Returns
+    -------
+    SgrtFilename
+
+    """
+
+    helper = SgrtFilename({})
+    filename_string = filename_string.replace(helper.ext, '')
+    parts = filename_string.split(helper.delimiter)
+
+    if not [len(x) for x in parts] == [9, 8, 9, 13, 3, 5, 6, 10]:
+        raise ValueError('Given filename_string "{}" does not comply with '
+                         'SGRT naming convention!')
+
+    dtime_2_format = "%Y%m%d"
+    if parts[1].endswith('--'):
+        dtime_2_format = "%H%M%S--"
+
+    fields = {
+              'pflag': parts[0][0],
+              'dtime_1': datetime.strptime(parts[0][1:], "%Y%m%d"),
+              'dtime_2': datetime.strptime(parts[1], dtime_2_format),
+              'var_name': parts[2],
+              'mission_id': parts[3][0:2],
+              'spacecraft_id': parts[3][2:3],
+              'mode_id': parts[3][3:5],
+              'product_type': parts[3][5:8],
+              'res_class': parts[3][8:9],
+              'level': parts[3][9:10],
+              'pol': parts[3][10:12],
+              'orbit_direction': parts[3][12:13],
+              'relative_orbit': parts[4],
+              'workflow_id': parts[5],
+              'grid_name': parts[6],
+              'tile_name': parts[7]
+             }
+
+    return SgrtFilename(fields)
+
+
 
 
 
