@@ -15,7 +15,13 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-class SmartFilename():
+class FilenameObj(object):
+    def __init__(self, attributes):
+        for key, value in attributes.items():
+            setattr(self, key, value)
+
+
+class SmartFilename(object):
 
     """
     SmartFilename class handles file names with pre-defined field names
@@ -45,6 +51,7 @@ class SmartFilename():
         self.delimiter = delimiter
         self.pad = pad
         self._check_def()
+        self.obj = FilenameObj(self.fields)
 
 
     def _check_def(self):
@@ -114,14 +121,16 @@ class SmartFilename():
 
         '''
         field = self.fields[key]
+        field_obj = getattr(self.obj, key)
+        if (field_obj != field) and (len(field_obj) <= self.fields_def[key]['len']):
+            field = field_obj
+            self[key] = field
 
         return field.replace(self.pad, '')
-
 
     def __getitem__(self, key):
 
         return self.get_field(key)
-
 
     def __setitem__(self, key, value):
 
@@ -132,9 +141,9 @@ class SmartFilename():
                                      len(value), self.fields_def[key]['len']))
             else:
                 self.fields[key] = value
+                setattr(self.obj, key, value)
         else:
             raise KeyError("Field name undefined: {:}".format(key))
-
 
     def __repr__(self):
 
