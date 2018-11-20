@@ -141,7 +141,7 @@ class SmartFilename(object):
                                      len(value), self.fields_def[key]['len']))
             else:
                 self.fields[key] = value
-                setattr(self.obj, key, value)
+                setattr(self.obj, key, value.replace(self.pad, ''))
         else:
             raise KeyError("Field name undefined: {:}".format(key))
 
