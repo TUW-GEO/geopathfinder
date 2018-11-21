@@ -115,7 +115,7 @@ class SgrtFilename(SmartFilename):
             item = datetime.strptime(item, self.date_format)
         if key == 'dtime_2':
             if self.single_date:
-                item = datetime.strptime(item, self.time_format)
+                item = datetime.time(datetime.strptime(item, self.time_format))
             else:
                 item = datetime.strptime(item, self.date_format)
 
