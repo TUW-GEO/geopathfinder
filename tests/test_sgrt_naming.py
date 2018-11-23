@@ -135,6 +135,36 @@ class TestSgrtFilename(unittest.TestCase):
         self.assertEqual(should.get_field('pol'), '')
 
 
+    def test5_build_ascat_ssm_fname(self):
+        """
+        Tests the creation of a resampled ASCAT SSM filename.
+
+        """
+        date_time = '20331122_112233'
+        tilename = 'EU500M_E012N024T6'
+
+        xfields = {'pflag': 'D',
+                   'dtime_1': datetime.strptime(date_time[:8], "%Y%m%d"),
+                   'dtime_2': datetime.strptime(date_time[-6:], "%H%M%S"),
+                   'var_name': 'SSM',
+                   'mission_id': 'AS',
+                   'spacecraft_id': 'C',
+                   'mode_id': 'SM',
+                   'product_type': 'O12',
+                   'res_class': 'N',
+                   'level': 'A',
+                   'pol': 'XX',
+                   'orbit_direction': 'D',
+                   'relative_orbit': '---',
+                   'workflow_id': 'C0102',
+                   'grid_name': tilename[:6],
+                   'tile_name': tilename[7:]}
+
+        should = 'D20331122_112233--_SSM------_ASCSMO12NAXXD_---_C0102_EU500M_E012N024T6.tif'
+        fn = SgrtFilename(xfields)
+        self.assertEqual(fn.full_string, should)
+
+
 class TestSgrtPath(unittest.TestCase):
     """
     Tests checking if a SGRT path is correctly reflected by sgrt_tree.

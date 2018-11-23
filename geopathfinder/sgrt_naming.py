@@ -47,17 +47,17 @@ class SgrtFilename(SmartFilename):
 
         self.date_format = "%Y%m%d"
         self.time_format = "%H%M%S"
+        self.fields = fields.copy()
 
-        if 'dtime_2' not in fields.keys():
+        if 'dtime_2' not in self.fields.keys():
             self.single_date = True
             apply_dtime_2 = False
         else:
             self.single_date = False
             apply_dtime_2 = True
-            if fields['dtime_2'].year < 1950:
+            # if only daytime and no date is given
+            if self.fields['dtime_2'].year < 1950:
                 self.single_date = True
-
-
 
         fields_def = OrderedDict([
                      ('pflag', {'len': 1, 'delim': False}),
@@ -78,22 +78,21 @@ class SgrtFilename(SmartFilename):
                      ('tile_name', {'len': 10, 'delim': True})
                     ])
 
-        if 'dtime_1' in fields.keys():
+        if 'dtime_1' in self.fields.keys():
             if self.single_date:
-                date = fields['dtime_1'].strftime(self.date_format)
+                date = self.fields['dtime_1'].strftime(self.date_format)
                 if apply_dtime_2:
-                    time = fields['dtime_2'].strftime(self.time_format)
+                    time = self.fields['dtime_2'].strftime(self.time_format)
                 else:
-                    time = fields['dtime_1'].strftime(self.time_format)
-                fields['dtime_1'] = date
-                fields['dtime_2'] = time
+                    time = self.fields['dtime_1'].strftime(self.time_format)
+                self.fields['dtime_1'] = date
+                self.fields['dtime_2'] = time
             else:
-                fields['dtime_1'] = \
-                    fields['dtime_1'].strftime(self.date_format)
-                fields['dtime_2'] = \
-                    fields['dtime_2'].strftime(self.date_format)
+                self.fields['dtime_1'] = self.fields['dtime_1'].strftime(self.date_format)
+                self.fields['dtime_2'] = self.fields['dtime_2'].strftime(self.date_format)
 
-        super(SgrtFilename, self).__init__(fields, fields_def, pad='-', ext='.tif')
+        super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext='.tif')
+
 
     def __getitem__(self, key):
         """

@@ -15,7 +15,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-class SmartFilename():
+class SmartFilename(object):
 
     """
     SmartFilename class handles file names with pre-defined field names
@@ -45,6 +45,7 @@ class SmartFilename():
         self.delimiter = delimiter
         self.pad = pad
         self._check_def()
+        self.full_string = self._build_fn()
 
 
     def _check_def(self):
