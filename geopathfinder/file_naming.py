@@ -129,9 +129,11 @@ class SmartFilename(object):
 
         return field.replace(self.pad, '')
 
+
     def __getitem__(self, key):
 
         return self.get_field(key)
+
 
     def __setitem__(self, key, value):
 
@@ -145,6 +147,7 @@ class SmartFilename(object):
                 setattr(self.obj, key, value.replace(self.pad, ''))
         else:
             raise KeyError("Field name undefined: {:}".format(key))
+
 
     def __repr__(self):
 

@@ -120,6 +120,7 @@ class SgrtFilename(SmartFilename):
 
         return item
 
+
     def __setitem__(self, key, value):
         """
         Set field content.
@@ -191,9 +192,6 @@ def create_sgrt_filename(filename_string):
              }
 
     return SgrtFilename(fields)
-
-
-
 
 
 def sgrt_path(root, mode=None, group=None, datalog=None,

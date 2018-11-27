@@ -52,18 +52,16 @@ class TestSgrtFilename(unittest.TestCase):
         Test building SGRT file name.
 
         """
-
         fn = ('-20080101_20090202_SSM------_-------------_---_-----_------_----------.tif')
 
         self.assertEqual(self.sgrt_fn.__repr__(), fn)
 
 
-    def test2_set_and_get_date(self):
+    def test2_get_n_set_date(self):
         """
         Test set and get start and end date.
 
         """
-
         self.assertEqual(self.sgrt_fn['dtime_1'].date(), self.dtime_1.date())
         self.assertEqual(self.sgrt_fn['dtime_2'].date(), self.dtime_2.date())
 
@@ -73,21 +71,37 @@ class TestSgrtFilename(unittest.TestCase):
         self.assertEqual(self.sgrt_fn['dtime_1'].date(), new_start_time.date())
 
 
-    def test3_set_and_get_date_n_time(self):
+    def test30_get_n_set_date_n_time(self):
         """
         Test set and get date and time for a single datetime.
 
         """
-
         self.assertEqual(self.sgrt_fn2['dtime_1'].date(), self.dtime_1.date())
-        self.assertEqual(self.sgrt_fn2['dtime_2'].time(), self.dtime_1.time())
+        self.assertEqual(self.sgrt_fn2['dtime_2'], self.dtime_1.time())
 
         new_start_time = datetime(2009, 1, 1, 12, 23, 33)
         self.sgrt_fn2['dtime_1'] = new_start_time
         self.sgrt_fn2['dtime_2'] = new_start_time
 
         self.assertEqual(self.sgrt_fn2['dtime_1'].date(), new_start_time.date())
-        self.assertEqual(self.sgrt_fn2['dtime_2'].time(), new_start_time.time())
+        self.assertEqual(self.sgrt_fn2['dtime_2'], new_start_time.time())
+
+
+    def test31_get_n_set_date_n_time_strings(self):
+        """
+        Test get and set date and time for a single datetime,
+        returning strings.
+
+        """
+        self.assertEqual(self.sgrt_fn2.obj.dtime_1, '20080101')
+        self.assertEqual(self.sgrt_fn2.obj.dtime_2, '122333')
+
+        new_start_time = datetime(2345, 1, 2, 7, 8, 9)
+        self.sgrt_fn2['dtime_1'] = new_start_time
+        self.sgrt_fn2['dtime_2'] = new_start_time
+
+        self.assertEqual(self.sgrt_fn2.obj.dtime_1, '23450102')
+        self.assertEqual(self.sgrt_fn2.obj.dtime_2, '070809')
 
 
     def test4_create_sgrt_filename(self):

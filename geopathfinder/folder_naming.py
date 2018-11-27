@@ -19,7 +19,6 @@ Module handling folder trees.
 """
 
 import os
-import regex as re
 import glob
 import copy
 import shutil
@@ -27,6 +26,7 @@ import warnings
 
 from datetime import datetime
 
+import regex as re
 import numpy as np
 import pandas as pd
 
