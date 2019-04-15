@@ -520,6 +520,45 @@ class SmartTree(object):
         return sorted(list(self.dirs.keys()))
 
 
+    def get_disk_usage(self, unit=None):
+        '''
+        Computes the disk usage for each SmartPath and creates a Pandas DataFrame.
+        :param unit: str
+            output unit of disk usage in bytes (e.g., "GB", "TB", ...)
+        :return: DataFrame
+            Pandas DataFrame containing the disk usage per SmartPath and the directory hierarchy as columns
+            (without the root directory path)
+        '''
+
+        scale_factor_dict = {"TB": 1e-12, "GB": 1e-9, "MB": 1e-6, "KB": 1e-3}
+        scale_factor = 1.
+        if unit is not None:
+            try:
+                scale_factor = scale_factor_dict[unit.upper()]
+            except KeyError:
+                raise KeyError('Unit {} unknown.'.format(unit))
+
+        dir_size_table = []
+        for smpt in self.get_all_smartpaths():
+            smpt.build_file_register()
+            sub_dirpaths = []
+            for i in range(1, len(self.hierarchy)):
+                dir_elem = smpt.get_level(self.hierarchy[i]).replace(smpt.get_level(self.hierarchy[i - 1]),
+                                                                     '').strip(os.sep)
+                if dir_elem == '':
+                    dir_elem = None
+                sub_dirpaths.append(dir_elem)
+            # compute size of directory
+            nbytes = sum([os.path.getsize(filepath) for filepath in smpt.file_register])
+            dir_size = nbytes * float(scale_factor)
+            sub_dirpaths.append(dir_size)
+            dir_size_table.append(sub_dirpaths)
+
+        df = pd.DataFrame(data=dir_size_table, columns=self.hierarchy[1:] + ['du'])
+
+        return df
+
+
     def count_dirs(self):
         '''
         Sets the dir_count the SmartTree
