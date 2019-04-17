@@ -201,10 +201,19 @@ class TestSmartPath(unittest.TestCase):
         Testing the file register.
 
         '''
-
         self.sp_obj_perm.build_file_register(level='var')
 
         self.assertEqual(self.sp_obj_perm.file_count, 5)
+
+
+    def test_get_disk_usage(self):
+        '''
+        Testing the disk usage function.
+
+        '''
+        du = self.sp_obj_perm.get_disk_usage('MB')
+
+        self.assertAlmostEqual(du, 1.09, places=2)
 
 
 class TestSmartTree(unittest.TestCase):
@@ -369,6 +378,25 @@ class TestSmartTree(unittest.TestCase):
         self.assertEqual(file_count, 4)
 
 
+    def test_get_disk_usage(self):
+        """
+        Tests if the disk usage functions works properly.
+
+        """
+        # test result from group_by
+        result = self.stt_1.get_disk_usage(unit='KB', group_by=['var'])
+        self.assertAlmostEqual(result.loc['ssm']['du'], 158.88, places=2)
+
+        # test result for total disk usage
+        result = self.stt_1.get_disk_usage(unit='MB', total=True)
+        self.assertAlmostEqual(result['du'][0], 0.255, places=2)
+
+        # test complete query result
+        result = self.stt_1.get_disk_usage(unit='KB')
+        self.assertEqual(result.shape, (9, 10))
+        should = ['preprocessed', 'preprocessed', 'preprocessed',
+                  'products', 'products', 'products', 'products', 'products', 'products']
+        self.assertEqual(sorted(result['group'].values), should)
 
 
 if __name__ == "__main__":
