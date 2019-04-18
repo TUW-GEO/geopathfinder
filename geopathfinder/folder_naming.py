@@ -267,7 +267,7 @@ class SmartPath(object):
         return expand_full_path(self[level], files)
 
 
-    def search_files(self, level, pattern='', full_paths=False):
+    def search_files(self, level, pattern=('.'), full_paths=False):
         """
         Searches files meeting the regex pattern at level in the SmartPath
 
@@ -293,7 +293,7 @@ class SmartPath(object):
                                  full_paths=full_paths)[0]
 
 
-    def search_files_ts(self, level, pattern='',
+    def search_files_ts(self, level, pattern=('.'),
                         date_position=1, date_format='%Y%m%d_%H%M%S',
                         starttime=None, endtime=None, full_paths=False):
         """
@@ -345,29 +345,36 @@ class SmartPath(object):
         return df
 
 
-    def build_file_register(self, level=None, pattern='.'):
+    def build_file_register(self, down_to_level=None, up_to_level=None, pattern=('.')):
         """
         Builds a file register collecting files at all levels in the SmartPath.
 
         Parameters
         ----------
-        level : str, optional
+        down_to_level : str, optional
             deepest level that should be included in the file register
+        up_to_level : str, optional
+            highest level that should be included in the file register
         pattern : str tuple, optional
             strings defining search pattern for file search
             e.g. ('C1003', 'E048N012T6')
+
         """
         file_register = []
         file_count = 0
-        if level is None:
-            idx = self.hierarchy
+
+        # limit the hierarchy
+        if up_to_level is not None:
+            idx = self.hierarchy[self.hierarchy.index(up_to_level):]
+        elif down_to_level is not None:
+            idx = self.hierarchy[:self.hierarchy.index(down_to_level) + 1]
         else:
-            idx = self.hierarchy[0:self.hierarchy.index(level) + 1]
+            idx = self.hierarchy
+
+        # search files at each level
         for h in idx:
             if self.levels[h] is not None:
-                r, c = regex_file_search(
-                    self.build_levels(level=h),
-                    pattern, full_paths=True)
+                r, c = regex_file_search(self.build_levels(level=h), pattern, full_paths=True)
                 file_register += r
                 file_count += c
 
@@ -376,7 +383,7 @@ class SmartPath(object):
         self.has_register = True
 
 
-    def get_disk_usage(self, unit=None):
+    def get_disk_usage(self, unit=None, up_to_level=None, down_to_level=None, file_pattern=('.')):
         '''
         Computes the disk usage for each SmartPath and creates a Pandas DataFrame.
 
@@ -384,6 +391,13 @@ class SmartPath(object):
         ----------
         unit : str
             output unit of disk usage in bytes (e.g., "GB", "TB", ...)
+        down_to_level : str, optional
+            deepest level that should be included in the file register
+        up_to_level : str, optional
+            highest level that should be included in the file register
+        file_pattern : str tuple, optional
+            strings defining file pattern that are included in disk usage sums
+            e.g. ('C1003', 'E048N012T6')
 
         Returns
         -------
@@ -399,8 +413,8 @@ class SmartPath(object):
             except KeyError:
                 raise KeyError('Unit {} unknown.'.format(unit))
 
-        if not self.has_register:
-            self.build_file_register()
+        self.build_file_register(down_to_level=down_to_level, up_to_level=up_to_level,
+                                 pattern=file_pattern)
 
         # compute size of directory
         nbytes = sum([os.path.getsize(filepath) for filepath in self.file_register])
@@ -566,7 +580,12 @@ class SmartTree(object):
         return sorted(list(self.dirs.keys()))
 
 
-    def get_disk_usage(self, unit='KB', group_by=[], total=False):
+    def get_disk_usage(self, unit='KB',
+                       group_by=[],
+                       file_pattern=('.'),
+                       down_to_level=None,
+                       up_to_level=None,
+                       total=False):
         '''
         Computes the disk usage for each SmartPath and creates a Pandas DataFrame.
 
@@ -577,6 +596,12 @@ class SmartTree(object):
         group_by : list, optional
             list of levels forming groups, delivering disk usage sums
             e.g. ['tile', 'var']
+        file_pattern : str tuple, optional
+            strings defining file pattern that are included in disk usage sums
+            e.g. ('M2019', 'SSM------')
+        up_to_level : str, optional
+            highest level that should be included in the disk usage sums
+            default is 'var'
         total : bool, optional
             returns the total disk usage for the root
 
@@ -591,8 +616,18 @@ class SmartTree(object):
         dir_size_table = []
         for smpt in self.get_all_smartpaths():
 
-            smpt.build_file_register()
+            # get deepest level
+            if down_to_level is None and up_to_level is None:
+                if 'var' not in smpt.hierarchy:
+                    up_to_level = smpt.hierarchy[-1]
+                else:
+                    up_to_level = 'var'
 
+            # build file register in respect to defined file patten and level
+            smpt.build_file_register(down_to_level=down_to_level, up_to_level=up_to_level,
+                                     pattern=file_pattern)
+
+            # collect hierarchy
             sub_dirpaths = []
             for i in range(1, len(self.hierarchy)):
                 dir_elem = smpt.get_level(self.hierarchy[i]).replace(smpt.get_level(self.hierarchy[i - 1]), '').strip(os.sep)
@@ -600,8 +635,9 @@ class SmartTree(object):
                     dir_elem = None
                 sub_dirpaths.append(dir_elem)
 
-            # compute size of SmartPath
-            dir_size = smpt.get_disk_usage(unit=unit)
+            # compute size of files along SmartPath
+            dir_size = smpt.get_disk_usage(unit=unit, file_pattern=file_pattern,
+                                           down_to_level=down_to_level, up_to_level=up_to_level)
             sub_dirpaths.append(dir_size)
             dir_size_table.append(sub_dirpaths)
 
@@ -1039,7 +1075,7 @@ def build_smarttree(root,
         # to register only files down to target level
         if trim_level is None:
             if register_file_pattern is not None and target_level is not None:
-                smart_path.build_file_register(level=target_level,
+                smart_path.build_file_register(down_to_level=target_level,
                                                pattern=register_file_pattern)
                 file_register += smart_path.file_register
 
