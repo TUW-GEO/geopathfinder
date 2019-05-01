@@ -93,6 +93,35 @@ class SgrtFilename(SmartFilename):
 
         super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext='.tif')
 
+   
+    @property
+    def stime(self):
+        """start time"""
+        return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_1"]
+
+    @property
+    def etime(self):
+        """end time"""
+        return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_2"]
+
+
+    @property
+    def product_id(self):
+        try:
+            product_id = "".join([self["mission_id"], self["spacecraft_id"],self["mode_id"],self["product_type"], self["res_class"]])
+        except:
+            product_id = None
+
+        return product_id
+
+    @property
+    def ftile(self):
+        try:
+            ftile = "_".join([self["grid_name"], self["tile_name"]])
+        except:
+            ftile = None
+        return ftile
+
 
     def __getitem__(self, key):
         """
