@@ -323,7 +323,43 @@ class TestSmartTree(unittest.TestCase):
                   os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1001', 'EQUI7_AF010M'),
                   os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1001', 'EQUI7_EU500M'),
                   os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1003', 'EQUI7_EU500M')]
-        result = sorted(self.stt_1.collect_level('grid', unique=True))
+        result = sorted(self.stt_1.collect_level_string('grid', unique=True))
+        self.assertEqual(should, result)
+
+        # test if unique full dirs deliver correct number of topnames
+        should = ['EQUI7_AF010M',
+                  'EQUI7_EU500M',
+                  'EQUI7_EU500M',
+                  'EQUI7_EU500M']
+        result = sorted(self.stt_1.collect_level_topnames('grid', unique=True))
+        self.assertEqual(should, result)
+
+
+    def test_collect_level_smartpaths(self):
+        """
+        Test the collect level functions
+
+        """
+
+        # unique case for the folder topnames
+        should = ['E006N006T1', 'E006N006T6', 'E006N006T6',
+                  'E006N006T6', 'E006N012T6', 'E048N012T6']
+        result = sorted(self.stt_1.collect_level_topnames('tile', unique=True))
+        self.assertEqual(should, result)
+
+        # non-unique case for the folder topnames
+        should = ['E006N006T1', 'E006N006T6', 'E006N006T6',
+                  'E006N006T6', 'E006N006T6', 'E006N012T6',
+                  'E048N012T6', 'E048N012T6']
+        result = sorted(self.stt_1.collect_level_topnames('tile', unique=False))
+        self.assertEqual(should, result)
+
+        # unique case for full dirs
+        should = [os.path.join(self.test_dir, 'IWGRDH', 'preprocessed', 'datasets', 'resampled', 'A0202', 'EQUI7_EU500M'),
+                  os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1001', 'EQUI7_AF010M'),
+                  os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1001', 'EQUI7_EU500M'),
+                  os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1003', 'EQUI7_EU500M')]
+        result = sorted(self.stt_1.collect_level_smartpath('grid', unique=True))
         self.assertEqual(should, result)
 
         # test if unique full dirs deliver correct number of topnames
@@ -392,37 +428,37 @@ class TestSmartTree(unittest.TestCase):
 
         """
         pass
-        # # test result from group_by
-        # result = self.stt_1.get_disk_usage(unit='KB', group_by=['var'], up_to_level='var')
-        # self.assertAlmostEqual(result.loc['ssm']['du'], 130.28, places=2)
-        #
-        # # test results for total disk usage, limited by levels
-        # # var <--
-        # result1 = self.stt_1.get_disk_usage(unit='MB', total=True, up_to_level='var')
-        # self.assertAlmostEqual(result1['du'][0], 0.227, places=2)
-        # # --> tile
-        # result2 = self.stt_1.get_disk_usage(unit='MB', total=True, down_to_level='tile')
-        # self.assertAlmostEqual(result2['du'][0], 0.029, places=2)
-        # # mode <-- all
-        # result3 = self.stt_1.get_disk_usage(unit='MB', total=True, up_to_level='mode')
-        # self.assertAlmostEqual(result3['du'][0], 0.255, places=2)
-        # # all --> qlook
-        # result4 = self.stt_1.get_disk_usage(unit='MB', total=True, down_to_level='qlook')
-        # self.assertAlmostEqual(result3['du'][0], 0.255, places=2)
-        # # cross-check sums
-        # self.assertAlmostEqual(result1['du'][0] + result2['du'][0], result3['du'][0], places=2)
-        # self.assertAlmostEqual(result3['du'][0], result4['du'][0], places=2)
-        #
-        # # test result for file pattern
-        # result = self.stt_1.get_disk_usage(unit='KB', file_pattern='SIG0', total=True)
-        # self.assertAlmostEqual(result['du'][0], 45.324, places=2)
-        #
-        # # test complete query result
-        # result = self.stt_1.get_disk_usage(unit='KB')
-        # self.assertEqual(result.shape, (9, 10))
-        # should = ['preprocessed', 'preprocessed', 'preprocessed',
-        #           'products', 'products', 'products', 'products', 'products', 'products']
-        # self.assertEqual(sorted(result['group'].values), should)
+        # test result from group_by
+        result = self.stt_1.get_disk_usage(unit='KB', group_by=['var'])
+        self.assertAlmostEqual(result.loc['ssm']['du'], 130.28, places=2)
+
+        # test results for total disk usage, limited by levels
+        # var <--
+        result1 = self.stt_1.get_disk_usage(unit='MB', total=True, up_to_level='var')
+        self.assertAlmostEqual(result1['du'][0], 0.227, places=2)
+        # --> tile
+        result2 = self.stt_1.get_disk_usage(unit='MB', total=True, down_to_level='tile')
+        self.assertAlmostEqual(result2['du'][0], 0.029, places=2)
+        # mode <-- all
+        result3 = self.stt_1.get_disk_usage(unit='MB', total=True, up_to_level='mode')
+        self.assertAlmostEqual(result3['du'][0], 0.255, places=2)
+        # all --> qlook
+        result4 = self.stt_1.get_disk_usage(unit='MB', total=True, down_to_level='qlook')
+        self.assertAlmostEqual(result3['du'][0], 0.255, places=2)
+        # cross-check sums
+        self.assertAlmostEqual(result1['du'][0] + result2['du'][0], result3['du'][0], places=2)
+        self.assertAlmostEqual(result3['du'][0], result4['du'][0], places=2)
+
+        # test result for file pattern
+        result = self.stt_1.get_disk_usage(unit='KB', file_pattern='SIG0', total=True)
+        self.assertAlmostEqual(result['du'][0], 45.324, places=2)
+
+        # test complete query result
+        result = self.stt_1.get_disk_usage(unit='KB')
+        self.assertEqual(result.shape, (9, 10))
+        should = ['preprocessed', 'preprocessed', 'preprocessed',
+                  'products', 'products', 'products', 'products', 'products', 'products']
+        self.assertEqual(sorted(result['group'].values), should)
 
 
 if __name__ == "__main__":

@@ -206,7 +206,7 @@ class SmartPath(object):
             print('Level \'{}\' is not in hierarchy!')
 
 
-    def cutoff_level(self, level, top2bottom=False):
+    def trim2level(self, level, remove='deeper_including'):
         '''
         Removes all levels that are higher or equal to given level.
 
@@ -215,20 +215,26 @@ class SmartPath(object):
         level : str
             String of the level that should be removed, together will all
             higher levels.
+        remove : str
+            what should be removed?
+            e.g. "deeper_including" removes the level itself, and deeper levels.
         '''
+
+        dict = {'deeper_including': '>=',
+                'deeper_excluding': '>',
+                'higher_including': '<=',
+                'higher_excluding': '<'}
+
         if level in self.hierarchy:
 
-            if top2bottom:
-                hierarchy = self.hierarchy[::-1]
-            else:
-                hierarchy = copy.copy(self.hierarchy)
+            hierarchy = copy.copy(self.hierarchy)
+            level_ind = hierarchy.index(level)
+            indxs = np.array(range(len(hierarchy)))
+            cmd = 'np.array(hierarchy)[indxs {} {}].tolist()'.format(dict[remove], level_ind)
+            subset = eval(cmd)
 
-            for h in hierarchy:
-                if h != level:
-                    self.remove_level(h)
-                else:
-                    self.remove_level(h)
-                    break
+            for h in subset:
+                self.remove_level(h)
 
         else:
             print('Level \'{}\' is not in hierarchy!')
@@ -505,11 +511,11 @@ class SmartTree(object):
 
     def print_collect_level(self, level, pattern=None, unique=False):
         '''
-        Nice function to print nicely output from collect_level()
+        Nice function to print nicely output from collect_level_string()
         '''
 
-        print('\n'.join(self.collect_level(level, pattern=pattern,
-                                           unique=unique)))
+        print('\n'.join(self.collect_level_string(level, pattern=pattern,
+                                                  unique=unique)))
 
 
     def print_collect_level_topnames(self, level, pattern=None, unique=True):
@@ -609,14 +615,19 @@ class SmartTree(object):
         # build SmartTree() size table
         dir_size_table = []
         rootless_hierarchy = self.hierarchy[1:]
+
+        self.collect_level_string('wflow', unique=False)
         n = len(rootless_hierarchy)
         for i, level in enumerate(rootless_hierarchy):  # loop over all levels of the hierarchy
+            if level == 'product':
+                a = 0
             smpts = copy.deepcopy(self.get_all_smartpaths())
             trimmed_smpts = []
             trimmed_dirpaths = []
             for smpt in smpts:  # cut each smartpath (except for the last level)
                 if i < (n - 1):
-                    smpt.cutoff_level(rootless_hierarchy[i + 1], top2bottom=True)  # cut the path one level below
+                    smpt.trim2level(rootless_hierarchy[i + 1], root2bottom=True)  # cut the path one level below
+                print(smpt.levels)
                 trimmed_smpts.append(smpt)
                 trimmed_dirpaths.append(smpt.get_dir())
 
@@ -625,8 +636,9 @@ class SmartTree(object):
             trimmed_smpts = np.array(trimmed_smpts)[uni_idx].tolist()
 
             for smpt in trimmed_smpts:  # loop over trimmed paths
+                smpt.print_dir()
                 dir_elems = []
-                for j in range(1, i+2):  # split directory path for each level
+                for j in range(1, i + 2):  # split directory path for each level
                     sub_dirpath = smpt.get_level(self.hierarchy[j])
                     prev_sub_dirpath = smpt.get_level(self.hierarchy[j - 1])
                     dir_elem = sub_dirpath.replace(prev_sub_dirpath, '').strip(os.sep)
@@ -635,7 +647,7 @@ class SmartTree(object):
                     dir_elems.append(dir_elem)
 
                 remaining_levels = n - (i + 2) + 1
-                dir_elems += [None]*remaining_levels  # fill up levels below with None
+                dir_elems += [None] * remaining_levels  # fill up levels below with None
                 filepaths = smpt.search_files(level, pattern=file_pattern, full_paths=True)
                 nbytes = sum([os.path.getsize(filepath) for filepath in filepaths])  # get the disk usage of all files at the current level
                 disk_usage = transform_bytes(nbytes, unit=unit)
@@ -700,9 +712,10 @@ class SmartTree(object):
             return self.dirs[matching_paths[0]]
 
 
-    def collect_level(self, level, pattern=None, unique=False):
+    def collect_level_string(self, level, pattern=None, unique=False):
         '''
-        Returns a list of paths at given level.
+        Returns a list of paths at given level,
+        and matching a given pattern.
 
         Parameters
         ----------
@@ -719,6 +732,33 @@ class SmartTree(object):
             list of paths at given level, matching the given pattern
         '''
 
+        result = self.collect_level_smartpath(level=level, pattern=pattern, unique=unique)
+
+        strings = [x.get_dir() for x in result]
+
+        return strings
+
+
+    def collect_level_smartpath(self, level, pattern=None, unique=False):
+        '''
+        Returns a list of Smartpaths reaching a given level,
+        and matching a given pattern.
+
+        Parameters
+        ----------
+        level : str
+            name of level in hierarchy
+        pattern : str tuple, optional
+            strings defining search pattern for path search
+            e.g. ('C1003', 'E048N012T6')
+        unique : bool, optional
+            if set, a list of unique paths is returned
+        Returns
+        -------
+        list of SmartPaths
+            list of paths at given level, matching the given pattern
+        '''
+
         result = []
 
         for _, smartpath in self.dirs.items():
@@ -728,14 +768,20 @@ class SmartTree(object):
                     rpattern = patterns_2_regex(pattern)
                     regex = re.compile(rpattern)
                     if regex.match(smartpath.levels[level]):
-                        result.append(smartpath[level])
+                        smartpath.trim2level(level, remove='deeper_excluding')
+                        result.append(smartpath)
                 else:
-                    result.append(smartpath[level])
+                    smartpath.trim2level(level, remove='deeper_excluding')
+                    result.append(smartpath)
 
         if unique:
-            result = list(set(result))
+            # remove duplicates after trimming the tree
+            _, uni_idx = np.unique([x.get_dir() for x in result], return_index=True)
+            result = np.array(result)[uni_idx]
 
-        return sorted(result)
+        sort_ind = np.argsort([x.get_dir() for x in result])
+
+        return result[sort_ind].tolist()
 
 
     def collect_level_topnames(self, level, pattern=None, unique=True):
@@ -758,7 +804,7 @@ class SmartTree(object):
             list of folder-topnames at given level, matching the given pattern
         '''
 
-        paths = self.collect_level(level, pattern=pattern, unique=unique)
+        paths = self.collect_level_string(level, pattern=pattern, unique=unique)
 
         topnames = [x.split(os.sep)[-1] for x in paths]
 
@@ -832,7 +878,7 @@ class SmartTree(object):
 
         branch = copy.deepcopy(self)
 
-        branch_path = self.collect_level(level, pattern=pattern, unique=True)
+        branch_path = self.collect_level_string(level, pattern=pattern, unique=True)
 
         if len(branch_path) == 0:
             warnings.warn('trim2branch(): No matches for "pattern" at "level"!')
@@ -919,7 +965,7 @@ class SmartTree(object):
             base_folder = self.collect_level_topnames('root')[0]
         else:
             branch = self.trim2branch(level, level_pattern, register_file_pattern=file_pattern)
-            source_dir = branch.collect_level('root', level_pattern, unique=True)[0]
+            source_dir = branch.collect_level_string('root', level_pattern, unique=True)[0]
             base_folder = branch.collect_level_topnames('root')[0]
 
         target_dir = os.path.join(target_dir, base_folder)
