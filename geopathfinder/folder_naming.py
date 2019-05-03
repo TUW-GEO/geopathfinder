@@ -615,37 +615,14 @@ class SmartTree(object):
         # build SmartTree() size table
         dir_size_table = []
         rootless_hierarchy = self.hierarchy[1:]
-
-        self.collect_level_string('wflow', unique=False)
         n = len(rootless_hierarchy)
+
         for i, level in enumerate(rootless_hierarchy):  # loop over all levels of the hierarchy
-            if level == 'product':
-                a = 0
-            smpts = copy.deepcopy(self.get_all_smartpaths())
-            trimmed_smpts = []
-            trimmed_dirpaths = []
-            for smpt in smpts:  # cut each smartpath (except for the last level)
-                if i < (n - 1):
-                    smpt.trim2level(rootless_hierarchy[i + 1], root2bottom=True)  # cut the path one level below
-                print(smpt.levels)
-                trimmed_smpts.append(smpt)
-                trimmed_dirpaths.append(smpt.get_dir())
-
-            # remove duplicates after trimming the tree
-            _, uni_idx = np.unique(np.array(trimmed_dirpaths), return_index=True)
-            trimmed_smpts = np.array(trimmed_smpts)[uni_idx].tolist()
-
-            for smpt in trimmed_smpts:  # loop over trimmed paths
-                smpt.print_dir()
-                dir_elems = []
-                for j in range(1, i + 2):  # split directory path for each level
-                    sub_dirpath = smpt.get_level(self.hierarchy[j])
-                    prev_sub_dirpath = smpt.get_level(self.hierarchy[j - 1])
-                    dir_elem = sub_dirpath.replace(prev_sub_dirpath, '').strip(os.sep)
-                    if dir_elem == '':
-                        dir_elem = None
-                    dir_elems.append(dir_elem)
-
+            smpts_at_level = self.collect_level_smartpath(level, unique=True)
+            for smpt in smpts_at_level:  # loop over trimmed paths
+                dir_elems = smpt.get_dir().replace(self.root, '').split(os.sep)
+                dir_elems = map(lambda x: x.replace(os.sep, ''), dir_elems)
+                dir_elems = [dir_elem for dir_elem in dir_elems if dir_elem != '']
                 remaining_levels = n - (i + 2) + 1
                 dir_elems += [None] * remaining_levels  # fill up levels below with None
                 filepaths = smpt.search_files(level, pattern=file_pattern, full_paths=True)
@@ -761,9 +738,9 @@ class SmartTree(object):
 
         result = []
 
-        for _, smartpath in self.dirs.items():
+        for _, elem in self.dirs.items():
+            smartpath = copy.deepcopy(elem)
             if smartpath.levels[level] is not None:
-
                 if pattern is not None:
                     rpattern = patterns_2_regex(pattern)
                     regex = re.compile(rpattern)
