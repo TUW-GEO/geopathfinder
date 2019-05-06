@@ -618,18 +618,28 @@ class SmartTree(object):
 
         # build SmartTree() disk usage table
         dir_size_table = []
-        for i, level in enumerate(rootless_hierarchy):  # loop over all levels of the hierarchy
+
+        # loop over all levels of the hierarchy
+        for i, level in enumerate(rootless_hierarchy):
             smpts_at_level = self.collect_level_smartpath(level, unique=True)
-            for smpt in smpts_at_level:  # loop over trimmed paths
+
+            # loop over trimmed paths
+            for smpt in smpts_at_level:
                 dir_elems = smpt.get_dir().replace(self.root, '').split(os.sep)
                 dir_elems = map(lambda x: x.replace(os.sep, ''), dir_elems)
                 dir_elems = [dir_elem for dir_elem in dir_elems if dir_elem != '']
+
+                # fill up levels below with None
                 remaining_levels = n - (i + 2) + 1
-                dir_elems += [None] * remaining_levels  # fill up levels below with None
+                dir_elems += [None] * remaining_levels
+
                 filepaths = smpt.search_files(level, pattern=file_pattern, full_paths=True)
                 filepaths = [filepath for filepath in filepaths if filepath in self.file_register]
-                nbytes = sum([os.path.getsize(filepath) for filepath in filepaths])  # get the disk usage of all files at the current level
+
+                # get the disk usage of all files at the current level
+                nbytes = sum([os.path.getsize(filepath) for filepath in filepaths])
                 disk_usage = transform_bytes(nbytes, unit=unit)
+
                 dir_elems.append(disk_usage)
                 dir_size_table.append(dir_elems)
 

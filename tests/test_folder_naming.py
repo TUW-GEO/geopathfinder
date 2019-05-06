@@ -434,8 +434,8 @@ class TestSmartTree(unittest.TestCase):
         Tests if the disk usage functions works properly.
 
         """
-
-        ssm_rel_filepaths = [("IWGRDH", "products", "datasets", "ssm", "C1001", "EQUI7_AF010M", "E006N006T1", "ssm",
+        ssm_rel_filepaths = [
+        ("IWGRDH", "products", "datasets", "ssm", "C1001", "EQUI7_AF010M", "E006N006T1", "ssm",
          "M20161017_053649--_SSM------_S1BIWGRDH1VVD_066_C1003_AF010M_E006N006T1.tif"),
         ("IWGRDH", "products", "datasets", "ssm", "C1001", "EQUI7_EU500M", "E006N006T6", "ssm",
          "M20160426_053533--_SSM------_S1AIWGRDH1VVD_066_C1001_EU500M_E006N006T6.tif"),
@@ -451,13 +451,14 @@ class TestSmartTree(unittest.TestCase):
          "M20170403_053310--_SSM------_S1BIWGRDH1VVD_066_C1003_EU500M_E048N012T6.tif"),
         ("IWGRDH", "products", "datasets", "ssm", "C1003", "EQUI7_EU500M", "E048N012T6", "ssm", "qlooks",
          "Q20150818_053449--_SSM------_S1AIWGRDH1VVD_066_C1003_EU500M_E048N012T6.tif"),
-         ("IWGRDH", "products", "datasets", "ssm", "C1003", "EQUI7_EU500M", "E048N012T6", "ssm", "qlooks",
-          "Q20170403_053310--_SSM------_S1BIWGRDH1VVD_066_C1003_EU500M_E048N012T6.tif")]
-        sig0_rel_filepaths = [("IWGRDH", "preprocessed", "datasets", "resampled", "A0202", "EQUI7_EU500M", "E006N006T6",
-                               "sig0", "M20160831_163321--_SIG0-----_S1AIWGRDH1VVA_175_A0201_EU500M_E048N006T6.tif"),
-                              ("IWGRDH", "preprocessed", "datasets", "resampled", "A0202", "EQUI7_EU500M", "E006N006T6",
-                               "sig0", "qlooks",
-                               "Q20160831_163321--_SIG0-----_S1AIWGRDH1VVA_175_A0201_EU500M_E006N006T6.tif")]
+        ("IWGRDH", "products", "datasets", "ssm", "C1003", "EQUI7_EU500M", "E048N012T6", "ssm", "qlooks",
+         "Q20170403_053310--_SSM------_S1BIWGRDH1VVD_066_C1003_EU500M_E048N012T6.tif")]
+
+        sig0_rel_filepaths = [
+        ("IWGRDH", "preprocessed", "datasets", "resampled", "A0202", "EQUI7_EU500M", "E006N006T6",
+         "sig0", "M20160831_163321--_SIG0-----_S1AIWGRDH1VVA_175_A0201_EU500M_E048N006T6.tif"),
+        ("IWGRDH", "preprocessed", "datasets", "resampled", "A0202", "EQUI7_EU500M", "E006N006T6",
+         "sig0", "qlooks", "Q20160831_163321--_SIG0-----_S1AIWGRDH1VVA_175_A0201_EU500M_E006N006T6.tif")]
 
         ssm_filepaths = [os.path.join(self.test_dir, *ssm_rel_filepath) for ssm_rel_filepath in ssm_rel_filepaths]
         sig0_filepaths = [os.path.join(self.test_dir, *sig0_rel_filepath) for sig0_rel_filepath in sig0_rel_filepaths]
