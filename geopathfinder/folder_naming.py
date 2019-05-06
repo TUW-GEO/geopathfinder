@@ -612,11 +612,12 @@ class SmartTree(object):
             hierarchy as columns (without the root directory path)
         '''
 
-        # build SmartTree() size table
-        dir_size_table = []
+        # hierarchy settings
         rootless_hierarchy = self.hierarchy[1:]
         n = len(rootless_hierarchy)
 
+        # build SmartTree() disk usage table
+        dir_size_table = []
         for i, level in enumerate(rootless_hierarchy):  # loop over all levels of the hierarchy
             smpts_at_level = self.collect_level_smartpath(level, unique=True)
             for smpt in smpts_at_level:  # loop over trimmed paths
@@ -626,6 +627,7 @@ class SmartTree(object):
                 remaining_levels = n - (i + 2) + 1
                 dir_elems += [None] * remaining_levels  # fill up levels below with None
                 filepaths = smpt.search_files(level, pattern=file_pattern, full_paths=True)
+                filepaths = [filepath for filepath in filepaths if filepath in self.file_register]
                 nbytes = sum([os.path.getsize(filepath) for filepath in filepaths])  # get the disk usage of all files at the current level
                 disk_usage = transform_bytes(nbytes, unit=unit)
                 dir_elems.append(disk_usage)
@@ -751,10 +753,11 @@ class SmartTree(object):
                     smartpath.trim2level(level, remove='deeper_excluding')
                     result.append(smartpath)
 
+        result = np.array(result)
         if unique:
             # remove duplicates after trimming the tree
             _, uni_idx = np.unique([x.get_dir() for x in result], return_index=True)
-            result = np.array(result)[uni_idx]
+            result = result[uni_idx]
 
         sort_ind = np.argsort([x.get_dir() for x in result])
 
@@ -868,7 +871,7 @@ class SmartTree(object):
                 if not branch_path[0] in d:
                     branch.remove_smartpath(d)
                 else:
-                    branch.dirs.get(d).cutoff_level(level)
+                    branch.dirs.get(d).trim2level(level, remove="higher_including")
                     branch.dirs.get(d).base_onto_root(branch_path[0])
 
             # update dir_count

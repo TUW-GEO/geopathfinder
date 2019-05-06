@@ -23,6 +23,7 @@ import shutil
 from geopathfinder.folder_naming import SmartPath
 from geopathfinder.folder_naming import NullSmartPath
 from geopathfinder.sgrt_naming import sgrt_tree
+from geopathfinder.folder_naming import transform_bytes
 
 def cur_path():
     pth, _ = os.path.split(os.path.abspath(__file__))
@@ -101,6 +102,12 @@ def get_test_sp_4_smarttree(sensor=None,
                  'tile', 'var', 'qlook']
 
     return SmartPath(levels, hierarchy, make_dir=make_dir)
+
+
+def disk_usage_filelist(filepaths, unit='KB'):
+    bytes = sum([os.path.getsize(filepath) for filepath in filepaths])
+
+    return transform_bytes(bytes, unit=unit)
 
 
 class TestSmartPath(unittest.TestCase):
@@ -359,7 +366,7 @@ class TestSmartTree(unittest.TestCase):
                   os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1001', 'EQUI7_AF010M'),
                   os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1001', 'EQUI7_EU500M'),
                   os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets', 'ssm', 'C1003', 'EQUI7_EU500M')]
-        result = sorted(self.stt_1.collect_level_smartpath('grid', unique=True))
+        result = sorted(self.stt_1.collect_level_string('grid', unique=True))
         self.assertEqual(should, result)
 
         # test if unique full dirs deliver correct number of topnames
@@ -377,7 +384,7 @@ class TestSmartTree(unittest.TestCase):
 
         """
 
-        branch1 = self.stt_1.trim2branch('wflow', 'C1003', register_file_pattern='.')
+        branch1 = self.stt_1.trim2branch('wflow', 'C1003', register_file_pattern=('.'))
         self.assertEqual(branch1.collect_level_topnames('root'), ['C1003'])
 
         self.assertEqual(branch1.dir_count, 4)
@@ -427,38 +434,51 @@ class TestSmartTree(unittest.TestCase):
         Tests if the disk usage functions works properly.
 
         """
-        pass
+
+        ssm_rel_filepaths = [("IWGRDH", "products", "datasets", "ssm", "C1001", "EQUI7_AF010M", "E006N006T1", "ssm",
+         "M20161017_053649--_SSM------_S1BIWGRDH1VVD_066_C1003_AF010M_E006N006T1.tif"),
+        ("IWGRDH", "products", "datasets", "ssm", "C1001", "EQUI7_EU500M", "E006N006T6", "ssm",
+         "M20160426_053533--_SSM------_S1AIWGRDH1VVD_066_C1001_EU500M_E006N006T6.tif"),
+        ("IWGRDH", "products", "datasets", "ssm", "C1003", "EQUI7_EU500M", "E006N012T6", "ssm",
+         "M20161005_053649--_SSM------_S1BIWGRDH1VVD_066_C1003_EU500M_E006N012T6.tif"),
+        ("IWGRDH", "products", "datasets", "ssm", "C1003", "EQUI7_EU500M", "E006N012T6", "ssm",
+         "M20161017_053649--_SSM------_S1BIWGRDH1VVD_066_C1003_EU500M_E006N012T6.tif"),
+        ("IWGRDH", "products", "datasets", "ssm", "C1003", "EQUI7_EU500M", "E006N012T6", "ssm",
+         "M20161029_053649--_SSM------_S1BIWGRDH1VVD_066_C1003_EU500M_E006N012T6.tif"),
+        ("IWGRDH", "products", "datasets", "ssm","C1003", "EQUI7_EU500M", "E048N012T6", "ssm",
+         "M20150818_053449--_SSM------_S1AIWGRDH1VVD_066_C1003_EU500M_E048N012T6.tif"),
+        ("IWGRDH", "products", "datasets", "ssm", "C1003", "EQUI7_EU500M", "E048N012T6", "ssm",
+         "M20170403_053310--_SSM------_S1BIWGRDH1VVD_066_C1003_EU500M_E048N012T6.tif"),
+        ("IWGRDH", "products", "datasets", "ssm", "C1003", "EQUI7_EU500M", "E048N012T6", "ssm", "qlooks",
+         "Q20150818_053449--_SSM------_S1AIWGRDH1VVD_066_C1003_EU500M_E048N012T6.tif"),
+         ("IWGRDH", "products", "datasets", "ssm", "C1003", "EQUI7_EU500M", "E048N012T6", "ssm", "qlooks",
+          "Q20170403_053310--_SSM------_S1BIWGRDH1VVD_066_C1003_EU500M_E048N012T6.tif")]
+        sig0_rel_filepaths = [("IWGRDH", "preprocessed", "datasets", "resampled", "A0202", "EQUI7_EU500M", "E006N006T6",
+                               "sig0", "M20160831_163321--_SIG0-----_S1AIWGRDH1VVA_175_A0201_EU500M_E048N006T6.tif"),
+                              ("IWGRDH", "preprocessed", "datasets", "resampled", "A0202", "EQUI7_EU500M", "E006N006T6",
+                               "sig0", "qlooks",
+                               "Q20160831_163321--_SIG0-----_S1AIWGRDH1VVA_175_A0201_EU500M_E006N006T6.tif")]
+
+        ssm_filepaths = [os.path.join(self.test_dir, *ssm_rel_filepath) for ssm_rel_filepath in ssm_rel_filepaths]
+        sig0_filepaths = [os.path.join(self.test_dir, *sig0_rel_filepath) for sig0_rel_filepath in sig0_rel_filepaths]
+        ssm_du = disk_usage_filelist(ssm_filepaths, unit='KB')
+        sig0_du = disk_usage_filelist(sig0_filepaths, unit='KB')
+
         # test result from group_by
         result = self.stt_1.get_disk_usage(unit='KB', group_by=['var'])
-        self.assertAlmostEqual(result.loc['ssm']['du'], 130.28, places=2)
-
-        # test results for total disk usage, limited by levels
-        # var <--
-        result1 = self.stt_1.get_disk_usage(unit='MB', total=True, up_to_level='var')
-        self.assertAlmostEqual(result1['du'][0], 0.227, places=2)
-        # --> tile
-        result2 = self.stt_1.get_disk_usage(unit='MB', total=True, down_to_level='tile')
-        self.assertAlmostEqual(result2['du'][0], 0.029, places=2)
-        # mode <-- all
-        result3 = self.stt_1.get_disk_usage(unit='MB', total=True, up_to_level='mode')
-        self.assertAlmostEqual(result3['du'][0], 0.255, places=2)
-        # all --> qlook
-        result4 = self.stt_1.get_disk_usage(unit='MB', total=True, down_to_level='qlook')
-        self.assertAlmostEqual(result3['du'][0], 0.255, places=2)
-        # cross-check sums
-        self.assertAlmostEqual(result1['du'][0] + result2['du'][0], result3['du'][0], places=2)
-        self.assertAlmostEqual(result3['du'][0], result4['du'][0], places=2)
+        self.assertAlmostEqual(result.loc['ssm']['du'], ssm_du, places=2)
 
         # test result for file pattern
         result = self.stt_1.get_disk_usage(unit='KB', file_pattern='SIG0', total=True)
-        self.assertAlmostEqual(result['du'][0], 45.324, places=2)
+        self.assertAlmostEqual(result['du'][0], sig0_du, places=2)
 
         # test complete query result
         result = self.stt_1.get_disk_usage(unit='KB')
-        self.assertEqual(result.shape, (9, 10))
-        should = ['preprocessed', 'preprocessed', 'preprocessed',
-                  'products', 'products', 'products', 'products', 'products', 'products']
-        self.assertEqual(sorted(result['group'].values), should)
+        self.assertEqual(result.shape, (33, 10))
+        should = ['E006N006T1', 'E006N006T1', 'E006N006T6', 'E006N006T6', 'E006N006T6', 'E006N006T6', 'E006N006T6',
+                  'E006N006T6', 'E006N006T6', 'E006N006T6', 'E006N006T6', 'E006N012T6', 'E006N012T6', 'E048N012T6',
+                  'E048N012T6', 'E048N012T6', 'E048N012T6', 'E048N012T6']
+        self.assertEqual(sorted(result['tile'].dropna().values), should)
 
 
 if __name__ == "__main__":
