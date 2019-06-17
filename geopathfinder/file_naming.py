@@ -14,6 +14,8 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from datetime import datetime
+
 
 class FilenameObj(object):
     def __init__(self, attributes):
@@ -62,6 +64,7 @@ class SmartFilename(object):
         """
         for key, value in self.fields.items():
             if key in self.fields_def:
+                value = self.__encode(key, value)
                 if len(value) > self.fields_def[key]['len']:
                     raise ValueError("Length does not comply with "
                                      "definition: {:} > {:}".format(
@@ -89,11 +92,11 @@ class SmartFilename(object):
             delimiter = self.delimiter if keys['delim'] else ''
 
             if name in self.fields:
+                value = self.__encode(name, self.fields[name])
                 if filename == '':
-                    filename = self.fields[name].ljust(length, self.pad)
+                    filename = value.ljust(length, self.pad)
                 else:
-                    filename += delimiter + \
-                        self.fields[name].ljust(length, self.pad)
+                    filename += delimiter + value.ljust(length, self.pad)
             else:
                 if filename == '':
                     filename = self.pad * length
@@ -104,7 +107,6 @@ class SmartFilename(object):
             filename += self.ext
 
         return filename
-
 
     def get_field(self, key):
         '''
@@ -127,13 +129,13 @@ class SmartFilename(object):
             field = field_obj
             self[key] = field
 
-        return field.replace(self.pad, '')
+        field = field.replace(self.pad, '')
 
+        return self.__decode(key, field)
 
     def __getitem__(self, key):
 
         return self.get_field(key)
-
 
     def __setitem__(self, key, value):
 
@@ -143,12 +145,27 @@ class SmartFilename(object):
                                  "definition: {:} > {:}".format(
                                      len(value), self.fields_def[key]['len']))
             else:
-                self.fields[key] = value
+                self.fields[key] = self.__encode(key, value)
                 setattr(self.obj, key, value.replace(self.pad, ''))
         else:
             raise KeyError("Field name undefined: {:}".format(key))
 
-
     def __repr__(self):
 
         return self._build_fn()
+
+    def __decode(self, key, value):
+        if 'decoder' in self.fields_def[key].keys():
+            decoder = self.fields_def[key]['decoder']
+            dec_value = decoder(value)
+            return dec_value
+        else:
+            return value
+
+    def __encode(self, key, value):
+        if (not isinstance(value, str)) and ('encoder' in self.fields_def[key].keys()):
+            encoder = self.fields_def[key]['encoder']
+            enc_value = encoder(value)
+            return enc_value
+        else:
+            return value

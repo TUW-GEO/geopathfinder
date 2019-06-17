@@ -36,7 +36,7 @@ allowed_sensor_dirs = ['Sentinel-1_CSAR',
                        'METOP_ASCAT',
                        'Envisat_ASAR']
 
-
+# TODO: add more data type checks
 class SgrtFilename(SmartFilename):
 
     """
@@ -61,8 +61,12 @@ class SgrtFilename(SmartFilename):
 
         fields_def = OrderedDict([
                      ('pflag', {'len': 1, 'delim': False}),
-                     ('dtime_1', {'len': 8, 'delim': False}),
-                     ('dtime_2', {'len': 8, 'delim': True}),
+                     ('dtime_1', {'len': 8, 'delim': False,
+                                  'decoder': lambda x: self.decode_date(x),
+                                  'encoder': lambda x: self.encode_date(x)}),
+                     ('dtime_2', {'len': 8, 'delim': True,
+                                  'decoder': lambda x: self.decode_time(x),
+                                  'encoder': lambda x: self.encode_time(x)}),
                      ('var_name', {'len': 9, 'delim': True}),
                      ('mission_id', {'len': 2, 'delim': True}),
                      ('spacecraft_id', {'len': 1, 'delim': False}),
@@ -72,7 +76,9 @@ class SgrtFilename(SmartFilename):
                      ('level', {'len': 1, 'delim': False}),
                      ('pol', {'len': 2, 'delim': False}),
                      ('orbit_direction', {'len': 1, 'delim': False}),
-                     ('relative_orbit', {'len': 3, 'delim': True}),
+                     ('relative_orbit', {'len': 3, 'delim': True,
+                                         'decoder': lambda x: self.decode_rel_orbit(x),
+                                         'encoder': lambda x: self.encode_rel_orbit(x)}),
                      ('workflow_id', {'len': 5, 'delim': True}),
                      ('grid_name', {'len': 6, 'delim': True}),
                      ('tile_name', {'len': 10, 'delim': True})
@@ -80,20 +86,16 @@ class SgrtFilename(SmartFilename):
 
         if 'dtime_1' in self.fields.keys():
             if self.single_date:
-                date = self.fields['dtime_1'].strftime(self.date_format)
+                date = self.fields['dtime_1']
                 if apply_dtime_2:
-                    time = self.fields['dtime_2'].strftime(self.time_format)
+                    time = self.fields['dtime_2']
                 else:
-                    time = self.fields['dtime_1'].strftime(self.time_format)
+                    time = self.fields['dtime_1']
                 self.fields['dtime_1'] = date
                 self.fields['dtime_2'] = time
-            else:
-                self.fields['dtime_1'] = self.fields['dtime_1'].strftime(self.date_format)
-                self.fields['dtime_2'] = self.fields['dtime_2'].strftime(self.date_format)
 
         super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext='.tif')
 
-   
     @property
     def stime(self):
         """start time"""
@@ -122,55 +124,33 @@ class SgrtFilename(SmartFilename):
             ftile = None
         return ftile
 
+    def decode_date(self, string):
+        return datetime.strptime(string, self.date_format)
 
-    def __getitem__(self, key):
-        """
-        Get field content.
+    def decode_time(self, string):
+        if self.single_date:
+            time_obj = datetime.time(datetime.strptime(string, self.time_format))
+        else:
+            time_obj = datetime.strptime(string, self.date_format)
 
-        Parameters
-        ----------
-        key : str
-            Field name.
+        return time_obj
 
-        Returns
-        -------
-        item : str
-            Item value.
-        """
-        item = super(SgrtFilename, self).__getitem__(key)
+    def decode_rel_orbit(self, string):
+        return int(string)
 
-        if key == 'dtime_1':
-            item = datetime.strptime(item, self.date_format)
-        if key == 'dtime_2':
-            if self.single_date:
-                item = datetime.time(datetime.strptime(item, self.time_format))
-            else:
-                item = datetime.strptime(item, self.date_format)
+    def encode_date(self, time_obj):
+        return time_obj.strftime(self.date_format)
 
-        return item
+    def encode_time(self, time_obj):
+        if self.single_date:
+            string = time_obj.strftime(self.time_format)
+        else:
+            string = time_obj.strftime(self.date_format)
 
+        return string
 
-    def __setitem__(self, key, value):
-        """
-        Set field content.
-
-        Parameters
-        ----------
-        key : str
-            Field name.
-        value : str or datetime
-            Field value.
-
-        """
-        if key == 'dtime_1' and isinstance(value, datetime):
-            value = value.strftime(self.date_format)
-        if key == 'dtime_2' and isinstance(value, datetime):
-            if self.single_date:
-                value = value.strftime(self.time_format)
-            else:
-                value = value.strftime(self.date_format)
-
-        super(SgrtFilename, self).__setitem__(key, value)
+    def encode_rel_orbit(self, orbit_num):
+        return "{:03d}".format(orbit_num)
 
 
 def create_sgrt_filename(filename_string):
