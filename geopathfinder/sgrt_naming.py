@@ -152,6 +152,16 @@ class SgrtFilename(SmartFilename):
     def encode_rel_orbit(self, orbit_num):
         return "{:03d}".format(orbit_num)
 
+    def __getitem__(self, key):
+
+        if key == "time":
+            if self.single_date:
+                return self.stime
+            else:
+                return self.stime + (self.etime - self.stime)/2  # if start and end time are given, take the mean
+        else:
+            return self[key]
+
 
 def create_sgrt_filename(filename_string):
     """
