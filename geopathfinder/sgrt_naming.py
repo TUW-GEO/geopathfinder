@@ -67,6 +67,7 @@ class SgrtFilename(SmartFilename):
                      ('dtime_2', {'len': 8, 'delim': True,
                                   'decoder': lambda x: self.decode_time(x),
                                   'encoder': lambda x: self.encode_time(x)}),
+                     ('time', None),
                      ('var_name', {'len': 9, 'delim': True}),
                      ('mission_id', {'len': 2, 'delim': True}),
                      ('spacecraft_id', {'len': 1, 'delim': False}),
@@ -160,7 +161,7 @@ class SgrtFilename(SmartFilename):
             else:
                 return self.stime + (self.etime - self.stime)/2  # if start and end time are given, take the mean
         else:
-            return self[key]
+            return super(SgrtFilename, self).__getitem__(key)
 
 
 def create_sgrt_filename(filename_string):
@@ -193,8 +194,9 @@ def create_sgrt_filename(filename_string):
 
     fields = {
               'pflag': parts[0][0],
-              'dtime_1': datetime.strptime(parts[0][1:], "%Y%m%d"),
-              'dtime_2': datetime.strptime(parts[1], dtime_2_format),
+              'dtime_1': parts[0][1:],
+              'dtime_2': parts[1],
+              'time': None,
               'var_name': parts[2],
               'mission_id': parts[3][0:2],
               'spacecraft_id': parts[3][2:3],

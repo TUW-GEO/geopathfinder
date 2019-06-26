@@ -64,6 +64,8 @@ class SmartFilename(object):
         """
         for key, value in self.fields.items():
             if key in self.fields_def:
+                if not self.fields_def[key]:
+                    continue
                 value = self.__encode(key, value)
                 if len(value) > self.fields_def[key]['len']:
                     raise ValueError("Length does not comply with "
@@ -87,6 +89,9 @@ class SmartFilename(object):
         """
         filename = ''
         for name, keys in self.fields_def.items():
+
+            if not keys:
+                continue
 
             length = keys['len']
             delimiter = self.delimiter if keys['delim'] else ''
@@ -125,7 +130,7 @@ class SmartFilename(object):
         '''
         field = self.fields[key]
         field_obj = getattr(self.obj, key)
-        if (field_obj != field) and (len(field_obj) <= self.fields_def[key]['len']):
+        if field_obj and (field_obj != field) and (len(field_obj) <= self.fields_def[key]['len']):
             field = field_obj
             self[key] = field
 
@@ -139,7 +144,7 @@ class SmartFilename(object):
 
     def __setitem__(self, key, value):
 
-        if key in self.fields_def:
+        if key in self.fields_def and self.fields_def[key]:
             if len(value) > self.fields_def[key]['len']:
                 raise ValueError("Length does not comply with "
                                  "definition: {:} > {:}".format(
@@ -155,7 +160,7 @@ class SmartFilename(object):
         return self._build_fn()
 
     def __decode(self, key, value):
-        if 'decoder' in self.fields_def[key].keys():
+        if self.fields_def[key] and 'decoder' in self.fields_def[key].keys():
             decoder = self.fields_def[key]['decoder']
             dec_value = decoder(value)
             return dec_value
@@ -163,7 +168,7 @@ class SmartFilename(object):
             return value
 
     def __encode(self, key, value):
-        if (not isinstance(value, str)) and ('encoder' in self.fields_def[key].keys()):
+        if (not isinstance(value, str)) and self.fields_def[key] and ('encoder' in self.fields_def[key].keys()):
             encoder = self.fields_def[key]['encoder']
             enc_value = encoder(value)
             return enc_value
