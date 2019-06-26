@@ -56,7 +56,12 @@ class SgrtFilename(SmartFilename):
             self.single_date = False
             apply_dtime_2 = True
             # if only daytime and no date is given
-            if self.fields['dtime_2'].year < 1950:
+            if self.fields['dtime_2'].endswith('--'):
+                dtime_2 = datetime.strptime(self.fields['dtime_2'][:-2], self.time_format)
+            else:
+                dtime_2 = datetime.strptime(self.fields['dtime_2'], self.date_format)
+
+            if dtime_2.year < 1950:
                 self.single_date = True
 
         fields_def = OrderedDict([
