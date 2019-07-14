@@ -14,7 +14,6 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from datetime import datetime
 
 
 class FilenameObj(object):
@@ -67,7 +66,7 @@ class SmartFilename(object):
                 if not self.fields_def[key]:
                     continue
                 value = self.__encode(key, value)
-                if len(value) > self.fields_def[key]['len']:
+                if self.fields_def[key]['len'] and len(value) > self.fields_def[key]['len']:
                     raise ValueError("Length does not comply with "
                                      "definition: {:} > {:}".format(
                                          len(value), self.fields_def[key]['len']))
@@ -93,7 +92,7 @@ class SmartFilename(object):
             if not keys:
                 continue
 
-            length = keys['len']
+            length = keys['len'] if keys['len'] else 1
             delimiter = self.delimiter if keys['delim'] else ''
 
             if name in self.fields:
@@ -130,13 +129,16 @@ class SmartFilename(object):
         '''
         field = self.fields[key]
         field_obj = getattr(self.obj, key)
-        if field_obj and (field_obj != field) and (len(field_obj) <= self.fields_def[key]['len']):
-            field = field_obj
-            self[key] = field
+        if field_obj and (field_obj != field):
+            if self.fields_def[key]['len'] and (len(field_obj) <= self.fields_def[key]['len']):
+                field = field_obj
+                self[key] = field
 
-        field = field.replace(self.pad, '')
-
-        return self.__decode(key, field)
+        if isinstance(field, str):
+            field = field.replace(self.pad, '')
+            return self.__decode(key, field)
+        else:
+            return field
 
     def __getitem__(self, key):
 
@@ -145,7 +147,8 @@ class SmartFilename(object):
     def __setitem__(self, key, value):
 
         if key in self.fields_def and self.fields_def[key]:
-            if len(value) > self.fields_def[key]['len']:
+            value = self.__encode(key, value)
+            if self.fields_def[key]['len'] and (len(value) > self.fields_def[key]['len']):
                 raise ValueError("Length does not comply with "
                                  "definition: {:} > {:}".format(
                                      len(value), self.fields_def[key]['len']))
@@ -162,15 +165,21 @@ class SmartFilename(object):
     def __decode(self, key, value):
         if self.fields_def[key] and 'decoder' in self.fields_def[key].keys():
             decoder = self.fields_def[key]['decoder']
-            dec_value = decoder(value)
-            return dec_value
+            try:
+                dec_value = decoder(value)
+                return dec_value
+            except:
+                return value
         else:
             return value
 
     def __encode(self, key, value):
         if (not isinstance(value, str)) and self.fields_def[key] and ('encoder' in self.fields_def[key].keys()):
             encoder = self.fields_def[key]['encoder']
-            enc_value = encoder(value)
-            return enc_value
+            try:
+                enc_value = encoder(value)
+                return enc_value
+            except:
+                return value
         else:
             return value
