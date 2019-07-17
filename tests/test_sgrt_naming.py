@@ -17,7 +17,7 @@
 
 import os
 import unittest
-from datetime import datetime
+from datetime import datetime, time
 
 import logging
 
@@ -59,13 +59,13 @@ class TestSgrtFilename(unittest.TestCase):
         Test set and get start and end date.
 
         """
-        self.assertEqual(self.sgrt_fn['dtime_1'].date(), self.dtime_1.date())
-        self.assertEqual(self.sgrt_fn['dtime_2'].date(), self.dtime_2.date())
+        self.assertEqual(self.sgrt_fn['dtime_1'], self.dtime_1.date())
+        self.assertEqual(self.sgrt_fn['dtime_2'], self.dtime_2.date())
 
-        new_start_time = datetime(2009, 1, 1, 12, 23, 33)
+        new_start_time = datetime(2009, 1, 1, 12, 23, 33).date()
         self.sgrt_fn['dtime_1'] = new_start_time
 
-        self.assertEqual(self.sgrt_fn['dtime_1'].date(), new_start_time.date())
+        self.assertEqual(self.sgrt_fn['dtime_1'], new_start_time)
 
 
     def test30_get_n_set_date_n_time(self):
@@ -73,14 +73,14 @@ class TestSgrtFilename(unittest.TestCase):
         Test set and get date and time for a single datetime.
 
         """
-        self.assertEqual(self.sgrt_fn2['dtime_1'].date(), self.dtime_1.date())
+        self.assertEqual(self.sgrt_fn2['dtime_1'], self.dtime_1.date())
         self.assertEqual(self.sgrt_fn2['dtime_2'], self.dtime_1.time())
 
         new_start_time = datetime(2009, 1, 1, 12, 23, 33)
         self.sgrt_fn2['dtime_1'] = new_start_time
         self.sgrt_fn2['dtime_2'] = new_start_time
 
-        self.assertEqual(self.sgrt_fn2['dtime_1'].date(), new_start_time.date())
+        self.assertEqual(self.sgrt_fn2['dtime_1'], new_start_time.date())
         self.assertEqual(self.sgrt_fn2['dtime_2'], new_start_time.time())
 
 
@@ -112,8 +112,8 @@ class TestSgrtFilename(unittest.TestCase):
         should = create_sgrt_filename(fn)
 
         self.assertEqual(should.get_field('pflag'), 'M')
-        self.assertEqual(should.get_field('dtime_1'), '20170725')
-        self.assertEqual(should.get_field('dtime_2'), '165004')
+        self.assertEqual(should.get_field('dtime_1'), datetime(2017, 7, 25).date())
+        self.assertEqual(should.get_field('dtime_2'), time(16, 50, 4))
         self.assertEqual(should.get_field('var_name'), 'SIG0')
         self.assertEqual(should.get_field('mission_id'), 'S1')
         self.assertEqual(should.get_field('spacecraft_id'), 'B')
@@ -123,7 +123,7 @@ class TestSgrtFilename(unittest.TestCase):
         self.assertEqual(should.get_field('level'), '1')
         self.assertEqual(should.get_field('pol'), 'VV')
         self.assertEqual(should.get_field('orbit_direction'), 'A')
-        self.assertEqual(should.get_field('relative_orbit'), '146')
+        self.assertEqual(should.get_field('relative_orbit'), 146)
         self.assertEqual(should.get_field('workflow_id'), 'A0104')
         self.assertEqual(should.get_field('grid_name'), 'EU500M')
         self.assertEqual(should.get_field('tile_name'), 'E048N012T6')
@@ -134,8 +134,8 @@ class TestSgrtFilename(unittest.TestCase):
         fn = 'M20170725_20181225_TMENSIG40_ASAWS---M1--D_146_A0104_EU500M_E048N012T6.tif'
         should = create_sgrt_filename(fn)
 
-        self.assertEqual(should.get_field('dtime_1'), '20170725')
-        self.assertEqual(should.get_field('dtime_2'), '20181225')
+        self.assertEqual(should.get_field('dtime_1'), datetime(2017, 7, 25).date())
+        self.assertEqual(should.get_field('dtime_2'), datetime(2018, 12, 25).date())
         self.assertEqual(should.get_field('var_name'), 'TMENSIG40')
         self.assertEqual(should.get_field('mission_id'), 'AS')
         self.assertEqual(should.get_field('spacecraft_id'), 'A')
@@ -166,7 +166,6 @@ class TestSgrtFilename(unittest.TestCase):
                    'level': 'A',
                    'pol': 'XX',
                    'orbit_direction': 'D',
-                   'relative_orbit': '---',
                    'workflow_id': 'C0102',
                    'grid_name': tilename[:6],
                    'tile_name': tilename[7:]}
@@ -259,4 +258,7 @@ class TestSgrtTree(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    #unittest.main()
+    testcls = TestSgrtFilename()
+    testcls.setUp()
+    testcls.test2_get_n_set_date()

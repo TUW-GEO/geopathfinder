@@ -21,6 +21,7 @@ SGRT folder and file name definition.
 
 import os
 
+import datetime as dt
 from datetime import datetime
 from collections import OrderedDict
 
@@ -53,15 +54,25 @@ class SgrtFilename(SmartFilename):
         else:
             self.single_date = False
             apply_dtime_2 = True
-            # if only daytime and no date is given
-            if isinstance(self.fields['dtime_2'], str):
-                if self.fields['dtime_2'].endswith('--'):
-                    dtime_2 = datetime.strptime(self.fields['dtime_2'][:-2], self.time_format)
-                else:
-                    dtime_2 = datetime.strptime(self.fields['dtime_2'], self.date_format)
 
-            if self.fields['dtime_2'].year < 1950:
+            if isinstance(self.fields['dtime_2'], dt.time) or (self.fields['dtime_2'].year < 1950):
                 self.single_date = True
+
+        if 'dtime_1' in self.fields.keys():
+            if self.single_date:
+                date = self.encode_date(self.fields['dtime_1'])
+                if apply_dtime_2:
+                    time = self.encode_time(self.fields['dtime_2'])
+                else:
+                    time = self.encode_time(self.fields['dtime_1'])
+                self.fields['dtime_1'] = date
+                self.fields['dtime_2'] = time
+            else:
+                self.fields['dtime_1'] = self.encode_date(self.fields['dtime_1'])
+                self.fields['dtime_2'] = self.encode_date(self.fields['dtime_2'])
+
+        if 'relative_orbit' in self.fields.keys():
+            self.fields['relative_orbit'] = self.encode_rel_orbit(self.fields['relative_orbit'])
 
         fields_def = OrderedDict([
                      ('pflag', {'len': 1, 'delim': False}),
@@ -88,16 +99,6 @@ class SgrtFilename(SmartFilename):
                      ('grid_name', {'len': 6, 'delim': True}),
                      ('tile_name', {'len': 10, 'delim': True})
                     ])
-
-        if 'dtime_1' in self.fields.keys():
-            if self.single_date:
-                date = self.fields['dtime_1']
-                if apply_dtime_2:
-                    time = self.fields['dtime_2']
-                else:
-                    time = self.fields['dtime_1']
-                self.fields['dtime_1'] = date
-                self.fields['dtime_2'] = time
 
         super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext='.tif')
 
@@ -130,13 +131,13 @@ class SgrtFilename(SmartFilename):
         return ftile
 
     def decode_date(self, string):
-        return datetime.strptime(string, self.date_format)
+        return datetime.strptime(string, self.date_format).date()
 
     def decode_time(self, string):
         if self.single_date:
             time_obj = datetime.time(datetime.strptime(string, self.time_format))
         else:
-            time_obj = datetime.strptime(string, self.date_format)
+            time_obj = self.decode_date(string)
 
         return time_obj
 
@@ -167,9 +168,6 @@ class SgrtFilename(SmartFilename):
         else:
             return super(SgrtFilename, self).__getitem__(key)
 
-    #def __setitem__(self, key, value):
-
-
 
 def create_sgrt_filename(filename_string):
     """
@@ -195,10 +193,22 @@ def create_sgrt_filename(filename_string):
         raise ValueError('Given filename_string "{}" does not comply with '
                          'SGRT naming convention!')
 
+    # decode all values from the filename
+    dtime_2_format = "%Y%m%d"
+    helper.single_date = False
+    if parts[1].endswith('--'):
+        dtime_2_format = "%H%M%S--"
+        helper.single_date = True
+
+    helper.time_format = dtime_2_format
+    dtime_1 = helper.decode_date(parts[0][1:])
+    dtime_2 = helper.decode_time(parts[1])
+    relative_orbit = helper.decode_rel_orbit(parts[4])
+
     fields = {
               'pflag': parts[0][0],
-              'dtime_1': parts[0][1:],
-              'dtime_2': parts[1],
+              'dtime_1': dtime_1,
+              'dtime_2': dtime_2,
               'time': None,
               'var_name': parts[2],
               'mission_id': parts[3][0:2],
@@ -209,7 +219,7 @@ def create_sgrt_filename(filename_string):
               'level': parts[3][9:10],
               'pol': parts[3][10:12],
               'orbit_direction': parts[3][12:13],
-              'relative_orbit': parts[4],
+              'relative_orbit': relative_orbit,
               'workflow_id': parts[5],
               'grid_name': parts[6],
               'tile_name': parts[7]
