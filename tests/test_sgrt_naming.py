@@ -21,10 +21,7 @@ from datetime import datetime
 
 import logging
 
-from geopathfinder.sgrt_naming import SgrtFilename
-from geopathfinder.sgrt_naming import sgrt_tree
-from geopathfinder.sgrt_naming import sgrt_path
-from geopathfinder.sgrt_naming import create_sgrt_filename
+from geopathfinder.naming_conventions.sgrt_naming import SgrtFilename, sgrt_tree, sgrt_path, create_sgrt_filename
 
 logging.basicConfig(level=logging.INFO)
 

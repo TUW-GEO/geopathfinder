@@ -24,10 +24,8 @@ import os
 from datetime import datetime
 from collections import OrderedDict
 
-from geopathfinder.folder_naming import SmartPath
+from geopathfinder.folder_naming import SmartPath, build_smarttree, create_smartpath
 from geopathfinder.file_naming import SmartFilename
-from geopathfinder.folder_naming import build_smarttree
-from geopathfinder.folder_naming import create_smartpath
 
 
 # Please add here new sensors if they follow the SGRT naming convention.
@@ -56,12 +54,13 @@ class SgrtFilename(SmartFilename):
             self.single_date = False
             apply_dtime_2 = True
             # if only daytime and no date is given
-            if self.fields['dtime_2'].endswith('--'):
-                dtime_2 = datetime.strptime(self.fields['dtime_2'][:-2], self.time_format)
-            else:
-                dtime_2 = datetime.strptime(self.fields['dtime_2'], self.date_format)
+            if isinstance(self.fields['dtime_2'], str):
+                if self.fields['dtime_2'].endswith('--'):
+                    dtime_2 = datetime.strptime(self.fields['dtime_2'][:-2], self.time_format)
+                else:
+                    dtime_2 = datetime.strptime(self.fields['dtime_2'], self.date_format)
 
-            if dtime_2.year < 1950:
+            if self.fields['dtime_2'].year < 1950:
                 self.single_date = True
 
         fields_def = OrderedDict([
@@ -168,6 +167,9 @@ class SgrtFilename(SmartFilename):
         else:
             return super(SgrtFilename, self).__getitem__(key)
 
+    #def __setitem__(self, key, value):
+
+
 
 def create_sgrt_filename(filename_string):
     """
@@ -192,10 +194,6 @@ def create_sgrt_filename(filename_string):
     if not [len(x) for x in parts] == [9, 8, 9, 13, 3, 5, 6, 10]:
         raise ValueError('Given filename_string "{}" does not comply with '
                          'SGRT naming convention!')
-
-    dtime_2_format = "%Y%m%d"
-    if parts[1].endswith('--'):
-        dtime_2_format = "%H%M%S--"
 
     fields = {
               'pflag': parts[0][0],

@@ -22,7 +22,7 @@ import shutil
 
 from geopathfinder.folder_naming import SmartPath
 from geopathfinder.folder_naming import NullSmartPath
-from geopathfinder.sgrt_naming import sgrt_tree
+from geopathfinder.naming_conventions.sgrt_naming import sgrt_tree
 from geopathfinder.folder_naming import transform_bytes
 
 def cur_path():

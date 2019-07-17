@@ -18,9 +18,8 @@ import unittest
 from datetime import datetime
 
 import logging
-import secrets
 
-from geopathfinder.eodatareaders import eoDRFilename, create_eodr_filename
+from geopathfinder.naming_conventions.eodr_naming import eoDRFilename, create_eodr_filename
 
 logging.basicConfig(level=logging.INFO)
 
@@ -46,7 +45,7 @@ class TestSgrtFilename(unittest.TestCase):
         Test building SGRT file name.
 
         """
-        fn = ('123456_20080101T122333_---------------_B1.vrt')
+        fn = ('123456------_20080101T122333_---------------_B1.vrt')
 
         self.assertEqual(str(self.eodr_fn_1), fn)
 
@@ -70,7 +69,7 @@ class TestSgrtFilename(unittest.TestCase):
         """
 
         # testing for single datetime
-        fn = '123456_20181220T232333_---------------_B5_34_aug.vrt'
+        fn = '123456------_20181220T232333_---------------_B5_34_aug.vrt'
         should = create_eodr_filename(fn)
 
         self.assertEqual(should.get_field('id'), '123456')

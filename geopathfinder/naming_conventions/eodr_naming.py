@@ -19,8 +19,6 @@ SGRT folder and file name definition.
 
 """
 
-import os
-
 from datetime import datetime
 from collections import OrderedDict
 
@@ -40,7 +38,7 @@ class eoDRFilename(SmartFilename):
         self.fields = fields.copy()
 
         fields_def = OrderedDict([
-                     ('id', {'len': 6, 'delim': True}),
+                     ('id', {'len': 12, 'delim': True}),
                      ('dt_1', {'len': 15, 'delim': True,
                                   'decoder': lambda x: self.decode_datetime(x),
                                   'encoder': lambda x: self.encode_datetime(x)}),
@@ -48,7 +46,7 @@ class eoDRFilename(SmartFilename):
                                   'decoder': lambda x: self.decode_datetime(x),
                                   'encoder': lambda x: self.encode_datetime(x)}),
                      ('dt', None),
-                     ('band', {'len': None, 'delim': True})
+                     ('band', {'len': None, 'delim': True, 'encoder': lambda x: str(x)})
                     ])
 
         fields_def_keys = list(fields_def.keys())
@@ -84,7 +82,7 @@ class eoDRFilename(SmartFilename):
         if isinstance(time_obj, datetime):
             return time_obj.strftime(self.dt_format)
         else:
-            time_obj
+            return time_obj
 
     def __getitem__(self, key):
 
