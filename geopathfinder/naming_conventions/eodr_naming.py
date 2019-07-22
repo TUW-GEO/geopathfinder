@@ -15,7 +15,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-SGRT folder and file name definition.
+eoDR file name definition.
 
 """
 
@@ -29,11 +29,22 @@ from geopathfinder.file_naming import SmartFilename
 class eoDRFilename(SmartFilename):
 
     """
-    SGRT file name definition using SmartFilename class.
+    eoDataReaders file name definition using SmartFilename class.
     """
 
-    def __init__(self, fields, ext='.vrt'):
+    def __init__(self, fields, ext='.vrt', convert=False):
+        """
+        Constructor of eoDRFilename class.
 
+        Parameters
+        ----------
+        fields: dict
+            Dictionary specifying the different parts of the filename.
+        ext: str, optional
+            Extension of the filename (default is '.vrt' for GDAL VRT files)
+        convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
+        """
         self.dt_format = "%Y%m%dT%H%M%S"
         self.fields = fields.copy()
 
@@ -45,7 +56,6 @@ class eoDRFilename(SmartFilename):
                      ('dt_2', {'len': 15, 'delim': True,
                                   'decoder': lambda x: self.decode_datetime(x),
                                   'encoder': lambda x: self.encode_datetime(x)}),
-                     ('dt', None),
                      ('band', {'len': None, 'delim': True, 'encoder': lambda x: str(x)})
                     ])
 
@@ -54,63 +64,99 @@ class eoDRFilename(SmartFilename):
             if key not in fields_def_keys:
                 fields_def[key] = {'len': None, 'delim': True}
 
-        super(eoDRFilename, self).__init__(self.fields, fields_def, pad='-', ext=ext)
+        super(eoDRFilename, self).__init__(self.fields, fields_def, pad='-', ext=ext, convert=convert)
 
     @property
     def stime(self):
-        """start time"""
-        if "-" not in self['dt_1']:
-            return self.decode_datetime(self['dt_1'])
-        else:
+        """
+        Start time.
+
+        Returns
+        -------
+        datetime.datetime
+            Start time.
+        """
+        try:
+            if "-" not in self['dt_1']:
+                return self.decode_datetime(self['dt_1'])
+            else:
+                return None
+        except TypeError:
             return None
 
     @property
     def etime(self):
-        """end time"""
-        if "-" not in self['dt_2']:
-            return self.decode_datetime(self['dt_2'])
-        else:
+        """"
+        End time.
+
+        Returns
+        -------
+        datetime.datetime
+            End time.
+        """
+        try:
+            if "-" not in self['dt_2']:
+                return self.decode_datetime(self['dt_2'])
+            else:
+                return None
+        except TypeError:
             return None
 
     def decode_datetime(self, string):
+        """
+        Decodes a string into a datetime object. The format is given by the class.
+
+        Parameters
+        ----------
+        string: str, object
+            String needed to be decoded to a datetime object.
+
+        Returns
+        -------
+        datetime.datetime, object
+            Original object or datetime object parsed from the given string.
+        """
         if isinstance(string, str):
             return datetime.strptime(string, self.dt_format)
         else:
             return string
 
     def encode_datetime(self, time_obj):
+        """
+        Encodes a datetime object into a string. The format is given by the class.
+
+        Parameters
+        ----------
+        time_obj: datetime.datetime, object
+            Datetime object needed to be encoded to a string.
+
+        Returns
+        -------
+        str, object
+            Original object or str object parsed from the given datetime object.
+        """
         if isinstance(time_obj, datetime):
             return time_obj.strftime(self.dt_format)
         else:
             return time_obj
 
-    def __getitem__(self, key):
 
-        if key == "dt":
-            if self.stime and self.etime:
-                return self.stime + (self.etime - self.stime) / 2
-            elif self.stime:
-                return self.stime  # if start and end time are given, take the mean
-        else:
-            return super(eoDRFilename, self).__getitem__(key)
-
-
-def create_eodr_filename(filename_string):
+def create_eodr_filename(filename_string, convert=False):
     """
-    Creates a SgrtFilename() object from a given string filename
+    Creates a eoDRFilename() object from a given string filename
 
     Parameters
     ----------
     filename_string : str
-        filename following the SGRT filename convention.
-        e.g. 'M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif'
+        filename following the eoDR filename convention.
+        e.g. 'c29cfaab80e2_20170517T171434_---------------_eo_array_contains.vrt'
+    convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
 
     Returns
     -------
-    SgrtFilename
-
+    eoDRFilename
     """
-
     helper = eoDRFilename({})
     filename_string = filename_string.replace(helper.ext, '')
     parts = filename_string.split(helper.delimiter)
@@ -118,16 +164,15 @@ def create_eodr_filename(filename_string):
     fields = {'id': parts[0],
               'dt_1': parts[1],
               'dt_2': parts[2],
-              'dt': None,
               'band': parts[3]
              }
 
-    if len(parts) > 4:
+    if len(parts) > 4:  # if the filename consists of more than 4 parts, additional "dimensions" are added to the fields dictionary
         for i, part in enumerate(parts[4:]):
             key = 'd' + str(i+1)
             fields[key] = part
 
-    return eoDRFilename(fields)
+    return eoDRFilename(fields, convert=convert)
 
 
 if __name__ == '__main__':

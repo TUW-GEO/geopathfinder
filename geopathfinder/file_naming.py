@@ -15,11 +15,13 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-
 class FilenameObj(object):
-    def __init__(self, attributes):
-        for key, value in attributes.items():
-            setattr(self, key, value)
+    """
+    Empty class which is used to hold different attributes of the filename.
+    """
+
+    def __init__(self):
+        pass
 
 
 class SmartFilename(object):
@@ -29,7 +31,7 @@ class SmartFilename(object):
     and field length.
     """
 
-    def __init__(self, fields, fields_def, ext=None, pad='-', delimiter='_'):
+    def __init__(self, fields, fields_def, ext=None, pad='-', delimiter='_', convert=False):
         """
         Define name of fields, length, pad and delimiter symbol.
 
@@ -45,16 +47,37 @@ class SmartFilename(object):
             Padding symbol (default: '-').
         delimiter : str, optional
             Delimiter (default: '_')
+        convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
         """
         self.fields = fields
         self.fields_def = fields_def
         self.ext = ext
         self.delimiter = delimiter
         self.pad = pad
+        self.convert = convert
         self._check_def()
-        self.obj = FilenameObj(self.fields)
+        self.obj = self.__init_filename_obj()
         self.full_string = self._build_fn()
 
+    def __init_filename_obj(self):
+        """
+        Initialises the class 'FilenameObj' to set all filename attributes as class variables.
+        This enables an easier access to filename properties.
+
+        Returns
+        -------
+        FilenameObj
+
+        """
+        filename_obj = FilenameObj()
+        for key, value in self.fields.items():
+            if self.convert:
+                setattr(filename_obj, key, self.__decode(key, value))
+            else:
+                setattr(filename_obj, key, self.__encode(key, value))
+
+        return filename_obj
 
     def _check_def(self):
         """
@@ -74,7 +97,6 @@ class SmartFilename(object):
                     self.fields_def[key]['delim'] = True
             else:
                 raise KeyError("Field name undefined: {:}".format(key))
-
 
     def _build_fn(self):
         """
@@ -113,39 +135,72 @@ class SmartFilename(object):
         return filename
 
     def get_field(self, key):
-        '''
-        Returns the string of the field with given key.
+        """
+        Returns the value of the field with a given key.
 
         Parameters
         ----------
         key : str
-            name of the field
+            Name of the field.
 
         Returns
         -------
-        str
-            part of the filename associated with given key
+        str, object
+            Part of the filename associated with given key. Depending on the chosen flag 'convert', it is either a str
+            (convert=False) or an object.
+        """
 
-        '''
-        field = self.fields[key]
-        field_obj = getattr(self.obj, key)
+        field = self.__encode(key, self.fields[key])
+
+        # check and reset the attribute of the object variable
+        field_obj = self.__encode(key, getattr(self.obj, key))
         if field_obj and (field_obj != field):
             if self.fields_def[key]['len'] and (len(field_obj) <= self.fields_def[key]['len']):
                 field = field_obj
                 self[key] = field
 
-        if isinstance(field, str):
-            field = field.replace(self.pad, '')
+        field = field.replace(self.pad, '')
+
+        if self.convert:
             return self.__decode(key, field)
         else:
             return field
 
     def __getitem__(self, key):
+        """
+        Returns the value of the field with a given key.
 
-        return self.get_field(key)
+        Parameters
+        ----------
+        key : str
+            Name of the field.
+
+        Returns
+        -------
+        str, object
+            Part of the filename associated with given key. Depending on the chosen flag 'convert', it is either a str
+            (convert=False) or an object. If the key can't be found in the fields definition, the method tries to return
+            a property of an inherited class.
+        """
+        if key in self.fields_def:
+            return self.get_field(key)
+        elif hasattr(self, key):
+            return getattr(self, key)
+        else:
+            raise KeyError('"{}" is neither a class variable nor a file attribute.'.format(key))
 
     def __setitem__(self, key, value):
+        """
+        Sets the value of a filename field corresponding to the given key.
 
+        Parameters
+        ----------
+        key : str
+            Name of the field.
+        value: object
+            Value of the field.
+
+        """
         if key in self.fields_def and self.fields_def[key]:
             value = self.__encode(key, value)
             if self.fields_def[key]['len'] and (len(value) > self.fields_def[key]['len']):
@@ -153,16 +208,42 @@ class SmartFilename(object):
                                  "definition: {:} > {:}".format(
                                      len(value), self.fields_def[key]['len']))
             else:
-                self.fields[key] = self.__encode(key, value)
-                setattr(self.obj, key, value.replace(self.pad, ''))
+                self.fields[key] = value
+                value = value.replace(self.pad, '')
+                if self.convert:
+                    setattr(self.obj, key, self.__decode(key, value))
+                else:
+                    setattr(self.obj, key, value)
         else:
             raise KeyError("Field name undefined: {:}".format(key))
 
     def __repr__(self):
+        """
+        Returns the string representation of the class.
 
+        Returns
+        -------
+        str
+            String representation of the class.
+        """
         return self._build_fn()
 
     def __decode(self, key, value):
+        """
+        Decodes a certain value (str -> object) specified by the given key if an entry 'decoder' is available.
+
+        Parameters
+        ----------
+        key : str
+            Name of the field.
+        value: object
+            Value of the field.
+
+        Returns
+        -------
+        str
+            Decoded or original value.
+        """
         if self.fields_def[key] and 'decoder' in self.fields_def[key].keys():
             decoder = self.fields_def[key]['decoder']
             try:
@@ -174,6 +255,21 @@ class SmartFilename(object):
             return value
 
     def __encode(self, key, value):
+        """
+        Encodes a certain value (object -> str) specified by the given key if an entry 'encoder' is available.
+
+        Parameters
+        ----------
+        key : str
+            Name of the field.
+        value: object
+            Value of the field.
+
+        Returns
+        -------
+        str
+            Encoded or original value.
+        """
         if (not isinstance(value, str)) and self.fields_def[key] and ('encoder' in self.fields_def[key].keys()):
             encoder = self.fields_def[key]['encoder']
             try:

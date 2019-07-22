@@ -25,7 +25,9 @@ import datetime as dt
 from datetime import datetime
 from collections import OrderedDict
 
-from geopathfinder.folder_naming import SmartPath, build_smarttree, create_smartpath
+from geopathfinder.folder_naming import SmartPath
+from geopathfinder.folder_naming import build_smarttree
+from geopathfinder.folder_naming import create_smartpath
 from geopathfinder.file_naming import SmartFilename
 
 
@@ -35,15 +37,24 @@ allowed_sensor_dirs = ['Sentinel-1_CSAR',
                        'METOP_ASCAT',
                        'Envisat_ASAR']
 
-# TODO: add more data type checks
+
 class SgrtFilename(SmartFilename):
 
     """
     SGRT file name definition using SmartFilename class.
     """
 
-    def __init__(self, fields):
+    def __init__(self, fields, convert=False):
+        """
+        Constructor of SgrtFilename class.
 
+        Parameters
+        ----------
+        fields: dict
+            Dictionary specifying the different parts of the filename.
+        convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
+        """
         self.date_format = "%Y%m%d"
         self.time_format = "%H%M%S"
         self.fields = fields.copy()
@@ -82,7 +93,6 @@ class SgrtFilename(SmartFilename):
                      ('dtime_2', {'len': 8, 'delim': True,
                                   'decoder': lambda x: self.decode_time(x),
                                   'encoder': lambda x: self.encode_time(x)}),
-                     ('time', None),
                      ('var_name', {'len': 9, 'delim': True}),
                      ('mission_id', {'len': 2, 'delim': True}),
                      ('spacecraft_id', {'len': 1, 'delim': False}),
@@ -100,76 +110,213 @@ class SgrtFilename(SmartFilename):
                      ('tile_name', {'len': 10, 'delim': True})
                     ])
 
-        super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext='.tif')
+        super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext='.tif', convert=convert)
 
     @property
     def stime(self):
-        """start time"""
-        return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_1"]
+        """
+        Start time.
+
+        Returns
+        -------
+        datetime.datetime
+            Start time.
+        """
+        try:
+            return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_1"]
+        except TypeError:
+            return None
 
     @property
     def etime(self):
-        """end time"""
-        return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_2"]
+        """
+        End time.
 
+        Returns
+        -------
+        datetime.datetime
+            End time.
+        """
+        try:
+            return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_2"]
+        except TypeError:
+            return None
+
+    @property
+    def time(self):
+        """
+        Unified time.
+
+        Returns
+        -------
+        datetime.datetime
+            Unified time.
+        """
+        try:
+            if self.single_date:
+                return self.stime
+            else:
+                return self.stime + (self.etime - self.stime) / 2
+        except TypeError:
+            return None
 
     @property
     def product_id(self):
+        """
+        Builds product id from other filename attributes (e.g. 'S1AIWGRDH').
+
+        Returns
+        -------
+        product_id: str
+            Product id consisting of mission id (e.g., 'S1'), spacecraft id (e.g., 'A'), mode id (e.g., 'IW'),
+            product type (e.g., 'GRD') and resolution class (e.g., 'H').
+        """
         try:
-            product_id = "".join([self["mission_id"], self["spacecraft_id"],self["mode_id"],self["product_type"], self["res_class"]])
-        except:
+            product_id = "".join([self["mission_id"], self["spacecraft_id"], self["mode_id"], self["product_type"], self["res_class"]])
+        except TypeError:
             product_id = None
 
         return product_id
 
     @property
     def ftile(self):
+        """
+        Builds the full tile name from other filename attributes (e.g. 'EU010M_E048N015T1').
+
+        Returns
+        -------
+        ftile: str
+            Full tile name consisting of grid name (e.g., 'EU10M') and tile name (e.g., 'E048N015T1').
+        """
         try:
             ftile = "_".join([self["grid_name"], self["tile_name"]])
-        except:
+        except TypeError:
             ftile = None
         return ftile
 
     def decode_date(self, string):
-        return datetime.strptime(string, self.date_format).date()
+        """
+        Decodes a string into a datetime.date object. The format is given by the class.
+
+        Parameters
+        ----------
+        string: str, object
+            String needed to be decoded to a datetime.date object.
+
+        Returns
+        -------
+        datetime.date, object
+            Original object or datetime.date object parsed from the given string.
+        """
+        if isinstance(string, str):
+            return datetime.strptime(string, self.date_format).date()
+        else:
+            return string
 
     def decode_time(self, string):
-        if self.single_date:
-            time_obj = datetime.time(datetime.strptime(string, self.time_format))
-        else:
-            time_obj = self.decode_date(string)
+        """
+        Decodes a string into a datetime.time/datetime.date object. The format is given by the class and the conversion
+        follows the 'single_date' setting.
 
-        return time_obj
+        Parameters
+        ----------
+        string: str, object
+            String needed to be decoded to a datetime.time/datetime.date object.
+
+        Returns
+        -------
+        datetime.date, datetime.time, object
+            Original object, datetime.date or datetime.time object parsed from the given string.
+        """
+        if isinstance(string, str):
+            if self.single_date:
+                return datetime.time(datetime.strptime(string, self.time_format))
+            else:
+                return self.decode_date(string)
+        else:
+            return string
 
     def decode_rel_orbit(self, string):
-        return int(string)
+        """
+        Decodes a string into an integer.
+
+        Parameters
+        ----------
+        string: str, object
+            String needed to be decoded to an integer.
+
+        Returns
+        -------
+        int, object
+            Original object or integer object parsed from the given string.
+        """
+        if isinstance(string, str):
+            return int(string)
+        else:
+            return string
 
     def encode_date(self, time_obj):
-        return time_obj.strftime(self.date_format)
+        """
+        Encodes a datetime.datetime/datetime.date object into a string. The format is given by the class.
+
+        Parameters
+        ----------
+        time_obj: datetime.datetime, datetime.date or object
+            Datetime object needed to be encoded to a string.
+
+        Returns
+        -------
+        str, object
+            Original object or str object parsed from the given datetime object.
+        """
+        if isinstance(time_obj, (dt.datetime, dt.date, dt.time)):
+            return time_obj.strftime(self.date_format)
+        else:
+            return time_obj
 
     def encode_time(self, time_obj):
-        if self.single_date:
-            string = time_obj.strftime(self.time_format)
-        else:
-            string = time_obj.strftime(self.date_format)
+        """
+        Encodes a datetime.datetime/datetime.date object into a string. The format is given by the class.
 
-        return string
+        Parameters
+        ----------
+        time_obj: datetime.datetime, datetime.date or object
+            Datetime object needed to be encoded to a string.
 
-    def encode_rel_orbit(self, orbit_num):
-        return "{:03d}".format(orbit_num)
-
-    def __getitem__(self, key):
-
-        if key == "time":
+        Returns
+        -------
+        str, object
+            Original object or str object parsed from the given datetime object.
+        """
+        if isinstance(time_obj, (dt.datetime, dt.time, dt.date)):
             if self.single_date:
-                return self.stime
+                return time_obj.strftime(self.time_format)
             else:
-                return self.stime + (self.etime - self.stime)/2  # if start and end time are given, take the mean
+                return time_obj.strftime(self.date_format)
         else:
-            return super(SgrtFilename, self).__getitem__(key)
+            return time_obj
+
+    def encode_rel_orbit(self, relative_orbit):
+        """
+        Encodes a relative orbit number into a string.
+
+        Parameters
+        ----------
+        relative_orbit: int or object
+            Integer needed to be encoded to a string.
+
+        Returns
+        -------
+        str, object
+            Original object or str object parsed from the given integer.
+        """
+        if isinstance(relative_orbit, int):
+            return "{:03d}".format(relative_orbit)
+        else:
+            return relative_orbit
 
 
-def create_sgrt_filename(filename_string):
+def create_sgrt_filename(filename_string, convert=False):
     """
     Creates a SgrtFilename() object from a given string filename
 
@@ -178,6 +325,8 @@ def create_sgrt_filename(filename_string):
     filename_string : str
         filename following the SGRT filename convention.
         e.g. 'M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif'
+    convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
 
     Returns
     -------
@@ -209,7 +358,6 @@ def create_sgrt_filename(filename_string):
               'pflag': parts[0][0],
               'dtime_1': dtime_1,
               'dtime_2': dtime_2,
-              'time': None,
               'var_name': parts[2],
               'mission_id': parts[3][0:2],
               'spacecraft_id': parts[3][2:3],
@@ -225,13 +373,13 @@ def create_sgrt_filename(filename_string):
               'tile_name': parts[7]
              }
 
-    return SgrtFilename(fields)
+    return SgrtFilename(fields, convert=convert)
 
 
 def sgrt_path(root, mode=None, group=None, datalog=None,
               product=None, wflow=None, grid=None, tile=None, var=None,
               qlook=True, make_dir=False):
-    '''
+    """
     Realisation of the full SGRT folder naming convention, yielding a single
     SmartPath.
 
@@ -265,7 +413,7 @@ def sgrt_path(root, mode=None, group=None, datalog=None,
     -------
     SmartPath
         Object for the path
-    '''
+    """
 
     # check the sensor folder name
     if root.split(os.sep)[-1] not in allowed_sensor_dirs:
@@ -320,7 +468,7 @@ def sgrt_path(root, mode=None, group=None, datalog=None,
 
 def sgrt_tree(root, target_level=None, register_file_pattern=None):
 
-    '''
+    """
     Realisation of the full SGRT folder naming convention, yielding a
     SmartTree(), reflecting all subfolders as SmartPath()
 
@@ -346,7 +494,7 @@ def sgrt_tree(root, target_level=None, register_file_pattern=None):
     -------
     SmartTree
         Object for the SGRT tree.
-    '''
+    """
 
     # defining the hierarchy
     hierarchy = ['mode', 'group','datalog',
@@ -363,7 +511,6 @@ def sgrt_tree(root, target_level=None, register_file_pattern=None):
                          'not a valid SGRT folder!'.format(root))
 
     return sgrt_tree
-
 
 
 if __name__ == '__main__':
