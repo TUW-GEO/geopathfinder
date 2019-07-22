@@ -11,12 +11,11 @@ Description
 
 Some general stuff goes here ...
 
-Filename
---------
-The following description should show how to implement a new naming convention:
-- Create a new .py file in the folder "geopathfinder/naming_conventions/". The filename should be an abbreviation of the
-  new naming convention separated from "naming" with an underscore, e.g., "sgrt_naming.py" ot "eodr_naming.py".
-- Inside this file, write a new class, which inherits from *SmartFilename*. In this class you can define how the filename structure should be like.
+Adding a new filenaming convention
+--------------------------------
+The following description aims to show how to implement a new naming convention:
+- Create a new .py file in the folder "geopathfinder/naming_conventions/". The filename should be an abbreviation of the new naming convention separated from "naming" with an underscore, e.g., "sgrt_naming.py" ot "eodr_naming.py".
+- Inside this file, write a new class, which inherits from *SmartFilename*. In this class you can define how the filename structure should look like.
   For each field you can define the length of the field ('len', integer), if a delimiter should be in between the current and the previous part of the filename ('delim', boolean)
   and finally, if desired, a decoding and encoding function ('decoder', 'encoder'). The latter parameters should point via a lambda function to a decoding or encoding method defined in the same class.
 - Finally, the parent class *SmartFilename* can be initiated with the given fields, fields definitions, a padding, a delimiter and a boolean value if en-/decoding should be applied or not.
