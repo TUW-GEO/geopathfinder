@@ -21,13 +21,14 @@ SGRT folder and file name definition.
 
 import os
 
+import datetime as dt
 from datetime import datetime
 from collections import OrderedDict
 
 from geopathfinder.folder_naming import SmartPath
-from geopathfinder.file_naming import SmartFilename
 from geopathfinder.folder_naming import build_smarttree
 from geopathfinder.folder_naming import create_smartpath
+from geopathfinder.file_naming import SmartFilename
 
 
 # Please add here new sensors if they follow the SGRT naming convention.
@@ -43,8 +44,17 @@ class SgrtFilename(SmartFilename):
     SGRT file name definition using SmartFilename class.
     """
 
-    def __init__(self, fields):
+    def __init__(self, fields, convert=False):
+        """
+        Constructor of SgrtFilename class.
 
+        Parameters
+        ----------
+        fields: dict
+            Dictionary specifying the different parts of the filename.
+        convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
+        """
         self.date_format = "%Y%m%d"
         self.time_format = "%H%M%S"
         self.fields = fields.copy()
@@ -55,14 +65,31 @@ class SgrtFilename(SmartFilename):
         else:
             self.single_date = False
             apply_dtime_2 = True
-            # if only daytime and no date is given
-            if self.fields['dtime_2'].year < 1950:
+
+            if isinstance(self.fields['dtime_2'], dt.time) or (self.fields['dtime_2'].year < 1950):
                 self.single_date = True
+
+        if 'dtime_1' in self.fields.keys():
+            if self.single_date:
+                date = self.encode_date(self.fields['dtime_1'])
+                if apply_dtime_2:
+                    time = self.encode_time(self.fields['dtime_2'])
+                else:
+                    time = self.encode_time(self.fields['dtime_1'])
+                self.fields['dtime_1'] = date
+                self.fields['dtime_2'] = time
+            else:
+                self.fields['dtime_1'] = self.encode_date(self.fields['dtime_1'])
+                self.fields['dtime_2'] = self.encode_date(self.fields['dtime_2'])
 
         fields_def = OrderedDict([
                      ('pflag', {'len': 1, 'delim': False}),
-                     ('dtime_1', {'len': 8, 'delim': False}),
-                     ('dtime_2', {'len': 8, 'delim': True}),
+                     ('dtime_1', {'len': 8, 'delim': False,
+                                  'decoder': lambda x: self.decode_date(x),
+                                  'encoder': lambda x: self.encode_date(x)}),
+                     ('dtime_2', {'len': 8, 'delim': True,
+                                  'decoder': lambda x: self.decode_time(x),
+                                  'encoder': lambda x: self.encode_time(x)}),
                      ('var_name', {'len': 9, 'delim': True}),
                      ('mission_id', {'len': 2, 'delim': True}),
                      ('spacecraft_id', {'len': 1, 'delim': False}),
@@ -72,108 +99,221 @@ class SgrtFilename(SmartFilename):
                      ('level', {'len': 1, 'delim': False}),
                      ('pol', {'len': 2, 'delim': False}),
                      ('orbit_direction', {'len': 1, 'delim': False}),
-                     ('relative_orbit', {'len': 3, 'delim': True}),
+                     ('relative_orbit', {'len': 3, 'delim': True,
+                                         'decoder': lambda x: self.decode_rel_orbit(x),
+                                         'encoder': lambda x: self.encode_rel_orbit(x)}),
                      ('workflow_id', {'len': 5, 'delim': True}),
                      ('grid_name', {'len': 6, 'delim': True}),
                      ('tile_name', {'len': 10, 'delim': True})
                     ])
 
-        if 'dtime_1' in self.fields.keys():
-            if self.single_date:
-                date = self.fields['dtime_1'].strftime(self.date_format)
-                if apply_dtime_2:
-                    time = self.fields['dtime_2'].strftime(self.time_format)
-                else:
-                    time = self.fields['dtime_1'].strftime(self.time_format)
-                self.fields['dtime_1'] = date
-                self.fields['dtime_2'] = time
-            else:
-                self.fields['dtime_1'] = self.fields['dtime_1'].strftime(self.date_format)
-                self.fields['dtime_2'] = self.fields['dtime_2'].strftime(self.date_format)
+        super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext='.tif', convert=convert)
 
-        super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext='.tif')
-
-   
     @property
     def stime(self):
-        """start time"""
-        return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_1"]
+        """
+        Start time.
+
+        Returns
+        -------
+        datetime.datetime
+            Start time.
+        """
+        try:
+            return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_1"]
+        except TypeError:
+            return None
 
     @property
     def etime(self):
-        """end time"""
-        return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_2"]
+        """
+        End time.
 
+        Returns
+        -------
+        datetime.datetime
+            End time.
+        """
+        try:
+            return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_2"]
+        except TypeError:
+            return None
+
+    @property
+    def time(self):
+        """
+        Unified time.
+
+        Returns
+        -------
+        datetime.datetime
+            Unified time.
+        """
+        try:
+            if self.single_date:
+                return self.stime
+            else:
+                return self.stime + (self.etime - self.stime) / 2
+        except TypeError:
+            return None
 
     @property
     def product_id(self):
+        """
+        Builds product id from other filename attributes (e.g. 'S1AIWGRDH').
+
+        Returns
+        -------
+        product_id: str
+            Product id consisting of mission id (e.g., 'S1'), spacecraft id (e.g., 'A'), mode id (e.g., 'IW'),
+            product type (e.g., 'GRD') and resolution class (e.g., 'H').
+        """
         try:
-            product_id = "".join([self["mission_id"], self["spacecraft_id"],self["mode_id"],self["product_type"], self["res_class"]])
-        except:
+            product_id = "".join([self["mission_id"], self["spacecraft_id"], self["mode_id"], self["product_type"], self["res_class"]])
+        except TypeError:
             product_id = None
 
         return product_id
 
     @property
     def ftile(self):
-        try:
-            ftile = "_".join([self["grid_name"], self["tile_name"]])
-        except:
-            ftile = None
-        return ftile
-
-
-    def __getitem__(self, key):
         """
-        Get field content.
-
-        Parameters
-        ----------
-        key : str
-            Field name.
+        Builds the full tile name from other filename attributes (e.g. 'EU010M_E048N015T1').
 
         Returns
         -------
-        item : str
-            Item value.
+        ftile: str
+            Full tile name consisting of grid name (e.g., 'EU10M') and tile name (e.g., 'E048N015T1').
         """
-        item = super(SgrtFilename, self).__getitem__(key)
+        try:
+            ftile = "_".join([self["grid_name"], self["tile_name"]])
+        except TypeError:
+            ftile = None
+        return ftile
 
-        if key == 'dtime_1':
-            item = datetime.strptime(item, self.date_format)
-        if key == 'dtime_2':
-            if self.single_date:
-                item = datetime.time(datetime.strptime(item, self.time_format))
-            else:
-                item = datetime.strptime(item, self.date_format)
-
-        return item
-
-
-    def __setitem__(self, key, value):
+    def decode_date(self, string):
         """
-        Set field content.
+        Decodes a string into a datetime.date object. The format is given by the class.
 
         Parameters
         ----------
-        key : str
-            Field name.
-        value : str or datetime
-            Field value.
+        string: str, object
+            String needed to be decoded to a datetime.date object.
 
+        Returns
+        -------
+        datetime.date, object
+            Original object or datetime.date object parsed from the given string.
         """
-        if key == 'dtime_1' and isinstance(value, datetime):
-            value = value.strftime(self.date_format)
-        if key == 'dtime_2' and isinstance(value, datetime):
+        if isinstance(string, str):
+            return datetime.strptime(string, self.date_format).date()
+        else:
+            return string
+
+    def decode_time(self, string):
+        """
+        Decodes a string into a datetime.time/datetime.date object. The format is given by the class and the conversion
+        follows the 'single_date' setting.
+
+        Parameters
+        ----------
+        string: str, object
+            String needed to be decoded to a datetime.time/datetime.date object.
+
+        Returns
+        -------
+        datetime.date, datetime.time, object
+            Original object, datetime.date or datetime.time object parsed from the given string.
+        """
+        if isinstance(string, str):
             if self.single_date:
-                value = value.strftime(self.time_format)
+                return datetime.time(datetime.strptime(string, self.time_format))
             else:
-                value = value.strftime(self.date_format)
+                return self.decode_date(string)
+        else:
+            return string
 
-        super(SgrtFilename, self).__setitem__(key, value)
+    def decode_rel_orbit(self, string):
+        """
+        Decodes a string into an integer.
+
+        Parameters
+        ----------
+        string: str, object
+            String needed to be decoded to an integer.
+
+        Returns
+        -------
+        int, object
+            Original object or integer object parsed from the given string.
+        """
+        if isinstance(string, str):
+            return int(string)
+        else:
+            return string
+
+    def encode_date(self, time_obj):
+        """
+        Encodes a datetime.datetime/datetime.date object into a string. The format is given by the class.
+
+        Parameters
+        ----------
+        time_obj: datetime.datetime, datetime.date or object
+            Datetime object needed to be encoded to a string.
+
+        Returns
+        -------
+        str, object
+            Original object or str object parsed from the given datetime object.
+        """
+        if isinstance(time_obj, (dt.datetime, dt.date, dt.time)):
+            return time_obj.strftime(self.date_format)
+        else:
+            return time_obj
+
+    def encode_time(self, time_obj):
+        """
+        Encodes a datetime.datetime/datetime.date object into a string. The format is given by the class.
+
+        Parameters
+        ----------
+        time_obj: datetime.datetime, datetime.date or object
+            Datetime object needed to be encoded to a string.
+
+        Returns
+        -------
+        str, object
+            Original object or str object parsed from the given datetime object.
+        """
+        if isinstance(time_obj, (dt.datetime, dt.time, dt.date)):
+            if self.single_date:
+                return time_obj.strftime(self.time_format)
+            else:
+                return time_obj.strftime(self.date_format)
+        else:
+            return time_obj
+
+    def encode_rel_orbit(self, relative_orbit):
+        """
+        Encodes a relative orbit number into a string.
+
+        Parameters
+        ----------
+        relative_orbit: int or object
+            Integer needed to be encoded to a string.
+
+        Returns
+        -------
+        str, object
+            Original object or str object parsed from the given integer.
+        """
+        if isinstance(relative_orbit, int):
+            return "{:03d}".format(relative_orbit)
+        else:
+            return relative_orbit
 
 
-def create_sgrt_filename(filename_string):
+def create_sgrt_filename(filename_string, convert=False):
     """
     Creates a SgrtFilename() object from a given string filename
 
@@ -182,6 +322,8 @@ def create_sgrt_filename(filename_string):
     filename_string : str
         filename following the SGRT filename convention.
         e.g. 'M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif'
+    convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
 
     Returns
     -------
@@ -197,14 +339,22 @@ def create_sgrt_filename(filename_string):
         raise ValueError('Given filename_string "{}" does not comply with '
                          'SGRT naming convention!')
 
+    # decode all values from the filename
     dtime_2_format = "%Y%m%d"
+    helper.single_date = False
     if parts[1].endswith('--'):
         dtime_2_format = "%H%M%S--"
+        helper.single_date = True
+
+    helper.time_format = dtime_2_format
+    dtime_1 = helper.decode_date(parts[0][1:])
+    dtime_2 = helper.decode_time(parts[1])
+    relative_orbit = helper.decode_rel_orbit(parts[4])
 
     fields = {
               'pflag': parts[0][0],
-              'dtime_1': datetime.strptime(parts[0][1:], "%Y%m%d"),
-              'dtime_2': datetime.strptime(parts[1], dtime_2_format),
+              'dtime_1': dtime_1,
+              'dtime_2': dtime_2,
               'var_name': parts[2],
               'mission_id': parts[3][0:2],
               'spacecraft_id': parts[3][2:3],
@@ -214,19 +364,19 @@ def create_sgrt_filename(filename_string):
               'level': parts[3][9:10],
               'pol': parts[3][10:12],
               'orbit_direction': parts[3][12:13],
-              'relative_orbit': parts[4],
+              'relative_orbit': relative_orbit,
               'workflow_id': parts[5],
               'grid_name': parts[6],
               'tile_name': parts[7]
              }
 
-    return SgrtFilename(fields)
+    return SgrtFilename(fields, convert=convert)
 
 
 def sgrt_path(root, mode=None, group=None, datalog=None,
               product=None, wflow=None, grid=None, tile=None, var=None,
               qlook=True, make_dir=False):
-    '''
+    """
     Realisation of the full SGRT folder naming convention, yielding a single
     SmartPath.
 
@@ -260,7 +410,7 @@ def sgrt_path(root, mode=None, group=None, datalog=None,
     -------
     SmartPath
         Object for the path
-    '''
+    """
 
     # check the sensor folder name
     if root.split(os.sep)[-1] not in allowed_sensor_dirs:
@@ -315,7 +465,7 @@ def sgrt_path(root, mode=None, group=None, datalog=None,
 
 def sgrt_tree(root, target_level=None, register_file_pattern=None):
 
-    '''
+    """
     Realisation of the full SGRT folder naming convention, yielding a
     SmartTree(), reflecting all subfolders as SmartPath()
 
@@ -341,7 +491,7 @@ def sgrt_tree(root, target_level=None, register_file_pattern=None):
     -------
     SmartTree
         Object for the SGRT tree.
-    '''
+    """
 
     # defining the hierarchy
     hierarchy = ['mode', 'group','datalog',
@@ -358,7 +508,6 @@ def sgrt_tree(root, target_level=None, register_file_pattern=None):
                          'not a valid SGRT folder!'.format(root))
 
     return sgrt_tree
-
 
 
 if __name__ == '__main__':
