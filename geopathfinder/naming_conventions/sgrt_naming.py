@@ -82,9 +82,6 @@ class SgrtFilename(SmartFilename):
                 self.fields['dtime_1'] = self.encode_date(self.fields['dtime_1'])
                 self.fields['dtime_2'] = self.encode_date(self.fields['dtime_2'])
 
-        if 'relative_orbit' in self.fields.keys():
-            self.fields['relative_orbit'] = self.encode_rel_orbit(self.fields['relative_orbit'])
-
         fields_def = OrderedDict([
                      ('pflag', {'len': 1, 'delim': False}),
                      ('dtime_1', {'len': 8, 'delim': False,
