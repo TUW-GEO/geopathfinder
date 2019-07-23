@@ -9,7 +9,12 @@ A package for creating, quering, and searching in data structures holding geo da
 Description
 ===========
 
-Some general stuff goes here ...
+This packages aims to provide a rich toolbox for efficient, quick, and precise handling of filenames and folder structures for geo-data, most conviniently when combined with grid objects as e.g. the https://github.com/TUW-GEO/Equi7Grid.
+
+With pre-defined sets comprising string-definitions, folder path logics, and filename en-/decoders, a variety of file/folder naming conventions can be implemented.
+
+The base classes SmartPath() and SmartTree() comprise also functions for file search and folder(-tree) volume determination.
+
 
 Adding a new filenaming convention
 --------------------------------
