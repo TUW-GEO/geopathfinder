@@ -17,7 +17,7 @@ The base classes SmartPath() and SmartTree() comprise also functions for file se
 
 
 Adding a new filenaming convention
---------------------------------
+----------------------------------
 In general, please follow the code and test guidelines of existing naming conventions.
 The following description aims to show how to implement a new naming convention:
 
