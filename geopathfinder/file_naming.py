@@ -60,6 +60,13 @@ class SmartFilename(object):
         self.obj = self.__init_filename_obj()
         self.full_string = self._build_fn()
 
+    @classmethod
+    def from_filename(cls, filename_str, fields_def, delimiter="_"):
+        fields = dict()
+        for field_def in fields_def:
+            if fields_def['len'] is not None:
+                pass
+
     def __init_filename_obj(self):
         """
         Initialises the class 'FilenameObj' to set all filename attributes as class variables.

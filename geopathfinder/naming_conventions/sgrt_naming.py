@@ -20,6 +20,7 @@ SGRT folder and file name definition.
 """
 
 import os
+import copy
 
 import datetime as dt
 from datetime import datetime
@@ -43,6 +44,25 @@ class SgrtFilename(SmartFilename):
     """
     SGRT file name definition using SmartFilename class.
     """
+
+    fields_def = OrderedDict([
+        ('pflag', {'len': 1, 'delim': False}),
+        ('dtime_1', {'len': 8, 'delim': False}),
+        ('dtime_2', {'len': 8, 'delim': True}),
+        ('var_name', {'len': 9, 'delim': True}),
+        ('mission_id', {'len': 2, 'delim': True}),
+        ('spacecraft_id', {'len': 1, 'delim': False}),
+        ('mode_id', {'len': 2, 'delim': False}),
+        ('product_type', {'len': 3, 'delim': False}),
+        ('res_class', {'len': 1, 'delim': False}),
+        ('level', {'len': 1, 'delim': False}),
+        ('pol', {'len': 2, 'delim': False}),
+        ('orbit_direction', {'len': 1, 'delim': False}),
+        ('relative_orbit', {'len': 3, 'delim': True}),
+        ('workflow_id', {'len': 5, 'delim': True}),
+        ('grid_name', {'len': 6, 'delim': True}),
+        ('tile_name', {'len': 10, 'delim': True})
+    ])
 
     def __init__(self, fields, convert=False):
         """
@@ -82,32 +102,19 @@ class SgrtFilename(SmartFilename):
                 self.fields['dtime_1'] = self.encode_date(self.fields['dtime_1'])
                 self.fields['dtime_2'] = self.encode_date(self.fields['dtime_2'])
 
-        fields_def = OrderedDict([
-                     ('pflag', {'len': 1, 'delim': False}),
-                     ('dtime_1', {'len': 8, 'delim': False,
-                                  'decoder': lambda x: self.decode_date(x),
-                                  'encoder': lambda x: self.encode_date(x)}),
-                     ('dtime_2', {'len': 8, 'delim': True,
-                                  'decoder': lambda x: self.decode_time(x),
-                                  'encoder': lambda x: self.encode_time(x)}),
-                     ('var_name', {'len': 9, 'delim': True}),
-                     ('mission_id', {'len': 2, 'delim': True}),
-                     ('spacecraft_id', {'len': 1, 'delim': False}),
-                     ('mode_id', {'len': 2, 'delim': False}),
-                     ('product_type', {'len': 3, 'delim': False}),
-                     ('res_class', {'len': 1, 'delim': False}),
-                     ('level', {'len': 1, 'delim': False}),
-                     ('pol', {'len': 2, 'delim': False}),
-                     ('orbit_direction', {'len': 1, 'delim': False}),
-                     ('relative_orbit', {'len': 3, 'delim': True,
-                                         'decoder': lambda x: self.decode_rel_orbit(x),
-                                         'encoder': lambda x: self.encode_rel_orbit(x)}),
-                     ('workflow_id', {'len': 5, 'delim': True}),
-                     ('grid_name', {'len': 6, 'delim': True}),
-                     ('tile_name', {'len': 10, 'delim': True})
-                    ])
+        fields_def_ext = copy.deepcopy(SgrtFilename.fields_def)
+        fields_def_ext['dtime_1']['decoder'] = lambda x: self.decode_date(x)
+        fields_def_ext['dtime_1']['encoder'] = lambda x: self.encode_date(x)
+        fields_def_ext['dtime_2']['decoder'] = lambda x: self.decode_time(x)
+        fields_def_ext['dtime_2']['encoder'] = lambda x: self.encode_time(x)
+        fields_def_ext['relative_orbit']['decoder'] = lambda x: self.decode_rel_orbit(x)
+        fields_def_ext['relative_orbit']['encoder'] = lambda x: self.encode_rel_orbit(x)
 
-        super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext='.tif', convert=convert)
+        super(SgrtFilename, self).__init__(self.fields, fields_def_ext, pad='-', ext='.tif', convert=convert)
+
+    @classmethod
+    def from_filename(cls, filename_str):
+        return super().from_filename(filename_str, SgrtFilename.fields_def)
 
     @property
     def stime(self):
