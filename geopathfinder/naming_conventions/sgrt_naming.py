@@ -44,7 +44,7 @@ class SgrtFilename(SmartFilename):
     SGRT file name definition using SmartFilename class.
     """
 
-    def __init__(self, fields, convert=False):
+    def __init__(self, fields, ext='.tif', convert=False):
         """
         Constructor of SgrtFilename class.
 
@@ -52,9 +52,12 @@ class SgrtFilename(SmartFilename):
         ----------
         fields: dict
             Dictionary specifying the different parts of the filename.
+        ext : str, optional
+            File name extension (default is '.tif').
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
         """
+
         self.date_format = "%Y%m%d"
         self.time_format = "%H%M%S"
         self.fields = fields.copy()
@@ -107,7 +110,7 @@ class SgrtFilename(SmartFilename):
                      ('tile_name', {'len': 10, 'delim': True})
                     ])
 
-        super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext='.tif', convert=convert)
+        super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext=ext, convert=convert)
 
     @property
     def stime(self):
@@ -313,7 +316,7 @@ class SgrtFilename(SmartFilename):
             return relative_orbit
 
 
-def create_sgrt_filename(filename_string, convert=False):
+def create_sgrt_filename(filename_string, ext='.tif', convert=False):
     """
     Creates a SgrtFilename() object from a given string filename
 
@@ -322,6 +325,8 @@ def create_sgrt_filename(filename_string, convert=False):
     filename_string : str
         filename following the SGRT filename convention.
         e.g. 'M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif'
+    ext : str, optional
+            File name extension (default is '.tif').
     convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
 
@@ -331,7 +336,7 @@ def create_sgrt_filename(filename_string, convert=False):
 
     """
 
-    helper = SgrtFilename({})
+    helper = SgrtFilename({}, ext=ext)
     filename_string = filename_string.replace(helper.ext, '')
     parts = filename_string.split(helper.delimiter)
 
@@ -370,7 +375,7 @@ def create_sgrt_filename(filename_string, convert=False):
               'tile_name': parts[7]
              }
 
-    return SgrtFilename(fields, convert=convert)
+    return SgrtFilename(fields, ext=ext, convert=convert)
 
 
 def sgrt_path(root, mode=None, group=None, datalog=None,
