@@ -37,7 +37,7 @@ class BMonFilename(SmartFilename):
     BMon file name definition using SmartFilename class.
     """
 
-    def __init__(self, fields, convert=False):
+    def __init__(self, fields, ext='.nc', convert=False):
         """
         Constructor of BMonFilename class.
 
@@ -45,6 +45,8 @@ class BMonFilename(SmartFilename):
         ----------
         fields: dict
             Dictionary specifying the different parts of the filename.
+        ext : str, optional
+            File name extension (default is '.nc').
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
         """
@@ -61,7 +63,7 @@ class BMonFilename(SmartFilename):
                     ('version', {'len': 2, 'delim': True})
                     ])
 
-        super(BMonFilename, self).__init__(self.fields, fields_def, pad='-', ext='.nc', convert=convert)
+        super(BMonFilename, self).__init__(self.fields, fields_def, pad='-', ext=ext, convert=convert)
 
     def decode_timestamp(self, string):
         """
@@ -104,7 +106,7 @@ class BMonFilename(SmartFilename):
             return time_obj
 
 
-def create_bmon_filename(filename_string, convert=False):
+def create_bmon_filename(filename_string, ext='.nc', convert=False):
     """
     Creates a BMonFilename() object from a given string filename
 
@@ -113,6 +115,8 @@ def create_bmon_filename(filename_string, convert=False):
     filename_string : str
         filename following the BMon filename convention.
         e.g. 'BMON_DM_ENSEMBLE_500m_20160101120000_v1.nc'
+    ext : str, optional
+            File name extension (default is '.nc').
     convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
 
@@ -133,7 +137,7 @@ def create_bmon_filename(filename_string, convert=False):
               'version': parts[-1]
              }
 
-    return BMonFilename(fields, convert=convert)
+    return BMonFilename(fields, ext=ext, convert=convert)
 
 if __name__ == '__main__':
     pass
