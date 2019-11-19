@@ -24,6 +24,32 @@ class FilenameObj(object):
         pass
 
 
+class SmartFilenamePart(object):
+    def __init__(self, arg, start=0, length=None, delimiter="_", pad="-", decoder=None, encoder=None):
+        self.start = start
+        self.delimiter = delimiter
+        self.pad = pad
+        decoder = lambda x: x if decoder is None else decoder
+        encoder = lambda x: x if encoder is None else encoder
+        self.str_value = encoder(arg)
+        self.obj_value = decoder(arg.strip(pad))
+        self.length = length if length is not None else len(self.str_value)
+        self.end = start + length
+
+    def __repr__(self):
+        """
+        Returns the string representation of the class.
+
+        Returns
+        -------
+        str
+            String representation of the class.
+        """
+        return self.str_value.ljust(self.length, self.pad)
+
+    def __add__(self, other):
+        return str(self) + self.delimiter + str(other)
+
 class SmartFilename(object):
 
     """
@@ -61,11 +87,19 @@ class SmartFilename(object):
         self.full_string = self._build_fn()
 
     @classmethod
-    def from_filename(cls, filename_str, fields_def, delimiter="_"):
+    def from_filename(cls, filename_str, fields_def, ext=None, pad="-", delimiter="_"):
+
         fields = dict()
-        for field_def in fields_def:
-            if fields_def['len'] is not None:
-                pass
+        fn_pos = 0
+        for key, value in fields_def.iteritems():
+            if value['delim']:
+                fn_pos += 1
+            if value['len'] is not None:
+                fields[key] = filename_str[fn_pos:fn_pos + value['len']]
+            else:
+
+
+        cls(fields, fields_def, )
 
     def __init_filename_obj(self):
         """
@@ -115,26 +149,17 @@ class SmartFilename(object):
             Filled file name.
 
         """
-        filename = ''
+
+        filename_parts = []
         for name, keys in self.fields_def.items():
-
-            if not keys:
-                continue
-
-            length = keys['len'] if keys['len'] else 1
-            delimiter = self.delimiter if keys['delim'] else ''
-
-            if name in self.fields:
-                value = self.__encode(name, self.fields[name])
-                if filename == '':
-                    filename = value.ljust(length, self.pad)
-                else:
-                    filename += delimiter + value.ljust(length, self.pad)
+            if name not in self.fields:
+                elem = ""
             else:
-                if filename == '':
-                    filename = self.pad * length
-                else:
-                    filename += delimiter + self.pad * length
+                elem = self.fields[name]
+
+            smart_fn_part = SmartFilenamePart(elem, delimiter=self.delimiter, pad=self.pad, **keys)
+
+        filename = sum(filename_parts)
 
         if self.ext is not None:
             filename += self.ext
@@ -235,54 +260,54 @@ class SmartFilename(object):
         """
         return self._build_fn()
 
-    def __decode(self, key, value):
-        """
-        Decodes a certain value (str -> object) specified by the given key if an entry 'decoder' is available.
-
-        Parameters
-        ----------
-        key : str
-            Name of the field.
-        value: object
-            Value of the field.
-
-        Returns
-        -------
-        str
-            Decoded or original value.
-        """
-        if self.fields_def[key] and 'decoder' in self.fields_def[key].keys():
-            decoder = self.fields_def[key]['decoder']
-            try:
-                dec_value = decoder(value)
-                return dec_value
-            except:
-                return value
-        else:
-            return value
-
-    def __encode(self, key, value):
-        """
-        Encodes a certain value (object -> str) specified by the given key if an entry 'encoder' is available.
-
-        Parameters
-        ----------
-        key : str
-            Name of the field.
-        value: object
-            Value of the field.
-
-        Returns
-        -------
-        str
-            Encoded or original value.
-        """
-        if (not isinstance(value, str)) and self.fields_def[key] and ('encoder' in self.fields_def[key].keys()):
-            encoder = self.fields_def[key]['encoder']
-            try:
-                enc_value = encoder(value)
-                return enc_value
-            except:
-                return value
-        else:
-            return value
+    # def __decode(self, key, value):
+    #     """
+    #     Decodes a certain value (str -> object) specified by the given key if an entry 'decoder' is available.
+    #
+    #     Parameters
+    #     ----------
+    #     key : str
+    #         Name of the field.
+    #     value: object
+    #         Value of the field.
+    #
+    #     Returns
+    #     -------
+    #     str
+    #         Decoded or original value.
+    #     """
+    #     if self.fields_def[key] and 'decoder' in self.fields_def[key].keys():
+    #         decoder = self.fields_def[key]['decoder']
+    #         try:
+    #             dec_value = decoder(value)
+    #             return dec_value
+    #         except:
+    #             return value
+    #     else:
+    #         return value
+    #
+    # def __encode(self, key, value):
+    #     """
+    #     Encodes a certain value (object -> str) specified by the given key if an entry 'encoder' is available.
+    #
+    #     Parameters
+    #     ----------
+    #     key : str
+    #         Name of the field.
+    #     value: object
+    #         Value of the field.
+    #
+    #     Returns
+    #     -------
+    #     str
+    #         Encoded or original value.
+    #     """
+    #     if (not isinstance(value, str)) and self.fields_def[key] and ('encoder' in self.fields_def[key].keys()):
+    #         encoder = self.fields_def[key]['encoder']
+    #         try:
+    #             enc_value = encoder(value)
+    #             return enc_value
+    #         except:
+    #             return value
+    #     else:
+    #         return value
