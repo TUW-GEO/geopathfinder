@@ -23,7 +23,7 @@ from geopathfinder.file_naming import SmartFilename
 class TestSmartFilename(unittest.TestCase):
 
     def setUp(self):
-        self.fields_def = OrderedDict([('pflag', {'len': 1, 'delim': True}),
+        self.fields_def = OrderedDict([('pflag', {'len': 1}),
                                        ('dtime_1', {'len': 14})])
 
     def test_build_filename_wihout_ext(self):
@@ -33,7 +33,7 @@ class TestSmartFilename(unittest.TestCase):
         fields = {'pflag': 'M', 'dtime_1': '20180101120000'}
         smrtf = SmartFilename(fields, self.fields_def)
 
-        self.assertEqual(smrtf.__repr__(), 'M_20180101120000')
+        self.assertEqual(str(smrtf), 'M_20180101120000')
 
     def test_build_filename_with_ext(self):
         """
@@ -42,7 +42,7 @@ class TestSmartFilename(unittest.TestCase):
         fields = {'pflag': 'M', 'dtime_1': '20180101120000'}
         smrtf = SmartFilename(fields, self.fields_def, ext='.tif')
 
-        self.assertEqual(smrtf.__repr__(), 'M_20180101120000.tif')
+        self.assertEqual(str(smrtf), 'M_20180101120000.tif')
 
     def test_init_undefined_field(self):
         """
