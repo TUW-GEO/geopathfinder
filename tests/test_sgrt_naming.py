@@ -17,15 +17,13 @@
 
 import os
 import unittest
+import logging
 from datetime import datetime
 from datetime import time
-
-import logging
 
 from geopathfinder.naming_conventions.sgrt_naming import SgrtFilename
 from geopathfinder.naming_conventions.sgrt_naming import sgrt_tree
 from geopathfinder.naming_conventions.sgrt_naming import sgrt_path
-from geopathfinder.naming_conventions.sgrt_naming import create_sgrt_filename
 
 logging.basicConfig(level=logging.INFO)
 
@@ -49,10 +47,10 @@ class TestSgrtFilename(unittest.TestCase):
         self.sgrt_fn3 = SgrtFilename(fields)
 
         fn = 'M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif'
-        self.sgrt_fn4 = create_sgrt_filename(fn, convert=True)
+        self.sgrt_fn4 = SgrtFilename.from_filename(fn, convert=True)
 
         fn = 'M20170725_20181225_TMENSIG40_ASAWS---M1--D_146_A0104_EU500M_E048N012T6.tif'
-        self.sgrt_fn5 = create_sgrt_filename(fn)
+        self.sgrt_fn5 = SgrtFilename.from_filename(fn)
 
     def test1_build_sgrt_filename(self):
         """
@@ -61,7 +59,7 @@ class TestSgrtFilename(unittest.TestCase):
         """
         fn = ('-20080101_20090202_SSM------_-------------_---_-----_------_----------.tif')
 
-        self.assertEqual(self.sgrt_fn.__repr__(), fn)
+        self.assertEqual(str(self.sgrt_fn), fn)
 
     def test2_get_n_set_date(self):
         """
@@ -130,35 +128,35 @@ class TestSgrtFilename(unittest.TestCase):
         """
 
         # testing for single datetime
-        self.assertEqual(self.sgrt_fn4.get_field('pflag'), 'M')
-        self.assertEqual(self.sgrt_fn4.get_field('dtime_1'), datetime(2017, 7, 25).date())
-        self.assertEqual(self.sgrt_fn4.get_field('dtime_2'), time(16, 50, 4))
-        self.assertEqual(self.sgrt_fn4.get_field('var_name'), 'SIG0')
-        self.assertEqual(self.sgrt_fn4.get_field('mission_id'), 'S1')
-        self.assertEqual(self.sgrt_fn4.get_field('spacecraft_id'), 'B')
-        self.assertEqual(self.sgrt_fn4.get_field('mode_id'), 'IW')
-        self.assertEqual(self.sgrt_fn4.get_field('product_type'), 'GRD')
-        self.assertEqual(self.sgrt_fn4.get_field('res_class'), 'H')
-        self.assertEqual(self.sgrt_fn4.get_field('level'), '1')
-        self.assertEqual(self.sgrt_fn4.get_field('pol'), 'VV')
-        self.assertEqual(self.sgrt_fn4.get_field('orbit_direction'), 'A')
-        self.assertEqual(self.sgrt_fn4.get_field('relative_orbit'), 146)
-        self.assertEqual(self.sgrt_fn4.get_field('workflow_id'), 'A0104')
-        self.assertEqual(self.sgrt_fn4.get_field('grid_name'), 'EU500M')
-        self.assertEqual(self.sgrt_fn4.get_field('tile_name'), 'E048N012T6')
+        self.assertEqual(self.sgrt_fn4['pflag'], 'M')
+        self.assertEqual(self.sgrt_fn4['dtime_1'], datetime(2017, 7, 25).date())
+        self.assertEqual(self.sgrt_fn4['dtime_2'], time(16, 50, 4))
+        self.assertEqual(self.sgrt_fn4['var_name'], 'SIG0')
+        self.assertEqual(self.sgrt_fn4['mission_id'], 'S1')
+        self.assertEqual(self.sgrt_fn4['spacecraft_id'], 'B')
+        self.assertEqual(self.sgrt_fn4['mode_id'], 'IW')
+        self.assertEqual(self.sgrt_fn4['product_type'], 'GRD')
+        self.assertEqual(self.sgrt_fn4['res_class'], 'H')
+        self.assertEqual(self.sgrt_fn4['level'], '1')
+        self.assertEqual(self.sgrt_fn4['pol'], 'VV')
+        self.assertEqual(self.sgrt_fn4['orbit_direction'], 'A')
+        self.assertEqual(self.sgrt_fn4['relative_orbit'], 146)
+        self.assertEqual(self.sgrt_fn4['workflow_id'], 'A0104')
+        self.assertEqual(self.sgrt_fn4['grid_name'], 'EU500M')
+        self.assertEqual(self.sgrt_fn4['tile_name'], 'E048N012T6')
         self.assertEqual(self.sgrt_fn4.ext, '.tif')
 
         # testing for empty fields and two dates
-        self.assertEqual(self.sgrt_fn5.get_field('dtime_1'), '20170725')
-        self.assertEqual(self.sgrt_fn5.get_field('dtime_2'), '20181225')
-        self.assertEqual(self.sgrt_fn5.get_field('var_name'), 'TMENSIG40')
-        self.assertEqual(self.sgrt_fn5.get_field('mission_id'), 'AS')
-        self.assertEqual(self.sgrt_fn5.get_field('spacecraft_id'), 'A')
-        self.assertEqual(self.sgrt_fn5.get_field('mode_id'), 'WS')
-        self.assertEqual(self.sgrt_fn5.get_field('product_type'), '')
-        self.assertEqual(self.sgrt_fn5.get_field('res_class'), 'M')
-        self.assertEqual(self.sgrt_fn5.get_field('level'), '1')
-        self.assertEqual(self.sgrt_fn5.get_field('pol'), '')
+        self.assertEqual(self.sgrt_fn5['dtime_1'], '20170725')
+        self.assertEqual(self.sgrt_fn5['dtime_2'], '20181225')
+        self.assertEqual(self.sgrt_fn5['var_name'], 'TMENSIG40')
+        self.assertEqual(self.sgrt_fn5['mission_id'], 'AS')
+        self.assertEqual(self.sgrt_fn5['spacecraft_id'], 'A')
+        self.assertEqual(self.sgrt_fn5['mode_id'], 'WS')
+        self.assertEqual(self.sgrt_fn5['product_type'], '')
+        self.assertEqual(self.sgrt_fn5['res_class'], 'M')
+        self.assertEqual(self.sgrt_fn5['level'], '1')
+        self.assertEqual(self.sgrt_fn5['pol'], '')
 
     def test5_build_ascat_ssm_fname(self):
         """
@@ -186,7 +184,7 @@ class TestSgrtFilename(unittest.TestCase):
 
         should = 'D20331122_112233--_SSM------_ASCSMO12NAXXD_---_C0102_EU500M_E012N024T6.tif'
         fn = SgrtFilename(xfields)
-        self.assertEqual(fn.full_string, should)
+        self.assertEqual(str(fn), should)
 
 
 class TestSgrtPath(unittest.TestCase):

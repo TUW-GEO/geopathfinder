@@ -14,17 +14,16 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import logging
 import unittest
 from datetime import datetime
 
-import logging
-
-from geopathfinder.naming_conventions.eodr_naming import eoDRFilename, create_eodr_filename
+from geopathfinder.naming_conventions.eodr_naming import EODRFilename
 
 logging.basicConfig(level=logging.INFO)
 
 
-class TesteoDRFilename(unittest.TestCase):
+class TestEODRFilename(unittest.TestCase):
 
     def setUp(self):
         self.id_1 = "123456"
@@ -34,16 +33,16 @@ class TesteoDRFilename(unittest.TestCase):
 
         fields_1 = {'id': self.id_1, 'dt_1': self.dt_1, 'band': 'B1'}
 
-        self.eodr_fn_1 = eoDRFilename(fields_1, convert=True)
+        self.eodr_fn_1 = EODRFilename(fields_1, convert=True)
 
         fields_2 = {'id': self.id_2, 'dt_1':  self.dt_1, 'dt_2': self.dt_2, 'band': 'B12', 'd1': '45'}
 
-        self.eodr_fn_2 = eoDRFilename(fields_2, convert=True)
+        self.eodr_fn_2 = EODRFilename(fields_2, convert=True)
 
         fn = '123456------_20181220T232333_---------------_B5_34_aug.vrt'
-        self.eodr_fn_3 = create_eodr_filename(fn, convert=True)
+        self.eodr_fn_3 = EODRFilename.from_filename(fn, convert=True)
 
-        self.eodr_fn_4 = create_eodr_filename(fn)
+        self.eodr_fn_4 = EODRFilename.from_filename(fn)
 
     def test_build_eodr_filename(self):
         """
@@ -74,21 +73,21 @@ class TesteoDRFilename(unittest.TestCase):
         """
 
         # testing for decoded types
-        self.assertEqual(self.eodr_fn_3.get_field('id'), '123456')
-        self.assertEqual(self.eodr_fn_3.get_field('dt_1'), datetime(2018, 12, 20, 23, 23, 33))
-        self.assertEqual(self.eodr_fn_3.get_field('dt_2'), '')
-        self.assertEqual(self.eodr_fn_3.get_field('band'), 'B5')
-        self.assertEqual(self.eodr_fn_3.get_field('d1'), '34')
-        self.assertEqual(self.eodr_fn_3.get_field('d2'), 'aug')
+        self.assertEqual(self.eodr_fn_3['id'], '123456')
+        self.assertEqual(self.eodr_fn_3['dt_1'], datetime(2018, 12, 20, 23, 23, 33))
+        self.assertEqual(self.eodr_fn_3['dt_2'], '')
+        self.assertEqual(self.eodr_fn_3['band'], 'B5')
+        self.assertEqual(self.eodr_fn_3['d1'], '34')
+        self.assertEqual(self.eodr_fn_3['d2'], 'aug')
         self.assertEqual(self.eodr_fn_3.ext, '.vrt')
 
         # testing for string types
-        self.assertEqual(self.eodr_fn_4.get_field('id'), '123456')
-        self.assertEqual(self.eodr_fn_4.get_field('dt_1'), '20181220T232333')
-        self.assertEqual(self.eodr_fn_4.get_field('dt_2'), '')
-        self.assertEqual(self.eodr_fn_4.get_field('band'), 'B5')
-        self.assertEqual(self.eodr_fn_4.get_field('d1'), '34')
-        self.assertEqual(self.eodr_fn_4.get_field('d2'), 'aug')
+        self.assertEqual(self.eodr_fn_4['id'], '123456')
+        self.assertEqual(self.eodr_fn_4['dt_1'], '20181220T232333')
+        self.assertEqual(self.eodr_fn_4['dt_2'], '')
+        self.assertEqual(self.eodr_fn_4['band'], 'B5')
+        self.assertEqual(self.eodr_fn_4['d1'], '34')
+        self.assertEqual(self.eodr_fn_4['d2'], 'aug')
         self.assertEqual(self.eodr_fn_4.ext, '.vrt')
 
 

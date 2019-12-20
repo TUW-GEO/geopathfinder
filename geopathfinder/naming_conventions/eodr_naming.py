@@ -19,6 +19,8 @@ eoDR file name definition.
 
 """
 
+import copy
+import os
 from datetime import datetime
 from collections import OrderedDict
 
@@ -26,11 +28,20 @@ from collections import OrderedDict
 from geopathfinder.file_naming import SmartFilename
 
 
-class eoDRFilename(SmartFilename):
+class EODRFilename(SmartFilename):
 
     """
     eoDataReaders file name definition using SmartFilename class.
     """
+
+    fields_def = OrderedDict([
+        ('id', {'len': 12}),
+        ('dt_1', {'len': 15}),
+        ('dt_2', {'len': 15}),
+        ('band', {})
+    ])
+    pad = "-"
+    delimiter = "_"
 
     def __init__(self, fields, ext='.vrt', convert=False):
         """
@@ -46,25 +57,52 @@ class eoDRFilename(SmartFilename):
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
         """
         self.dt_format = "%Y%m%dT%H%M%S"
-        self.fields = fields.copy()
+        fields = fields.copy()
 
-        fields_def = OrderedDict([
-                     ('id', {'len': 12, 'delim': True}),
-                     ('dt_1', {'len': 15, 'delim': True,
-                                  'decoder': lambda x: self.decode_datetime(x),
-                                  'encoder': lambda x: self.encode_datetime(x)}),
-                     ('dt_2', {'len': 15, 'delim': True,
-                                  'decoder': lambda x: self.decode_datetime(x),
-                                  'encoder': lambda x: self.encode_datetime(x)}),
-                     ('band', {'len': None, 'delim': True, 'encoder': lambda x: str(x)})
-                    ])
+        fields_def_ext = copy.deepcopy(EODRFilename.fields_def)
+        fields_def_ext['dt_1']['decoder'] = lambda x: self.decode_datetime(x)
+        fields_def_ext['dt_1']['encoder'] = lambda x: self.encode_datetime(x)
+        fields_def_ext['dt_2']['decoder'] = lambda x: self.decode_datetime(x)
+        fields_def_ext['dt_2']['encoder'] = lambda x: self.encode_datetime(x)
+        fields_def_ext['band']['encoder'] = lambda x: str(x)
 
-        fields_def_keys = list(fields_def.keys())
+        fields_def_keys = list(fields_def_ext.keys())
         for key in fields.keys():
             if key not in fields_def_keys:
-                fields_def[key] = {'len': None, 'delim': True}
+                fields_def_ext[key] = {}
 
-        super(eoDRFilename, self).__init__(self.fields, fields_def, pad='-', ext=ext, convert=convert)
+        super(EODRFilename, self).__init__(fields, fields_def_ext, delimiter=EODRFilename.delimiter,
+                                           pad=EODRFilename.pad, ext=ext, convert=convert)
+
+    @classmethod
+    def from_filename(cls, filename_str, convert=False):
+        """
+        Converts a filename given as a string into an EODRFilename class object.
+
+        Parameters
+        ----------
+        filename_str : str
+            Filename without any paths (e.g., "123456------_20181220T232333_---------------_B5_34_aug.vrt").
+        convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
+
+        Returns
+        -------
+        EODRFilename
+            Class representing an EODR filename.
+        """
+
+        fn_parts = os.path.splitext(os.path.basename(filename_str))[0].split(EODRFilename.delimiter)
+        fields_def_ext = copy.deepcopy(EODRFilename.fields_def)
+        fields_def_ext['band']['len'] = len(fn_parts[3])  # get length of the band in the filename
+        # if the filename consists of more than 4 parts, additional "dimensions" are added to the fields dictionary
+        if len(fn_parts) > 4:
+            for i, fn_part in enumerate(fn_parts[4:]):
+                key = 'd' + str(i + 1)
+                fields_def_ext[key] = {'len': len(fn_part)}
+
+        return super().from_filename(filename_str, fields_def_ext, pad=EODRFilename.pad,
+                                     delimiter=EODRFilename.delimiter, convert=convert)
 
     @property
     def stime(self):
@@ -139,41 +177,6 @@ class eoDRFilename(SmartFilename):
             return time_obj.strftime(self.dt_format)
         else:
             return time_obj
-
-
-def create_eodr_filename(filename_string, convert=False):
-    """
-    Creates a eoDRFilename() object from a given string filename
-
-    Parameters
-    ----------
-    filename_string : str
-        filename following the eoDR filename convention.
-        e.g. 'c29cfaab80e2_20170517T171434_---------------_eo_array_contains.vrt'
-    convert: bool, optional
-            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
-
-    Returns
-    -------
-    eoDRFilename
-    """
-    helper = eoDRFilename({})
-    filename_string = filename_string.replace(helper.ext, '')
-    parts = filename_string.split(helper.delimiter)
-
-    fields = {'id': parts[0],
-              'dt_1': parts[1],
-              'dt_2': parts[2],
-              'band': parts[3]
-             }
-
-    if len(parts) > 4:  # if the filename consists of more than 4 parts, additional "dimensions" are added to the fields dictionary
-        for i, part in enumerate(parts[4:]):
-            key = 'd' + str(i+1)
-            fields[key] = part
-
-    return eoDRFilename(fields, convert=convert)
-
 
 if __name__ == '__main__':
     pass
