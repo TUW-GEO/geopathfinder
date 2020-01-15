@@ -52,6 +52,9 @@ class TestSgrtFilename(unittest.TestCase):
         fn = 'M20170725_20181225_TMENSIG40_ASAWS---M1--D_146_A0104_EU500M_E048N012T6.tif'
         self.sgrt_fn5 = SgrtFilename.from_filename(fn)
 
+        fn = 'M20170725_20181225_TMENSIG40_ASAWS---M1--D_---_A0104_EU500M_E048N012T6.tif'
+        self.sgrt_fn6 = SgrtFilename.from_filename(fn, convert=True)
+
     def test1_build_sgrt_filename(self):
         """
         Test building SGRT file name.
@@ -157,6 +160,9 @@ class TestSgrtFilename(unittest.TestCase):
         self.assertEqual(self.sgrt_fn5['res_class'], 'M')
         self.assertEqual(self.sgrt_fn5['level'], '1')
         self.assertEqual(self.sgrt_fn5['pol'], '')
+
+        # testing for empty relative orbit field
+        self.assertEqual(self.sgrt_fn6['relative_orbit'], None)
 
     def test5_build_ascat_ssm_fname(self):
         """

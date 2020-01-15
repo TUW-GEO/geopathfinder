@@ -14,12 +14,11 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import logging
 import unittest
 from datetime import datetime
 
-import logging
-
-from geopathfinder.naming_conventions.bmon_naming import BMonFilename, create_bmon_filename
+from geopathfinder.naming_conventions.bmon_naming import BMonFilename
 
 logging.basicConfig(level=logging.INFO)
 
@@ -44,9 +43,9 @@ class TestBMonFilename(unittest.TestCase):
         self.bmon_fn_2 = BMonFilename(fields_2, convert=True)
 
         fn = "BMON_DM_ENSEMBLE_500m_20160101120000_v1.nc"
-        self.bmon_fn_3 = create_bmon_filename(fn, convert=True)
+        self.bmon_fn_3 = BMonFilename.from_filename(fn, convert=True)
 
-        self.bmon_fn_4 = create_bmon_filename(fn)
+        self.bmon_fn_4 = BMonFilename.from_filename(fn, convert=False)
 
     def test_build_bmon_filename(self):
         """
@@ -77,21 +76,20 @@ class TestBMonFilename(unittest.TestCase):
         """
 
         # testing for decoded types
-        self.assertEqual(self.bmon_fn_3.get_field('var_name'), self.var_name)
-        self.assertEqual(self.bmon_fn_3.get_field('sres'), '500m')
-        self.assertEqual(self.bmon_fn_3.get_field('timestamp'), self.timestamp_1)
-        self.assertEqual(self.bmon_fn_3.get_field('version'), 'v1')
+        self.assertEqual(self.bmon_fn_3['var_name'], self.var_name)
+        self.assertEqual(self.bmon_fn_3['sres'], '500m')
+        self.assertEqual(self.bmon_fn_3['timestamp'], self.timestamp_1)
+        self.assertEqual(self.bmon_fn_3['version'], 'v1')
         self.assertEqual(self.bmon_fn_3.ext, '.nc')
 
         # testing for string types
-        self.assertEqual(self.bmon_fn_4.get_field('var_name'), self.var_name)
-        self.assertEqual(self.bmon_fn_4.get_field('sres'), '500m')
-        self.assertEqual(self.bmon_fn_4.get_field('timestamp'), '20160101120000')
-        self.assertEqual(self.bmon_fn_4.get_field('version'), 'v1')
+        self.assertEqual(self.bmon_fn_4['var_name'], self.var_name)
+        self.assertEqual(self.bmon_fn_4['sres'], '500m')
+        self.assertEqual(self.bmon_fn_4['timestamp'], '20160101120000')
+        self.assertEqual(self.bmon_fn_4['version'], 'v1')
         self.assertEqual(self.bmon_fn_4.ext, '.nc')
 
 
 if __name__ == "__main__":
     unittest.main()
-
 

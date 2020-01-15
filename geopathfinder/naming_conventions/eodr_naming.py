@@ -57,7 +57,6 @@ class EODRFilename(SmartFilename):
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
         """
         self.dt_format = "%Y%m%dT%H%M%S"
-        fields = fields.copy()
 
         fields_def_ext = copy.deepcopy(EODRFilename.fields_def)
         fields_def_ext['dt_1']['decoder'] = lambda x: self.decode_datetime(x)

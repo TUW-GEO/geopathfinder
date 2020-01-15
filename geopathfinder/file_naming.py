@@ -94,14 +94,11 @@ class SmartFilenamePart(object):
             Decoded (object) representation of a filename part.
         """
 
-        if self.encoded != '':
-            enc_wo_pad = self.encoded.strip(self.pad)
-            if enc_wo_pad != '':
-                return self.decoder(enc_wo_pad)
-            else:
-                return enc_wo_pad
+        enc_wo_pad = self.encoded.strip(self.pad)
+        if enc_wo_pad != '':
+            return self.decoder(enc_wo_pad)
         else:
-            return self.encoded
+            return None
 
     def __repr__(self):
         """
@@ -232,7 +229,10 @@ class SmartFilename(object):
             elif 'len' in value.keys():
                 length = value['len']
                 fields[name] = filename_str[start:(start + length)]
-                start += length
+            else:
+                length = 0
+
+            start += length
 
             if 'delim' in value.keys():
                 start += len(value['delim'])

@@ -19,15 +19,11 @@ BMon file name definition.
 
 """
 
-import os
-
+import copy
 import datetime as dt
 from datetime import datetime
 from collections import OrderedDict
 
-from geopathfinder.folder_naming import SmartPath
-from geopathfinder.folder_naming import build_smarttree
-from geopathfinder.folder_naming import create_smartpath
 from geopathfinder.file_naming import SmartFilename
 
 
@@ -36,6 +32,15 @@ class BMonFilename(SmartFilename):
     """
     BMon file name definition using SmartFilename class.
     """
+
+    fields_def = OrderedDict([
+        ('var_name', {'len': 16}),
+        ('sres', {'len': 4, 'start': 17}),
+        ('timestamp', {'len': 14}),
+        ('version', {'len': 2})
+    ])
+    pad = "-"
+    delimiter = "_"
 
     def __init__(self, fields, ext='.nc', convert=False):
         """
@@ -52,18 +57,34 @@ class BMonFilename(SmartFilename):
         """
 
         self.timestamp_format = "%Y%m%d%H%M%S"
-        self.fields = fields.copy()
 
-        fields_def = OrderedDict([
-                     ('var_name', {'len': 16, 'delim': False}),
-                     ('sres', {'len': 4, 'delim': True}),
-                     ('timestamp', {'len': 14, 'delim': True,
-                                  'decoder': lambda x: self.decode_timestamp(x),
-                                  'encoder': lambda x: self.encode_timestamp(x)}),
-                    ('version', {'len': 2, 'delim': True})
-                    ])
+        fields_def_ext = copy.deepcopy(BMonFilename.fields_def)
+        fields_def_ext['timestamp']['decoder'] = lambda x: self.decode_timestamp(x)
+        fields_def_ext['timestamp']['encoder'] = lambda x: self.encode_timestamp(x)
 
-        super(BMonFilename, self).__init__(self.fields, fields_def, pad='-', ext=ext, convert=convert)
+        super(BMonFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=BMonFilename.pad,
+                                           delimiter=BMonFilename.delimiter, convert=convert)
+
+    @classmethod
+    def from_filename(cls, filename_str, convert=False):
+        """
+        Converts a filename given as a string into a BMonFilename class object.
+
+        Parameters
+        ----------
+        filename_str : str
+            Filename without any paths (e.g., "BMON_DM_ENSEMBLE_500m_20160101120000_v1.nc").
+        convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
+
+        Returns
+        -------
+        BMonFilename
+            Class representing a BMON filename.
+        """
+
+        return super().from_filename(filename_str, BMonFilename.fields_def, pad=BMonFilename.pad,
+                                     delimiter=BMonFilename.delimiter, convert=convert)
 
     def decode_timestamp(self, string):
         """
@@ -104,40 +125,6 @@ class BMonFilename(SmartFilename):
             return time_obj.strftime(self.timestamp_format)
         else:
             return time_obj
-
-
-def create_bmon_filename(filename_string, ext='.nc', convert=False):
-    """
-    Creates a BMonFilename() object from a given string filename
-
-    Parameters
-    ----------
-    filename_string : str
-        filename following the BMon filename convention.
-        e.g. 'BMON_DM_ENSEMBLE_500m_20160101120000_v1.nc'
-    ext : str, optional
-            File name extension (default is '.nc').
-    convert: bool, optional
-            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
-
-    Returns
-    -------
-    BMonFilename
-
-    """
-
-    helper = BMonFilename({})
-    filename_string = filename_string.replace(helper.ext, '')
-    parts = filename_string.split(helper.delimiter)
-
-    fields = {
-              'var_name': "_".join(parts[:-3]),
-              'sres': parts[-3],
-              'timestamp': parts[-2],
-              'version': parts[-1]
-             }
-
-    return BMonFilename(fields, ext=ext, convert=convert)
 
 if __name__ == '__main__':
     pass

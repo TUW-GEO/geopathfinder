@@ -117,8 +117,8 @@ class SgrtFilename(SmartFilename):
         fields_def_ext['relative_orbit']['decoder'] = lambda x: self.decode_rel_orbit(x)
         fields_def_ext['relative_orbit']['encoder'] = lambda x: self.encode_rel_orbit(x)
 
-        super(SgrtFilename, self).__init__(fields, fields_def_ext, pad=SgrtFilename.pad,
-                                           delimiter=SgrtFilename.delimiter, ext=ext, convert=convert)
+        super(SgrtFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=SgrtFilename.pad,
+                                           delimiter=SgrtFilename.delimiter, convert=convert)
 
     @classmethod
     def from_filename(cls, filename_str, convert=False):
@@ -279,7 +279,10 @@ class SgrtFilename(SmartFilename):
         int, object
             Original object or integer object parsed from the given string.
         """
-        return int(string)
+        if isinstance(string, str):
+            return int(string)
+        else:
+            return string
 
     def encode_date(self, time_obj):
         """
