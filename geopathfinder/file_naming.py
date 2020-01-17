@@ -14,14 +14,132 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import os
+import copy
+from collections import OrderedDict
 
-class FilenameObj(object):
-    """
-    Empty class which is used to hold different attributes of the filename.
-    """
 
-    def __init__(self):
-        pass
+class SmartFilenamePart(object):
+    """ Represents a part of filename. """
+
+    def __init__(self, arg, start=0, length=None, delimiter="_", pad="-", decoder=None, encoder=None):
+        """
+        Constructor of SmartFilenamePart class.
+
+        Parameters
+        ----------
+        arg: object
+            Input argument, which can be a string or the decoded part of the filename.
+        start: int, optional
+            Start index of filename part (default is 0).
+        length: int, optional
+            Length of filename part.
+        delimiter : str, optional
+            Delimiter (default: '_')
+        pad : str, optional
+            Padding symbol (default: '-').
+        decoder: function, optional
+            Decodes a certain value (str -> object).
+        encoder: function, optional
+            Encodes a certain value (object -> str).
+        """
+
+        self.arg = arg
+        self.start = start
+        self.delimiter = delimiter
+        self.pad = pad
+        self.decoder = (lambda x: x) if decoder is None else decoder
+        self.encoder = (lambda x: x) if encoder is None else encoder
+        self.length = length if length is not None else len(self.encoded)
+
+        # check validity
+        if not self.is_valid():
+            err_msg = "Length does not comply with definition: {:} > {:}".format(len(self), self.length)
+            raise ValueError(err_msg)
+
+    def is_valid(self):
+        """
+        Checks if a SmartFilenamePart instance is valid.
+        It is valid if the specified length is equal to the length of the SmartFilenamePart.
+
+        Returns
+        -------
+        bool
+            True if SmartFilenamePart instance is valid, else False.
+        """
+
+        return self.length == len(self)
+
+    @property
+    def encoded(self):
+        """
+        Converts filename part to an encoded (string) representation.
+
+        Returns
+        -------
+        str
+            Encoded (string) representation of a filename part.
+        """
+
+        return self.encoder(self.arg)
+
+    @property
+    def decoded(self):
+        """
+        Converts filename part to a decoded (object) representation.
+
+        Returns
+        -------
+        object
+            Decoded (object) representation of a filename part.
+        """
+
+        enc_wo_pad = self.encoded.strip(self.pad)
+        if enc_wo_pad != '':
+            return self.decoder(enc_wo_pad)
+        else:
+            return None
+
+    def __repr__(self):
+        """
+        Returns the string representation of the class.
+
+        Returns
+        -------
+        str
+            String representation of the class.
+        """
+
+        return self.encoded.ljust(self.length, self.pad)
+
+    def __len__(self):
+        """
+        Returns length of the filename part.
+
+        Returns
+        -------
+        int
+            Length of the filename part.
+        """
+
+        return len(str(self))
+
+    def __add__(self, other):
+        """
+        Defines summation rule for two SmartFilenamePart/str instances.
+
+        Parameters
+        ----------
+        other: SmartFilenamePart, str
+            Second summand.
+
+        Returns
+        -------
+        str
+            Concatenated strings separated by a delimiter.
+        """
+
+        return str(self) + self.delimiter + str(other)
 
 
 class SmartFilename(object):
@@ -39,8 +157,16 @@ class SmartFilename(object):
         ----------
         fields : dict
             Name of fields (keys) and (values).
-        field_def : OrderedDict
-            Name of fields (keys) in right order and length (values).
+        fields_def : OrderedDict
+            Name of fields (keys) in right order and length (values). It must contain:
+                - "len": int
+                    Length of filename part (must be given).
+                - "start": int, optional
+                    Start index of filename part (default is 0).
+                - "delim": str, optional
+                    Delimiter between this and the following filename part (default is the one from the parent class).
+                - "pad": str,
+                    Padding for filename part (default is the one from the parent class).
         ext : str, optional
             File name extension (default: None).
         pad : str, optional
@@ -50,15 +176,73 @@ class SmartFilename(object):
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
         """
-        self.fields = fields
-        self.fields_def = fields_def
         self.ext = ext
         self.delimiter = delimiter
         self.pad = pad
         self.convert = convert
-        self._check_def()
+        self._fn_map = self.__build_map(fields, fields_def)
         self.obj = self.__init_filename_obj()
-        self.full_string = self._build_fn()
+
+    @classmethod
+    def from_filename(cls, filename_str, fields_def, pad="-", delimiter="_", convert=False):
+        """
+        Converts a filename given as a string into a SmartFilename class object.
+
+        Parameters
+        ----------
+        filename_str : str
+            Filename without any paths (e.g., "M20170725_test.tif").
+        fields_def : OrderedDict
+            Name of fields (keys) in right order and length (values). It must contain:
+                - "len": int
+                    Length of filename part (must be given).
+                - "start": int, optional
+                    Start index of filename part (default is 0).
+                - "delim": str, optional
+                    Delimiter between this and the following filename part (default is the one from the parent class).
+                - "pad": str,
+                    Padding for filename part (default is the one from the parent class).
+        pad : str, optional
+            Padding symbol (default: '-').
+        delimiter : str, optional
+            Delimiter (default: '_')
+        convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
+
+        Returns
+        -------
+        SmartFilename
+            Class representing a filename.
+        """
+
+        # get extensions from filename
+        ext = os.path.splitext(filename_str)[1]
+
+        fields = dict()
+        start = 0
+        for name, value in fields_def.items():
+            # parse part of filename via start and end position
+            if 'start' in value.keys() and 'len' in value.keys():
+                start = value['start']
+                length = value['len']
+                fields[name] = filename_str[start:(start + length)]
+            elif 'len' in value.keys():
+                length = value['len']
+                fields[name] = filename_str[start:(start + length)]
+            else:
+                length = 0
+
+            start += length
+
+            if 'delim' in value.keys():
+                start += len(value['delim'])
+            else:
+                start += len(delimiter)
+
+        if cls.__name__ == "SmartFilename":
+            return cls(fields, fields_def, ext=ext, convert=convert, pad=pad, delimiter=delimiter)
+        else:
+            return cls(fields, ext=ext, convert=convert)
 
     def __init_filename_obj(self):
         """
@@ -70,33 +254,71 @@ class SmartFilename(object):
         FilenameObj
 
         """
+
+        class FilenameObj(object):
+            def __init__(self):
+                pass
+
         filename_obj = FilenameObj()
-        for key, value in self.fields.items():
+        for name, fn_part in self._fn_map.items():
             if self.convert:
-                setattr(filename_obj, key, self.__decode(key, value))
+                setattr(filename_obj, name, fn_part.decoded)
             else:
-                setattr(filename_obj, key, self.__encode(key, value))
+                setattr(filename_obj, name, fn_part.encoded)
 
         return filename_obj
 
-    def _check_def(self):
+    def __build_map(self, fields, fields_def):
         """
-        Check if fields names and length comply with definition.
+        Creates a dictionary/map between filename part names and SmartFilenamePart instances.
 
+        Paramaters
+        ----------
+        fields : dict
+            Name of fields (keys) and (values).
+        fields_def : OrderedDict
+            Name of fields (keys) in right order and length (values). It must contain:
+                - "len": int
+                    Length of filename part (must be given).
+                - "start": int, optional
+                    Start index of filename part (default is 0).
+                - "delim": str, optional
+                    Delimiter between this and the following filename part (default is the one from the parent class).
+                - "pad": str,
+                    Padding for filename part (default is the one from the parent class).
+
+        Returns
+        -------
+        dict
+            Contains SmartFilenamePart instances representing each part of the filename.
         """
-        for key, value in self.fields.items():
-            if key in self.fields_def:
-                if not self.fields_def[key]:
-                    continue
-                value = self.__encode(key, value)
-                if self.fields_def[key]['len'] and len(value) > self.fields_def[key]['len']:
-                    raise ValueError("Length does not comply with "
-                                     "definition: {:} > {:}".format(
-                                         len(value), self.fields_def[key]['len']))
-                if 'delim' not in self.fields_def[key].keys():
-                    self.fields_def[key]['delim'] = True
-            else:
+
+        # check fields consistency
+        for key in fields.keys():
+            if key not in fields_def.keys():
                 raise KeyError("Field name undefined: {:}".format(key))
+
+        fn_map = OrderedDict()
+        for name, keys in fields_def.items():
+            if name not in fields:
+                elem = ""
+            else:
+                elem = fields[name]
+
+            if 'delim' not in keys:
+                keys['delimiter'] = self.delimiter
+            else:
+                keys['delimiter'] = keys['delim']
+                del keys['delim']
+            if 'pad' not in keys:
+                keys['pad'] = self.pad
+            if 'len' in keys:
+                keys['length'] = keys['len']
+                del keys['len']
+            smart_fn_part = SmartFilenamePart(elem, **keys)
+            fn_map[name] = smart_fn_part
+
+        return fn_map
 
     def _build_fn(self):
         """
@@ -108,39 +330,23 @@ class SmartFilename(object):
             Filled file name.
 
         """
-        filename = ''
-        for name, keys in self.fields_def.items():
-
-            if not keys:
-                continue
-
-            length = keys['len'] if keys['len'] else 1
-            delimiter = self.delimiter if keys['delim'] else ''
-
-            if name in self.fields:
-                value = self.__encode(name, self.fields[name])
-                if filename == '':
-                    filename = value.ljust(length, self.pad)
-                else:
-                    filename += delimiter + value.ljust(length, self.pad)
-            else:
-                if filename == '':
-                    filename = self.pad * length
-                else:
-                    filename += delimiter + self.pad * length
+        fn_parts = list(self._fn_map.values())
+        filename = str(fn_parts[0])
+        for i in range(1, len(fn_parts)):
+            filename = filename[:-len(fn_parts[i-1])] + (fn_parts[i-1] + fn_parts[i])
 
         if self.ext is not None:
             filename += self.ext
 
         return filename
 
-    def get_field(self, key):
+    def _get_field(self, name):
         """
         Returns the value of the field with a given key.
 
         Parameters
         ----------
-        key : str
+        name : str
             Name of the field.
 
         Returns
@@ -150,29 +356,26 @@ class SmartFilename(object):
             (convert=False) or an object.
         """
 
-        field = self.__encode(key, self.fields[key])
-
         # check and reset the attribute of the object variable
-        field_obj = self.__encode(key, getattr(self.obj, key))
-        if field_obj and (field_obj != field):
-            if self.fields_def[key]['len'] and (len(field_obj) <= self.fields_def[key]['len']):
-                field = field_obj
-                self[key] = field
-
-        field = field.replace(self.pad, '')
+        field_from_obj = self._fn_map[name].encoder(getattr(self.obj, name))
+        if field_from_obj and (field_from_obj != self._fn_map[name].encoded):
+            fn_part = copy.deepcopy(self._fn_map[name])
+            fn_part.arg = field_from_obj
+            if fn_part.is_valid():
+                self._fn_map[name] = fn_part
 
         if self.convert:
-            return self.__decode(key, field)
+            return self._fn_map[name].decoded
         else:
-            return field
+            return self._fn_map[name].encoded.strip(self._fn_map[name].pad)
 
-    def __getitem__(self, key):
+    def __getitem__(self, name):
         """
         Returns the value of the field with a given key.
 
         Parameters
         ----------
-        key : str
+        name : str
             Name of the field.
 
         Returns
@@ -182,40 +385,43 @@ class SmartFilename(object):
             (convert=False) or an object. If the key can't be found in the fields definition, the method tries to return
             a property of an inherited class.
         """
-        if key in self.fields_def:
-            return self.get_field(key)
-        elif hasattr(self, key):
-            return getattr(self, key)
-        else:
-            raise KeyError('"{}" is neither a class variable nor a file attribute.'.format(key))
 
-    def __setitem__(self, key, value):
+        if name in self._fn_map:
+            return self._get_field(name)
+        elif hasattr(self, name):
+            return getattr(self, name)
+        else:
+            raise KeyError('"{}" is neither a class variable nor a file attribute.'.format(name))
+
+    def __setitem__(self, name, value):
         """
         Sets the value of a filename field corresponding to the given key.
 
         Parameters
         ----------
-        key : str
+        name : str
             Name of the field.
         value: object
             Value of the field.
 
         """
-        if key in self.fields_def and self.fields_def[key]:
-            value = self.__encode(key, value)
-            if self.fields_def[key]['len'] and (len(value) > self.fields_def[key]['len']):
-                raise ValueError("Length does not comply with "
-                                 "definition: {:} > {:}".format(
-                                     len(value), self.fields_def[key]['len']))
+
+        if name in self._fn_map:
+            fn_part = copy.deepcopy(self._fn_map[name])
+            fn_part.arg = value
+            if not fn_part.is_valid():
+                err_msg = "Length does not comply with definition: {:} > {:}".format(len(fn_part.encoded),
+                                                                                     fn_part.length)
+                raise ValueError(err_msg)
             else:
-                self.fields[key] = value
-                value = value.replace(self.pad, '')
+                self._fn_map[name] = fn_part
+                value = fn_part.encoded.replace(self.pad, '')
                 if self.convert:
-                    setattr(self.obj, key, self.__decode(key, value))
+                    setattr(self.obj, name, fn_part.decoded)
                 else:
-                    setattr(self.obj, key, value)
+                    setattr(self.obj, name, value)
         else:
-            raise KeyError("Field name undefined: {:}".format(key))
+            raise KeyError("Field name undefined: {:}".format(name))
 
     def __repr__(self):
         """
@@ -226,56 +432,5 @@ class SmartFilename(object):
         str
             String representation of the class.
         """
+
         return self._build_fn()
-
-    def __decode(self, key, value):
-        """
-        Decodes a certain value (str -> object) specified by the given key if an entry 'decoder' is available.
-
-        Parameters
-        ----------
-        key : str
-            Name of the field.
-        value: object
-            Value of the field.
-
-        Returns
-        -------
-        str
-            Decoded or original value.
-        """
-        if self.fields_def[key] and 'decoder' in self.fields_def[key].keys():
-            decoder = self.fields_def[key]['decoder']
-            try:
-                dec_value = decoder(value)
-                return dec_value
-            except:
-                return value
-        else:
-            return value
-
-    def __encode(self, key, value):
-        """
-        Encodes a certain value (object -> str) specified by the given key if an entry 'encoder' is available.
-
-        Parameters
-        ----------
-        key : str
-            Name of the field.
-        value: object
-            Value of the field.
-
-        Returns
-        -------
-        str
-            Encoded or original value.
-        """
-        if (not isinstance(value, str)) and self.fields_def[key] and ('encoder' in self.fields_def[key].keys()):
-            encoder = self.fields_def[key]['encoder']
-            try:
-                enc_value = encoder(value)
-                return enc_value
-            except:
-                return value
-        else:
-            return value

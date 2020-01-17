@@ -20,6 +20,7 @@ SGRT folder and file name definition.
 """
 
 import os
+import copy
 
 import datetime as dt
 from datetime import datetime
@@ -44,7 +45,28 @@ class SgrtFilename(SmartFilename):
     SGRT file name definition using SmartFilename class.
     """
 
-    def __init__(self, fields, ext='.tif', convert=False):
+    fields_def = OrderedDict([
+        ('pflag', {'len': 1, 'delim': ''}),
+        ('dtime_1', {'len': 8}),
+        ('dtime_2', {'len': 8}),
+        ('var_name', {'len': 9}),
+        ('mission_id', {'len': 2, 'delim': ''}),
+        ('spacecraft_id', {'len': 1, 'delim': ''}),
+        ('mode_id', {'len': 2, 'delim': ''}),
+        ('product_type', {'len': 3, 'delim': ''}),
+        ('res_class', {'len': 1, 'delim': ''}),
+        ('level', {'len': 1, 'delim': ''}),
+        ('pol', {'len': 2, 'delim': ''}),
+        ('orbit_direction', {'len': 1}),
+        ('relative_orbit', {'len': 3}),
+        ('workflow_id', {'len': 5}),
+        ('grid_name', {'len': 6}),
+        ('tile_name', {'len': 10})
+    ])
+    pad = "-"
+    delimiter = "_"
+
+    def __init__(self, fields, ext=".tif", convert=False):
         """
         Constructor of SgrtFilename class.
 
@@ -52,65 +74,72 @@ class SgrtFilename(SmartFilename):
         ----------
         fields: dict
             Dictionary specifying the different parts of the filename.
-        ext : str, optional
-            File name extension (default is '.tif').
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
         """
 
         self.date_format = "%Y%m%d"
         self.time_format = "%H%M%S"
-        self.fields = fields.copy()
+        fields = fields.copy()
 
-        if 'dtime_2' not in self.fields.keys():
+        if 'dtime_2' not in fields.keys():
             self.single_date = True
             apply_dtime_2 = False
         else:
             self.single_date = False
             apply_dtime_2 = True
 
-            if isinstance(self.fields['dtime_2'], dt.time) or (self.fields['dtime_2'].year < 1950):
-                self.single_date = True
-
-        if 'dtime_1' in self.fields.keys():
-            if self.single_date:
-                date = self.encode_date(self.fields['dtime_1'])
-                if apply_dtime_2:
-                    time = self.encode_time(self.fields['dtime_2'])
-                else:
-                    time = self.encode_time(self.fields['dtime_1'])
-                self.fields['dtime_1'] = date
-                self.fields['dtime_2'] = time
+            if isinstance(fields['dtime_2'], str):
+                if fields['dtime_2'].endswith('--'):
+                    self.single_date = True
             else:
-                self.fields['dtime_1'] = self.encode_date(self.fields['dtime_1'])
-                self.fields['dtime_2'] = self.encode_date(self.fields['dtime_2'])
+                if isinstance(fields['dtime_2'], dt.time) or (fields['dtime_2'].year < 1950):
+                    self.single_date = True
 
-        fields_def = OrderedDict([
-                     ('pflag', {'len': 1, 'delim': False}),
-                     ('dtime_1', {'len': 8, 'delim': False,
-                                  'decoder': lambda x: self.decode_date(x),
-                                  'encoder': lambda x: self.encode_date(x)}),
-                     ('dtime_2', {'len': 8, 'delim': True,
-                                  'decoder': lambda x: self.decode_time(x),
-                                  'encoder': lambda x: self.encode_time(x)}),
-                     ('var_name', {'len': 9, 'delim': True}),
-                     ('mission_id', {'len': 2, 'delim': True}),
-                     ('spacecraft_id', {'len': 1, 'delim': False}),
-                     ('mode_id', {'len': 2, 'delim': False}),
-                     ('product_type', {'len': 3, 'delim': False}),
-                     ('res_class', {'len': 1, 'delim': False}),
-                     ('level', {'len': 1, 'delim': False}),
-                     ('pol', {'len': 2, 'delim': False}),
-                     ('orbit_direction', {'len': 1, 'delim': False}),
-                     ('relative_orbit', {'len': 3, 'delim': True,
-                                         'decoder': lambda x: self.decode_rel_orbit(x),
-                                         'encoder': lambda x: self.encode_rel_orbit(x)}),
-                     ('workflow_id', {'len': 5, 'delim': True}),
-                     ('grid_name', {'len': 6, 'delim': True}),
-                     ('tile_name', {'len': 10, 'delim': True})
-                    ])
+        if 'dtime_1' in fields.keys():
+            if self.single_date:
+                date = self.encode_date(fields['dtime_1'])
+                if apply_dtime_2:
+                    time = self.encode_time(fields['dtime_2'])
+                else:
+                    time = self.encode_time(fields['dtime_1'])
+                fields['dtime_1'] = date
+                fields['dtime_2'] = time
+            else:
+                fields['dtime_1'] = self.encode_date(fields['dtime_1'])
+                fields['dtime_2'] = self.encode_date(fields['dtime_2'])
 
-        super(SgrtFilename, self).__init__(self.fields, fields_def, pad='-', ext=ext, convert=convert)
+        fields_def_ext = copy.deepcopy(SgrtFilename.fields_def)
+        fields_def_ext['dtime_1']['decoder'] = lambda x: self.decode_date(x)
+        fields_def_ext['dtime_1']['encoder'] = lambda x: self.encode_date(x)
+        fields_def_ext['dtime_2']['decoder'] = lambda x: self.decode_time(x)
+        fields_def_ext['dtime_2']['encoder'] = lambda x: self.encode_time(x)
+        fields_def_ext['relative_orbit']['decoder'] = lambda x: self.decode_rel_orbit(x)
+        fields_def_ext['relative_orbit']['encoder'] = lambda x: self.encode_rel_orbit(x)
+
+        super(SgrtFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=SgrtFilename.pad,
+                                           delimiter=SgrtFilename.delimiter, convert=convert)
+
+    @classmethod
+    def from_filename(cls, filename_str, convert=False):
+        """
+        Converts a filename given as a string into an SgrtFilename class object.
+
+        Parameters
+        ----------
+        filename_str : str
+            Filename without any paths (e.g., "M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif").
+        convert: bool, optional
+            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
+
+        Returns
+        -------
+        SgrtFilename
+            Class representing an SGRT filename.
+        """
+
+        return super().from_filename(filename_str, SgrtFilename.fields_def, pad=SgrtFilename.pad,
+                                     delimiter=SgrtFilename.delimiter, convert=convert)
 
     @property
     def stime(self):
@@ -314,68 +343,6 @@ class SgrtFilename(SmartFilename):
             return "{:03d}".format(relative_orbit)
         else:
             return relative_orbit
-
-
-def create_sgrt_filename(filename_string, ext='.tif', convert=False):
-    """
-    Creates a SgrtFilename() object from a given string filename
-
-    Parameters
-    ----------
-    filename_string : str
-        filename following the SGRT filename convention.
-        e.g. 'M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif'
-    ext : str, optional
-            File name extension (default is '.tif').
-    convert: bool, optional
-            If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
-
-    Returns
-    -------
-    SgrtFilename
-
-    """
-
-    helper = SgrtFilename({}, ext=ext)
-    filename_string = filename_string.replace(helper.ext, '')
-    parts = filename_string.split(helper.delimiter)
-
-    if not [len(x) for x in parts] == [9, 8, 9, 13, 3, 5, 6, 10]:
-        raise ValueError('Given filename_string "{}" does not comply with '
-                         'SGRT naming convention!')
-
-    # decode all values from the filename
-    dtime_2_format = "%Y%m%d"
-    helper.single_date = False
-    if parts[1].endswith('--'):
-        dtime_2_format = "%H%M%S--"
-        helper.single_date = True
-
-    helper.time_format = dtime_2_format
-    dtime_1 = helper.decode_date(parts[0][1:])
-    dtime_2 = helper.decode_time(parts[1])
-    relative_orbit = helper.decode_rel_orbit(parts[4])
-
-    fields = {
-              'pflag': parts[0][0],
-              'dtime_1': dtime_1,
-              'dtime_2': dtime_2,
-              'var_name': parts[2],
-              'mission_id': parts[3][0:2],
-              'spacecraft_id': parts[3][2:3],
-              'mode_id': parts[3][3:5],
-              'product_type': parts[3][5:8],
-              'res_class': parts[3][8:9],
-              'level': parts[3][9:10],
-              'pol': parts[3][10:12],
-              'orbit_direction': parts[3][12:13],
-              'relative_orbit': relative_orbit,
-              'workflow_id': parts[5],
-              'grid_name': parts[6],
-              'tile_name': parts[7]
-             }
-
-    return SgrtFilename(fields, ext=ext, convert=convert)
 
 
 def sgrt_path(root, mode=None, group=None, datalog=None,
