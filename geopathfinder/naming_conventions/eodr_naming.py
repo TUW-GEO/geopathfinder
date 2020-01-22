@@ -38,6 +38,7 @@ class EODRFilename(SmartFilename):
         ('id', {'len': 12}),
         ('dt_1', {'len': 15}),
         ('dt_2', {'len': 15}),
+        ('file_num', {}),
         ('band', {})
     ])
     pad = "-"
@@ -63,6 +64,8 @@ class EODRFilename(SmartFilename):
         fields_def_ext['dt_1']['encoder'] = lambda x: self.encode_datetime(x)
         fields_def_ext['dt_2']['decoder'] = lambda x: self.decode_datetime(x)
         fields_def_ext['dt_2']['encoder'] = lambda x: self.encode_datetime(x)
+        fields_def_ext['file_num']['decoder'] = lambda x: int(x)
+        fields_def_ext['file_num']['encoder'] = lambda x: str(x)
         fields_def_ext['band']['encoder'] = lambda x: str(x)
 
         fields_def_keys = list(fields_def_ext.keys())
@@ -81,7 +84,7 @@ class EODRFilename(SmartFilename):
         Parameters
         ----------
         filename_str : str
-            Filename without any paths (e.g., "123456------_20181220T232333_---------------_B5_34_aug.vrt").
+            Filename without any paths (e.g., "123456------_20181220T232333_---------------_2_B5_34_aug.vrt").
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
 
@@ -93,10 +96,11 @@ class EODRFilename(SmartFilename):
 
         fn_parts = os.path.splitext(os.path.basename(filename_str))[0].split(EODRFilename.delimiter)
         fields_def_ext = copy.deepcopy(EODRFilename.fields_def)
-        fields_def_ext['band']['len'] = len(fn_parts[3])  # get length of the band in the filename
+        fields_def_ext['file_num']['len'] = len(fn_parts[3])
+        fields_def_ext['band']['len'] = len(fn_parts[4])  # get length of the band in the filename
         # if the filename consists of more than 4 parts, additional "dimensions" are added to the fields dictionary
-        if len(fn_parts) > 4:
-            for i, fn_part in enumerate(fn_parts[4:]):
+        if len(fn_parts) > 5:
+            for i, fn_part in enumerate(fn_parts[5:]):
                 key = 'd' + str(i + 1)
                 fields_def_ext[key] = {'len': len(fn_part)}
 
