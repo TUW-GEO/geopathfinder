@@ -35,6 +35,7 @@ class EODRFilename(SmartFilename):
     """
 
     fields_def = OrderedDict([
+        ('counter', {'len': 5}),
         ('id', {'len': 12}),
         ('dt_1', {'len': 15}),
         ('dt_2', {'len': 15}),
@@ -60,6 +61,8 @@ class EODRFilename(SmartFilename):
         self.dt_format = "%Y%m%dT%H%M%S"
 
         fields_def_ext = copy.deepcopy(EODRFilename.fields_def)
+        fields_def_ext['counter']['decoder'] = lambda x: self.decode_counter(x)
+        fields_def_ext['counter']['encoder'] = lambda x: self.encode_counter(x)
         fields_def_ext['dt_1']['decoder'] = lambda x: self.decode_datetime(x)
         fields_def_ext['dt_1']['encoder'] = lambda x: self.encode_datetime(x)
         fields_def_ext['dt_2']['decoder'] = lambda x: self.decode_datetime(x)
@@ -84,7 +87,7 @@ class EODRFilename(SmartFilename):
         Parameters
         ----------
         filename_str : str
-            Filename without any paths (e.g., "123456------_20181220T232333_---------------_2_B5_34_aug.vrt").
+            Filename without any paths (e.g., "00001_123456------_20181220T232333_---------------_2_B5_34_aug.vrt").
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
 
@@ -96,11 +99,11 @@ class EODRFilename(SmartFilename):
 
         fn_parts = os.path.splitext(os.path.basename(filename_str))[0].split(EODRFilename.delimiter)
         fields_def_ext = copy.deepcopy(EODRFilename.fields_def)
-        fields_def_ext['file_num']['len'] = len(fn_parts[3])
-        fields_def_ext['band']['len'] = len(fn_parts[4])  # get length of the band in the filename
+        fields_def_ext['file_num']['len'] = len(fn_parts[4])
+        fields_def_ext['band']['len'] = len(fn_parts[5])  # get length of the band in the filename
         # if the filename consists of more than 4 parts, additional "dimensions" are added to the fields dictionary
-        if len(fn_parts) > 5:
-            for i, fn_part in enumerate(fn_parts[5:]):
+        if len(fn_parts) > 6:
+            for i, fn_part in enumerate(fn_parts[6:]):
                 key = 'd' + str(i + 1)
                 fields_def_ext[key] = {'len': len(fn_part)}
 
@@ -180,6 +183,46 @@ class EODRFilename(SmartFilename):
             return time_obj.strftime(self.dt_format)
         else:
             return time_obj
+
+    def decode_counter(self, string):
+        """
+        Decodes a string into an integer.
+
+        Parameters
+        ----------
+        string: str, object
+            String needed to be decoded to an integer.
+
+        Returns
+        -------
+        int, object
+            Original object or integer object parsed from the given string.
+        """
+
+        if isinstance(string, str):
+            return int(string)
+        else:
+            return string
+
+    def encode_counter(self, file_counter):
+        """
+        Encodes a file counter into a string.
+
+        Parameters
+        ----------
+        file_counter: int
+            Integer needed to be encoded to a string.
+
+        Returns
+        -------
+        str, object
+            Original object or str object parsed from the given integer.
+        """
+
+        if isinstance(file_counter, int):
+            return "{:05d}".format(file_counter)
+        else:
+            return file_counter
 
 if __name__ == '__main__':
     pass
