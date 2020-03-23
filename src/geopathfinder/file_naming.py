@@ -305,17 +305,21 @@ class SmartFilename(object):
             else:
                 elem = fields[name]
 
+            fn_part_kwargs = dict()
             if 'delim' not in keys:
-                keys['delimiter'] = self.delimiter
+                fn_part_kwargs['delimiter'] = self.delimiter
             else:
-                keys['delimiter'] = keys['delim']
-                del keys['delim']
+                fn_part_kwargs['delimiter'] = keys['delim']
             if 'pad' not in keys:
-                keys['pad'] = self.pad
+                fn_part_kwargs['pad'] = self.pad
             if 'len' in keys:
-                keys['length'] = keys['len']
-                del keys['len']
-            smart_fn_part = SmartFilenamePart(elem, **keys)
+                fn_part_kwargs['length'] = keys['len']
+            if 'decoder' in keys:
+                fn_part_kwargs['decoder'] = keys['decoder']
+            if 'encoder' in keys:
+                fn_part_kwargs['encoder'] = keys['encoder']
+
+            smart_fn_part = SmartFilenamePart(elem, **fn_part_kwargs)
             fn_map[name] = smart_fn_part
 
         return fn_map
