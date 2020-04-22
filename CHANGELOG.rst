@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version v0.0.6
+==============
+
+- class restructuring to use the `from_filename` classmethod instead of always creating a new external parsing function
+- minor restructuring of the existing file naming conventions
+- added new file naming convention BMON
+- minor bug removal
+
 Version v0.0.5
 ==============
 

@@ -1,9 +1,22 @@
+=============
 geopathfinder
 =============
+.. image:: https://travis-ci.org/TUW-GEO/geopathfinder.svg?branch=master
+    :target: https://travis-ci.org/TUW-GEO/geopathfinder
 
+.. image:: https://coveralls.io/repos/github/TUW-GEO/geopathfinder/badge.svg?branch=master
+    :target: https://coveralls.io/github/TUW-GEO/geopathfinder?branch=master
 
-A package for creating, quering, and searching in data structures holding geo data sets.
+.. image:: https://badge.fury.io/py/geopathfinder.svg
+    :target: https://badge.fury.io/py/geopathfinder
 
+.. image:: https://readthedocs.org/projects/geopathfinder/badge/?version=latest
+    :target: https://geopathfinder.readthedocs.io/en/latest/?badge=latest
+
+.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+    :target: https://opensource.org/licenses/MIT
+
+A package for creating, querying, and searching in data structures holding geo data sets.
 
 Description
 ===========
@@ -13,7 +26,6 @@ This packages aims to provide a rich toolbox for efficient, quick, and precise h
 With pre-defined sets comprising string-definitions, folder path logics, and filename en-/decoders, a variety of file/folder naming conventions can be implemented.
 
 The base classes SmartPath() and SmartTree() comprise also functions for file search and folder(-tree) volume determination.
-
 
 Adding a new filenaming convention
 ----------------------------------
@@ -32,7 +44,6 @@ The following description aims to show how to implement a new naming convention:
   To allow this, one can define methods tagged with *property* in the current class. *SmartFilename* then handles the properties of the inherited class equally to a common filename entry given in the field definition.
 
 - Add tests to "tests" and name the test file "test_[]_naming.py", where "[]" should be replaced by the abbreviation of the new naming convention.
-
 
 Note
 ====
