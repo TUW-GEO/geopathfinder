@@ -53,14 +53,16 @@ class SmartFilenamePart(object):
         self.length = length if length is not None else len(self.encoded)
 
         # check validity
-        if not self.is_valid():
+        if not self.has_valid_len():
             err_msg = "Length does not comply with definition: {:} > {:}".format(len(self), self.length)
             raise ValueError(err_msg)
 
-    def is_valid(self):
+
+    def has_valid_len(self):
         """
-        Checks if a SmartFilenamePart instance is valid.
-        It is valid if the specified length is equal to the length of the SmartFilenamePart.
+        Checks if a SmartFilenamePart instance has a valid len.
+        It is valid if the specified length is equal to the length of the SmartFilenamePart,
+        or if len == 0, i.e accepting any length.
 
         Returns
         -------
@@ -68,7 +70,13 @@ class SmartFilenamePart(object):
             True if SmartFilenamePart instance is valid, else False.
         """
 
-        return self.length == len(self)
+        # 0 for accepting any length
+        if self.length == 0:
+            check = True
+        else:
+            check = self.length == len(self)
+
+        return check
 
     @property
     def encoded(self):
@@ -161,6 +169,7 @@ class SmartFilename(object):
             Name of fields (keys) in right order and length (values). It must contain:
                 - "len": int
                     Length of filename part (must be given).
+                    "0" to allow any length.
                 - "start": int, optional
                     Start index of filename part (default is 0).
                 - "delim": str, optional
@@ -196,6 +205,7 @@ class SmartFilename(object):
             Name of fields (keys) in right order and length (values). It must contain:
                 - "len": int
                     Length of filename part (must be given).
+                    "0" to allow any length.
                 - "start": int, optional
                     Start index of filename part (default is 0).
                 - "delim": str, optional
@@ -280,6 +290,7 @@ class SmartFilename(object):
             Name of fields (keys) in right order and length (values). It must contain:
                 - "len": int
                     Length of filename part (must be given).
+                    "0" to allow any length.
                 - "start": int, optional
                     Start index of filename part (default is 0).
                 - "delim": str, optional
@@ -365,7 +376,7 @@ class SmartFilename(object):
         if field_from_obj and (field_from_obj != self._fn_map[name].encoded):
             fn_part = copy.deepcopy(self._fn_map[name])
             fn_part.arg = field_from_obj
-            if fn_part.is_valid():
+            if fn_part.has_valid_len():
                 self._fn_map[name] = fn_part
 
         if self.convert:
@@ -413,7 +424,7 @@ class SmartFilename(object):
         if name in self._fn_map:
             fn_part = copy.deepcopy(self._fn_map[name])
             fn_part.arg = value
-            if not fn_part.is_valid():
+            if not fn_part.has_valid_len():
                 err_msg = "Length does not comply with definition: {:} > {:}".format(len(fn_part.encoded),
                                                                                      fn_part.length)
                 raise ValueError(err_msg)
