@@ -65,19 +65,29 @@ class YeodaFilename(SmartFilename):
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
         """
 
-
-        self.date_format = "%Y%m%d"
-        self.time_format = "%H%M%S"
-
         fields = fields.copy()
 
-        #implement here the date and time options & checks
+        # implement here the date and time options & checks
         # 20170103T130355
         # 20170103
         # 20160103-20170103
         # 20160103T130355-20170103T230355
+        if 'datetime_1' in fields:
+            fields['datetime_1'] = self.encode_datetime(fields['datetime_1'])
+
+        if 'datetime_2' in fields:
+            self.single_date = False
+            fields['datetime_2'] = self.encode_datetime(fields['datetime_2'])
+        else:
+            self.single_date = True
 
         fields_def_ext = copy.deepcopy(YeodaFilename.fields_def)
+        fields_def_ext['datetime_1']['decoder'] = lambda x: self.decode_datetime(x)
+        fields_def_ext['datetime_1']['encoder'] = lambda x: self.encode_datetime(x)
+        fields_def_ext['datetime_2']['decoder'] = lambda x: self.decode_datetime(x)
+        fields_def_ext['datetime_2']['encoder'] = lambda x: self.encode_datetime(x)
+        fields_def_ext['extra_field']['decoder'] = lambda x: self.decode_extra_field(x)
+        fields_def_ext['extra_field']['encoder'] = lambda x: self.encode_extra_field(x)
 
         super(YeodaFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=YeodaFilename.pad,
                                            delimiter=YeodaFilename.delimiter, convert=convert)
@@ -185,7 +195,7 @@ class YeodaFilename(SmartFilename):
             ftile = None
         return ftile
 
-    def decode_date(self, string):
+    def decode_datetime(self, string):
         """
         Decodes a string into a datetime.date object. The format is given by the class.
 
@@ -200,7 +210,10 @@ class YeodaFilename(SmartFilename):
             Original object or datetime.date object parsed from the given string.
         """
         if isinstance(string, str):
-            return datetime.strptime(string, self.date_format).date()
+            if len(string) > 8:
+                return datetime.strptime(string, "%Y%m%dT%H%M%S")
+            else:
+                return datetime.strptime(string, "%Y%m%d")
         else:
             return string
 
@@ -227,9 +240,9 @@ class YeodaFilename(SmartFilename):
         else:
             return string
 
-    def decode_rel_orbit(self, string):
+    def decode_extra_field(self, string):
         """
-        Decodes a string into an integer.
+        Decodes a string into an integer if possible.
 
         Parameters
         ----------
@@ -242,11 +255,15 @@ class YeodaFilename(SmartFilename):
             Original object or integer object parsed from the given string.
         """
         if isinstance(string, str):
-            return int(string)
+            try:
+                decode = int(string)
+            except ValueError:
+                return string
+            return decode
         else:
             return string
 
-    def encode_date(self, time_obj):
+    def encode_datetime(self, datetime_obj):
         """
         Encodes a datetime.datetime/datetime.date object into a string. The format is given by the class.
 
@@ -260,10 +277,13 @@ class YeodaFilename(SmartFilename):
         str, object
             Original object or str object parsed from the given datetime object.
         """
-        if isinstance(time_obj, (dt.datetime, dt.date, dt.time)):
-            return time_obj.strftime(self.date_format)
+        if isinstance(datetime_obj, (dt.date, dt.time, dt.datetime)):
+            if datetime_obj.time() == dt.time():
+                return datetime_obj.strftime("%Y%m%d")
+            else:
+                return datetime_obj.strftime("%Y%m%dT%H%M%S")
         else:
-            return time_obj
+            return datetime_obj
 
     def encode_time(self, time_obj):
         """
@@ -287,9 +307,9 @@ class YeodaFilename(SmartFilename):
         else:
             return time_obj
 
-    def encode_rel_orbit(self, relative_orbit):
+    def encode_extra_field(self, relative_orbit):
         """
-        Encodes a relative orbit number into a string.
+        Encodes the extra field e.g. a relative orbit number into a string.
 
         Parameters
         ----------
@@ -304,7 +324,7 @@ class YeodaFilename(SmartFilename):
         if isinstance(relative_orbit, int):
             return "{:03d}".format(relative_orbit)
         else:
-            return relative_orbit
+            return str(relative_orbit)
 
 
 def yeoda_path(root, mode=None, group=None, datalog=None,
