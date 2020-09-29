@@ -210,35 +210,13 @@ class YeodaFilename(SmartFilename):
             Original object or datetime.date object parsed from the given string.
         """
         if isinstance(string, str):
-            if len(string) > 8:
+            if 'T' in string:
                 return datetime.strptime(string, "%Y%m%dT%H%M%S")
             else:
                 return datetime.strptime(string, "%Y%m%d")
         else:
             return string
 
-    def decode_time(self, string):
-        """
-        Decodes a string into a datetime.time/datetime.date object. The format is given by the class and the conversion
-        follows the 'single_date' setting.
-
-        Parameters
-        ----------
-        string: str, object
-            String needed to be decoded to a datetime.time/datetime.date object.
-
-        Returns
-        -------
-        datetime.date, datetime.time, object
-            Original object, datetime.date or datetime.time object parsed from the given string.
-        """
-        if isinstance(string, str):
-            if self.single_date:
-                return datetime.time(datetime.strptime(string, self.time_format))
-            else:
-                return self.decode_date(string)
-        else:
-            return string
 
     def decode_extra_field(self, string):
         """
@@ -277,35 +255,13 @@ class YeodaFilename(SmartFilename):
         str, object
             Original object or str object parsed from the given datetime object.
         """
-        if isinstance(datetime_obj, (dt.date, dt.time, dt.datetime)):
-            if datetime_obj.time() == dt.time():
-                return datetime_obj.strftime("%Y%m%d")
-            else:
-                return datetime_obj.strftime("%Y%m%dT%H%M%S")
+        if isinstance(datetime_obj, dt.datetime):
+            return datetime_obj.strftime("%Y%m%dT%H%M%S")
+        elif isinstance(datetime_obj, dt.date):
+            return datetime_obj.strftime("%Y%m%d")
         else:
             return datetime_obj
 
-    def encode_time(self, time_obj):
-        """
-        Encodes a datetime.datetime/datetime.date object into a string. The format is given by the class.
-
-        Parameters
-        ----------
-        time_obj: datetime.datetime, datetime.date or object
-            Datetime object needed to be encoded to a string.
-
-        Returns
-        -------
-        str, object
-            Original object or str object parsed from the given datetime object.
-        """
-        if isinstance(time_obj, (dt.datetime, dt.time, dt.date)):
-            if self.single_date:
-                return time_obj.strftime(self.time_format)
-            else:
-                return time_obj.strftime(self.date_format)
-        else:
-            return time_obj
 
     def encode_extra_field(self, relative_orbit):
         """
