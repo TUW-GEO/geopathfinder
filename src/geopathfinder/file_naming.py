@@ -224,7 +224,7 @@ class SmartFilename(object):
         SmartFilename
             Class representing a filename.
         """
-
+        # TODO: handle missing datetime_2 and empty fields in general
         # get extensions from filename
         ext = os.path.splitext(filename_str)[1]
 
@@ -238,6 +238,8 @@ class SmartFilename(object):
                 fields[name] = filename_str[start:(start + length)]
             elif 'len' in value.keys():
                 length = value['len']
+                if length == 0:
+                    length = filename_str.find(delimiter, start) - start
                 fields[name] = filename_str[start:(start + length)]
             else:
                 length = 0
