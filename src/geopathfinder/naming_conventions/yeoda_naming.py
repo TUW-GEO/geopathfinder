@@ -124,7 +124,7 @@ class YeodaFilename(SmartFilename):
             Start time.
         """
         try:
-            return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_1"]
+            return self.obj['datetime_1']
         except TypeError:
             return None
 
@@ -139,7 +139,7 @@ class YeodaFilename(SmartFilename):
             End time.
         """
         try:
-            return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_2"]
+            return self.obj['datetime_1']
         except TypeError:
             return None
 
@@ -232,6 +232,7 @@ class YeodaFilename(SmartFilename):
         int, object
             Original object or integer object parsed from the given string.
         """
+        # TODO: relative orbit now includes the direction - solve it (maybe add another field for input)
         if isinstance(string, str):
             try:
                 decode = int(string)
