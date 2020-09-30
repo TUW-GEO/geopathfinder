@@ -50,7 +50,7 @@ class SmartFilenamePart(object):
         self.pad = pad
         self.decoder = (lambda x: x) if decoder is None else decoder
         self.encoder = (lambda x: x) if encoder is None else encoder
-        self.length = length if length is not None else len(self.encoded)
+        self.length = length if length is not None and length != 0 else len(self.encoded)
 
         # check validity
         if not self.has_valid_len():
@@ -350,7 +350,10 @@ class SmartFilename(object):
         fn_parts = list(self._fn_map.values())
         filename = str(fn_parts[0])
         for i in range(1, len(fn_parts)):
-            filename = filename[:-len(fn_parts[i-1])] + (fn_parts[i-1] + fn_parts[i])
+            if len(fn_parts[i-1]) == 0:
+                filename = filename + (fn_parts[i - 1] + fn_parts[i])
+            else:
+                filename = filename[:-len(fn_parts[i-1])] + (fn_parts[i-1] + fn_parts[i])
 
         if self.ext is not None:
             filename += self.ext
