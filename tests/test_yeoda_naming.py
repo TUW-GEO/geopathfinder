@@ -18,8 +18,7 @@
 import os
 import unittest
 import logging
-from datetime import datetime
-from datetime import time
+from datetime import datetime, time, date
 
 from geopathfinder.naming_conventions.yeoda_naming import YeodaFilename
 from geopathfinder.naming_conventions.yeoda_naming import yeoda_path
@@ -37,21 +36,20 @@ class TestYeodaFilename(unittest.TestCase):
         fields = {'datetime_1': self.dtime_1, 'datetime_2': self.dtime_2, 'var_name': 'SSM'}
 
         self.sgrt_fn = YeodaFilename(fields, convert=True)
-        print(str(self.sgrt_fn))
 
-        fields = {'datetime_1': self.dtime_1, 'var_name': 'SSM'}
+        fields = {'datetime_1': self.dtime_1, 'var_name': 'SSM', 'band': 'VV'}
 
         self.sgrt_fn2 = YeodaFilename(fields, convert=True)
 
         self.sgrt_fn3 = YeodaFilename(fields)
 
-        fn = 'SIG0_20170725T165004_VV_A146_E048N012T6_EU500M_V04R01_S1BIWG1.tif'
+        fn = 'SIG0_20170725T165004__VV_A146_E048N012T6_EU500M_V04R01_S1BIWG1.tif'
         self.sgrt_fn4 = YeodaFilename.from_filename(fn, convert=True)
 
-        fn = 'TMENSIG40_20170725-20181225_M1_A146_E048N012T6_EU500M_V04R01_ASAWS.tif'
+        fn = 'TMENSIG40_20170725_20181225_M1_A146_E048N012T6_EU500M_V04R01_ASAWS.tif'
         self.sgrt_fn5 = YeodaFilename.from_filename(fn)
 
-        fn = 'TMENSIG40_20170725-20181225_M1_E048N012T6_EU500M_V04R01_ASAWS.tif'
+        fn = 'TMENSIG40_20170725_20181225_M1__E048N012T6_EU500M_V04R01_ASAWS.tif'
         self.sgrt_fn6 = YeodaFilename.from_filename(fn, convert=True)
 
 
@@ -60,7 +58,7 @@ class TestYeodaFilename(unittest.TestCase):
         Test building Yeoda file name.
 
         """
-        fn = ('SSM_20080101T122333_20090202T220101.tif')
+        fn = ('SSM_20080101T122333_20090202T220101___----------_------_------_.tif')
 
         self.assertEqual(str(self.sgrt_fn), fn)
 
@@ -70,13 +68,14 @@ class TestYeodaFilename(unittest.TestCase):
         Test set and get start and end date.
 
         """
-        self.assertEqual(self.sgrt_fn['datetime_1'], self.dtime_1.date())
-        self.assertEqual(self.sgrt_fn['datetime_2'], self.dtime_2.date())
+        self.assertEqual(self.sgrt_fn['datetime_1'], self.dtime_1)
+        self.assertEqual(self.sgrt_fn['datetime_2'], self.dtime_2)
 
-        new_start_time = datetime(2009, 1, 1, 12, 23, 33).date()
+        new_start_time = datetime(2009, 1, 1, 12, 23, 33)
         self.sgrt_fn['datetime_1'] = new_start_time
 
         self.assertEqual(self.sgrt_fn['datetime_1'], new_start_time)
+        self.assertEqual(self.sgrt_fn['datetime_2'], self.dtime_2)
 
     def test30_get_n_set_date_n_time(self):
         """
@@ -101,12 +100,10 @@ class TestYeodaFilename(unittest.TestCase):
         self.assertEqual(self.sgrt_fn2.obj.datetime_1.date(), datetime(2008, 1, 1).date())
         self.assertEqual(self.sgrt_fn2.obj.datetime_1.time(), time(12, 23, 33))
 
-        new_start_time = datetime(2345, 1, 2, 7, 8, 9)
+        new_start_time = date(2345, 1, 2)
         self.sgrt_fn2['datetime_1'] = new_start_time
-        self.sgrt_fn2['datetime_2'] = new_start_time
 
-        self.assertEqual(self.sgrt_fn2.obj.datetime_1.time(), time(7, 8, 9))
-        self.assertEqual(self.sgrt_fn2.obj.datetime_2.time(), time(7, 8, 9))
+        self.assertEqual(self.sgrt_fn2.obj.datetime_1.time(), time())
 
     def test32_get_n_set_date_n_time_strings(self):
         """
@@ -114,14 +111,14 @@ class TestYeodaFilename(unittest.TestCase):
         returning strings.
 
         """
+
         self.assertEqual(self.sgrt_fn3.obj.datetime_1, '20080101T122333')
 
         new_start_time = datetime(2345, 1, 2, 7, 8, 9)
-        self.sgrt_fn3['dtime_1'] = new_start_time
-        self.sgrt_fn3['dtime_2'] = new_start_time
+        self.sgrt_fn3['datetime_2'] = new_start_time
 
-        self.assertEqual(self.sgrt_fn3.obj.dtime_1, '23450102')
-        self.assertEqual(self.sgrt_fn3.obj.dtime_2, '070809')
+        self.assertEqual(self.sgrt_fn3.obj.datetime_1, '20080101T122333')
+        self.assertEqual(self.sgrt_fn3.obj.datetime_2, '23450102T070809')
 
     def test4_create_sgrt_filename(self):
         """
@@ -131,8 +128,8 @@ class TestYeodaFilename(unittest.TestCase):
 
         # testing for single datetime
         self.assertEqual(self.sgrt_fn4['pflag'], 'M')
-        self.assertEqual(self.sgrt_fn4['dtime_1'], datetime(2017, 7, 25).date())
-        self.assertEqual(self.sgrt_fn4['dtime_2'], time(16, 50, 4))
+        self.assertEqual(self.sgrt_fn4['datetime_1'].date(), datetime(2017, 7, 25).date())
+        self.assertEqual(self.sgrt_fn4['datetime_1'].time(), time(16, 50, 4))
         self.assertEqual(self.sgrt_fn4['var_name'], 'SIG0')
         self.assertEqual(self.sgrt_fn4['mission_id'], 'S1')
         self.assertEqual(self.sgrt_fn4['spacecraft_id'], 'B')
