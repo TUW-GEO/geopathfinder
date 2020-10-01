@@ -15,11 +15,10 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-SGRT folder and file name definition.
+Yeoda folder and file name definition.
 
 """
 
-import os
 import copy
 
 import datetime as dt
@@ -33,9 +32,8 @@ from geopathfinder.file_naming import SmartFilename
 
 
 class YeodaFilename(SmartFilename):
-
     """
-    yeoda file name definition using SmartFilename class.
+    Yeoda file name definition using SmartFilename class.
     """
 
     fields_def = OrderedDict([
@@ -63,14 +61,10 @@ class YeodaFilename(SmartFilename):
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
         """
-
+        # TODO: decide if subfields (e.g. orbit_direction, sensor_id, resolution_class) should be included
         fields = fields.copy()
 
-        # implement here the date and time options & checks
-        # 20170103T130355
-        # 20170103
-        # 20160103-20170103
-        # 20160103T130355-20170103T230355
+        # date and time options and checks
         if 'datetime_1' in fields:
             fields['datetime_1'] = self.encode_datetime(fields['datetime_1'])
 
@@ -99,14 +93,14 @@ class YeodaFilename(SmartFilename):
         Parameters
         ----------
         filename_str : str
-            Filename without any paths (e.g., "M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif").
+            Filename without any paths (e.g., "SIG0_20170725T165004__VV_A146_E048N012T6_EU500M_S1BIWG1.tif").
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
 
         Returns
         -------
         YeodaFilename
-            Class representing an SGRT filename.
+            Class representing an Yeoda filename.
         """
 
         return super().from_filename(filename_str, YeodaFilename.fields_def, pad=YeodaFilename.pad,
@@ -171,6 +165,7 @@ class YeodaFilename(SmartFilename):
             Product id consisting of mission id (e.g., 'S1'), spacecraft id (e.g., 'A'), mode id (e.g., 'IW'),
             product type (e.g., 'GRD') and resolution class (e.g., 'H').
         """
+        # TODO: is this still used? Should be adapted!
         try:
             product_id = "".join([self["mission_id"], self["spacecraft_id"], self["mode_id"], self["product_type"], self["res_class"]])
         except TypeError:
@@ -196,7 +191,7 @@ class YeodaFilename(SmartFilename):
 
     def decode_datetime(self, string):
         """
-        Decodes a string into a datetime.date object. The format is given by the class.
+        Decodes a string into a datetime.datetime object. The format is defined based on the string itself.
 
         Parameters
         ----------
@@ -205,8 +200,8 @@ class YeodaFilename(SmartFilename):
 
         Returns
         -------
-        datetime.date, object
-            Original object or datetime.date object parsed from the given string.
+        datetime.datetime, object
+            Original object or datetime.datetime object parsed from the given string.
         """
         if isinstance(string, str):
             if 'T' in string:
@@ -231,7 +226,7 @@ class YeodaFilename(SmartFilename):
         int, object
             Original object or integer object parsed from the given string.
         """
-        # TODO: relative orbit now includes the direction - solve it (maybe add another field for input)
+
         if isinstance(string, str):
             try:
                 decode = int(string)
@@ -243,7 +238,7 @@ class YeodaFilename(SmartFilename):
 
     def encode_datetime(self, datetime_obj):
         """
-        Encodes a datetime.datetime/datetime.date object into a string. The format is given by the class.
+        Encodes a datetime.datetime/datetime.date object into a string. The format is selected by the input type.
 
         Parameters
         ----------
@@ -321,7 +316,7 @@ def yeoda_path(root, mode=None, group=None, datalog=None,
     SmartPath
         Object for the path
     """
-
+    # TODO: test and adapt the path approach as well
     # define the datalog folder name
     if datalog is None:
         if isinstance(wflow, str):
@@ -398,7 +393,7 @@ def yeoda_tree(root, target_level=None, register_file_pattern=None):
     SmartTree
         Tree object for the yeoda dataset.
     """
-
+    # TODO: test and adapt the tree approach as well
     # defining the hierarchy
     hierarchy = ['mode', 'group','datalog',
                  'product', 'wflow', 'grid',
