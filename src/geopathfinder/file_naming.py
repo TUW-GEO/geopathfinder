@@ -358,7 +358,7 @@ class SmartFilename(object):
             Filled file name.
 
         """
-        #TODO: there is a last delimiter before the file extension -> check that
+
         fn_parts = list(self._fn_map.values())
         filename = str(fn_parts[0])
         for i in range(1, len(fn_parts)):
