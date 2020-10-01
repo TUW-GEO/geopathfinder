@@ -57,6 +57,10 @@ class SmartFilenamePart(object):
             err_msg = "Length does not comply with definition: {:} > {:}".format(len(self), self.length)
             raise ValueError(err_msg)
 
+        # check delimiter in case of zero length
+        if length == 0 and delimiter == '':
+            raise ValueError('A variable field length (length = 0) requires a delimiter!')
+
 
     def has_valid_len(self):
         """
@@ -238,7 +242,7 @@ class SmartFilename(object):
                 fields[name] = filename_str[start:(start + length)]
             elif 'len' in value.keys():
                 length = value['len']
-                if length == 0:
+                if length == 0:  # handle variable length
                     if 'delim' in value.keys():
                         if not value['delim']:
                             raise Exception('A variable field length (length = 0) requires a delimiter!')
