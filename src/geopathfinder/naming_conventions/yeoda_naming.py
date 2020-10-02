@@ -93,7 +93,7 @@ class YeodaFilename(SmartFilename):
         Parameters
         ----------
         filename_str : str
-            Filename without any paths (e.g., "SIG0_20170725T165004__VV_A146_E048N012T6_EU500M_S1BIWG1.tif").
+            Filename without any paths (e.g., "SIG0_20170725T165004__VV_A146_E048N012T6_EU500M_V04R01_S1BIWG1.tif").
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
 
@@ -278,9 +278,7 @@ class YeodaFilename(SmartFilename):
             return str(relative_orbit)
 
 
-def yeoda_path(root, mode=None, group=None, datalog=None,
-               product=None, wflow=None, grid=None, tile=None, var=None,
-               qlook=True, make_dir=False):
+def yeoda_path(root, product=None, version=None, run_num=None, grid=None, tile=None, qlook=True, make_dir=False):
     """
     Realisation of the full yeoda folder naming convention, yielding a single
     SmartPath.
@@ -290,22 +288,16 @@ def yeoda_path(root, mode=None, group=None, datalog=None,
     root : str
         root directory of the path. must contain satellite sensor at toplevel.
         e.g. "R:\Datapool_processed\Sentinel-1_CSAR"
-    mode : str
-        e.g "IWGRDH"
-    group : str, optional
-        "preprocessed" or "parameters" or "products"
-    datalog : str, optional
-        must be "datasets" or "logfiles"
     product : str
         e.g. "ssm"
-    wflow : str
-        e.g. "C1003"
+    version : str or int
+        e.g. 2 or "Y2018"
+    run_num : int
+        e.g. 4
     grid : str
         e.g. "EQUI7_EU500M"
     tile : str
         e.g. "E048N012T6"
-    var : str
-        e.g. "ssm"
     qlook : bool
         if the quicklook subdir should be integrated
     make_dir : bool
@@ -317,44 +309,24 @@ def yeoda_path(root, mode=None, group=None, datalog=None,
         Object for the path
     """
     # TODO: test and adapt the path approach as well
-    # define the datalog folder name
-    if datalog is None:
-        if isinstance(wflow, str):
-            datalog = 'datasets'
-    elif datalog == 'logfiles':
-        product = None
-        wflow = None
-        grid = None
-        tile = None
-        var = None
-        qlook = False
-    elif datalog == 'datasets':
-        pass
-    else:
-        raise ValueError('Wrong input for "datalog" level!')
+    # root/product/wflow/grid/tile
+    # S1_CSAR_IWGRDH\FLOOD-HM\HM2019R02\EQUI7_EU010M\E040N014T1
+    # Sentinel-1\02_processed\IWGRDH\preprocessed\datasets\resampled\A0104\EQUI7_EU010M\E036N009T1\sig0
 
-
-    # define the group folder name
-    if group is None:
-        if wflow.startswith('A'):
-            group = 'preprocessed'
-        elif wflow.startswith('B'):
-            group = 'parameters'
-        elif wflow.startswith('C'):
-            group = 'products'
-        else:
-            raise ValueError('Wrong input for "wflow" level!')
-
+    # define the version and run number folder name
+    if version:
+        if isinstance(version, int):
+            version = 'V' + "{:02d}".format(version)
+    if run_num:
+        run_num = 'R' + "{:02d}".format(run_num)
+    wflow = str(version) if version else "" + str(run_num) if run_num else ""
+    wflow = wflow if version or run_num else None
 
     # defining the folder levels
-    levels = [mode, group,
-              datalog, product, wflow, grid,
-              tile,  var, 'qlooks']
+    levels = [product, wflow, grid, tile, 'qlooks']
 
     # defining the hierarchy
-    hierarchy = ['mode', 'group',
-                 'datalog', 'product', 'wflow', 'grid',
-                 'tile', 'var', 'qlook']
+    hierarchy = ['product', 'wflow', 'grid', 'tile', 'qlook']
 
     if qlook is False:
         levels.remove('qlooks')
