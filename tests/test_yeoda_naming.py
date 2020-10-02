@@ -46,7 +46,7 @@ class TestYeodaFilename(unittest.TestCase):
         fn = 'SIG0_20170725T165004__VV_A146_E048N012T6_EU500M_V04R01_S1BIWG1.tif'
         self.sgrt_fn4 = YeodaFilename.from_filename(fn, convert=True)
 
-        fn = 'TMENSIG40_20170725_20181225_M1_A146_E048N012T6_EU500M_V04R01_ASAWS.tif'
+        fn = 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M_V04R01_ASAWS.tif'
         self.sgrt_fn5 = YeodaFilename.from_filename(fn)
 
         fn = 'TMENSIG40_20170725_20181225_M1__E048N012T6_EU500M_V04R01_ASAWS.tif'
@@ -120,45 +120,33 @@ class TestYeodaFilename(unittest.TestCase):
         self.assertEqual(self.sgrt_fn3.obj.datetime_1, '20080101T122333')
         self.assertEqual(self.sgrt_fn3.obj.datetime_2, '23450102T070809')
 
-    def test4_create_sgrt_filename(self):
+    def test4_create_yeoda_filename(self):
         """
         Tests the creation of a SmartFilename from a given string filename.
 
         """
 
         # testing for single datetime
-        self.assertEqual(self.sgrt_fn4['pflag'], 'M')
         self.assertEqual(self.sgrt_fn4['datetime_1'].date(), datetime(2017, 7, 25).date())
         self.assertEqual(self.sgrt_fn4['datetime_1'].time(), time(16, 50, 4))
         self.assertEqual(self.sgrt_fn4['var_name'], 'SIG0')
-        self.assertEqual(self.sgrt_fn4['mission_id'], 'S1')
-        self.assertEqual(self.sgrt_fn4['spacecraft_id'], 'B')
-        self.assertEqual(self.sgrt_fn4['mode_id'], 'IW')
-        self.assertEqual(self.sgrt_fn4['product_type'], 'GRD')
-        self.assertEqual(self.sgrt_fn4['res_class'], 'H')
-        self.assertEqual(self.sgrt_fn4['level'], '1')
-        self.assertEqual(self.sgrt_fn4['pol'], 'VV')
-        self.assertEqual(self.sgrt_fn4['orbit_direction'], 'A')
-        self.assertEqual(self.sgrt_fn4['relative_orbit'], 146)
-        self.assertEqual(self.sgrt_fn4['workflow_id'], 'A0104')
+        self.assertEqual(self.sgrt_fn4['sensor_field'], 'S1BIWG1')
+        self.assertEqual(self.sgrt_fn4['band'], 'VV')
+        self.assertEqual(self.sgrt_fn4['extra_field'], 'A146')
+        self.assertEqual(self.sgrt_fn4['version_run_id'], 'V04R01')
         self.assertEqual(self.sgrt_fn4['grid_name'], 'EU500M')
         self.assertEqual(self.sgrt_fn4['tile_name'], 'E048N012T6')
         self.assertEqual(self.sgrt_fn4.ext, '.tif')
 
         # testing for empty fields and two dates
-        self.assertEqual(self.sgrt_fn5['dtime_1'], '20170725')
-        self.assertEqual(self.sgrt_fn5['dtime_2'], '20181225')
+        self.assertEqual(self.sgrt_fn5['datetime_1'], '20170725')
+        self.assertEqual(self.sgrt_fn5['datetime_2'], '20181225')
         self.assertEqual(self.sgrt_fn5['var_name'], 'TMENSIG40')
-        self.assertEqual(self.sgrt_fn5['mission_id'], 'AS')
-        self.assertEqual(self.sgrt_fn5['spacecraft_id'], 'A')
-        self.assertEqual(self.sgrt_fn5['mode_id'], 'WS')
-        self.assertEqual(self.sgrt_fn5['product_type'], '')
-        self.assertEqual(self.sgrt_fn5['res_class'], 'M')
-        self.assertEqual(self.sgrt_fn5['level'], '1')
-        self.assertEqual(self.sgrt_fn5['pol'], '')
+        self.assertEqual(self.sgrt_fn5['sensor_field'], 'ASAWS')
+        self.assertEqual(self.sgrt_fn5['band'], '')
 
         # testing for empty relative orbit field
-        self.assertEqual(self.sgrt_fn6['relative_orbit'], None)
+        self.assertEqual(self.sgrt_fn6['extra_field'], None)
 
     def test5_build_ascat_ssm_fname(self):
         """
@@ -168,24 +156,17 @@ class TestYeodaFilename(unittest.TestCase):
         date_time = '20331122_112233'
         tilename = 'EU500M_E012N024T6'
 
-        xfields = {'pflag': 'D',
-                   'dtime_1': datetime.strptime(date_time[:8], "%Y%m%d"),
-                   'dtime_2': datetime.strptime(date_time[-6:], "%H%M%S"),
+        xfields = {'datetime_1': datetime.strptime(date_time, "%Y%m%d_%H%M%S"),
                    'var_name': 'SSM',
-                   'mission_id': 'AS',
-                   'spacecraft_id': 'C',
-                   'mode_id': 'SM',
-                   'product_type': 'O12',
-                   'res_class': 'N',
-                   'level': 'A',
-                   'pol': 'XX',
-                   'orbit_direction': 'D',
-                   'workflow_id': 'C0102',
+                   'sensor_field': 'ASCSMO12NA',
+                   'band': 'XX',
+                   'extra_field': 'D',
+                   'version_run_id': 'V02R01',
                    'grid_name': tilename[:6],
                    'tile_name': tilename[7:]}
 
-        should = 'D20331122_112233--_SSM------_ASCSMO12NAXXD_---_C0102_EU500M_E012N024T6.tif'
-        fn = SgrtFilename(xfields)
+        should = 'SSM_20331122T112233__XX_D_E012N024T6_EU500M_V02R01_ASCSMO12NA.tif'
+        fn = YeodaFilename(xfields)
         self.assertEqual(str(fn), should)
 
 
