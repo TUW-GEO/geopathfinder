@@ -316,7 +316,8 @@ def yeoda_path(root, product=None, version=None, run_num=None, grid=None, tile=N
             version = 'V' + "{:02d}".format(version)
     if run_num:
         run_num = 'R' + "{:02d}".format(run_num)
-    wflow = str(version) if version else "" + str(run_num) if run_num else ""
+    wflow = str(version) if version else ""
+    wflow += str(run_num) if run_num else ""
     wflow = wflow if version or run_num else None
 
     # defining the folder levels
