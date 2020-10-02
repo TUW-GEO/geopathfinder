@@ -50,12 +50,16 @@ class SmartFilenamePart(object):
         self.pad = pad
         self.decoder = (lambda x: x) if decoder is None else decoder
         self.encoder = (lambda x: x) if encoder is None else encoder
-        self.length = length if length is not None else len(self.encoded)
+        self.length = length if length is not None and length != 0 else len(self.encoded)
 
         # check validity
         if not self.has_valid_len():
             err_msg = "Length does not comply with definition: {:} > {:}".format(len(self), self.length)
             raise ValueError(err_msg)
+
+        # check delimiter in case of zero length
+        if length == 0 and delimiter == '':
+            raise ValueError('A variable field length (length = 0) requires a delimiter!')
 
 
     def has_valid_len(self):
@@ -238,6 +242,15 @@ class SmartFilename(object):
                 fields[name] = filename_str[start:(start + length)]
             elif 'len' in value.keys():
                 length = value['len']
+                if length == 0:  # handle variable length
+                    if 'delim' in value.keys():
+                        if not value['delim']:
+                            raise Exception('A variable field length (length = 0) requires a delimiter!')
+                    elif not delimiter:
+                        raise Exception('A variable field length (length = 0) requires a delimiter!')
+                    end = filename_str.find(delimiter, start) if delimiter in filename_str[start:] \
+                        else filename_str.find('.', start)
+                    length = end - start
                 fields[name] = filename_str[start:(start + length)]
             else:
                 length = 0
@@ -345,10 +358,14 @@ class SmartFilename(object):
             Filled file name.
 
         """
+
         fn_parts = list(self._fn_map.values())
         filename = str(fn_parts[0])
         for i in range(1, len(fn_parts)):
-            filename = filename[:-len(fn_parts[i-1])] + (fn_parts[i-1] + fn_parts[i])
+            if len(fn_parts[i-1]) == 0:
+                filename = filename + (fn_parts[i - 1] + fn_parts[i])
+            else:
+                filename = filename[:-len(fn_parts[i-1])] + (fn_parts[i-1] + fn_parts[i])
 
         if self.ext is not None:
             filename += self.ext

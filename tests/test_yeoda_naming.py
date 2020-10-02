@@ -18,8 +18,7 @@
 import os
 import unittest
 import logging
-from datetime import datetime
-from datetime import time
+from datetime import datetime, time, date
 
 from geopathfinder.naming_conventions.yeoda_naming import YeodaFilename
 from geopathfinder.naming_conventions.yeoda_naming import yeoda_path
@@ -34,34 +33,32 @@ class TestYeodaFilename(unittest.TestCase):
         self.dtime_1 = datetime(2008, 1, 1, 12, 23, 33)
         self.dtime_2 = datetime(2009, 2, 2, 22, 1, 1)
 
-        fields = {'datetime_1': self.dtime_1, 'datetime_2': self.dtime_2,
-                  'var_name': 'SSM'}
+        fields = {'datetime_1': self.dtime_1, 'datetime_2': self.dtime_2, 'var_name': 'SSM'}
 
         self.sgrt_fn = YeodaFilename(fields, convert=True)
 
-        fields = {'datetime_1': self.dtime_1,
-                  'var_name': 'SSM'}
+        fields = {'datetime_1': self.dtime_1, 'var_name': 'SSM', 'band': 'VV'}
 
         self.sgrt_fn2 = YeodaFilename(fields, convert=True)
 
         self.sgrt_fn3 = YeodaFilename(fields)
 
-        fn = 'M20170725_165004--_SIG0-----_S1BIWGRDH1VVA_146_A0104_EU500M_E048N012T6.tif'
+        fn = 'SIG0_20170725T165004__VV_A146_E048N012T6_EU500M_V04R01_S1BIWG1.tif'
         self.sgrt_fn4 = YeodaFilename.from_filename(fn, convert=True)
 
-        fn = 'M20170725_20181225_TMENSIG40_ASAWS---M1--D_146_A0104_EU500M_E048N012T6.tif'
+        fn = 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M_V04R01_ASAWS.tif'
         self.sgrt_fn5 = YeodaFilename.from_filename(fn)
 
-        fn = 'M20170725_20181225_TMENSIG40_ASAWS---M1--D_---_A0104_EU500M_E048N012T6.tif'
+        fn = 'TMENSIG40_20170725_20181225_M1__E048N012T6_EU500M_V04R01_ASAWS.tif'
         self.sgrt_fn6 = YeodaFilename.from_filename(fn, convert=True)
 
 
     def test1_build_sgrt_filename(self):
         """
-        Test building SGRT file name.
+        Test building Yeoda file name.
 
         """
-        fn = ('-20080101_20090202_SSM------_-------------_---_-----_------_----------.tif')
+        fn = ('SSM_20080101T122333_20090202T220101___----------_------_------_.tif')
 
         self.assertEqual(str(self.sgrt_fn), fn)
 
@@ -71,28 +68,28 @@ class TestYeodaFilename(unittest.TestCase):
         Test set and get start and end date.
 
         """
-        self.assertEqual(self.sgrt_fn['dtime_1'], self.dtime_1.date())
-        self.assertEqual(self.sgrt_fn['dtime_2'], self.dtime_2.date())
+        self.assertEqual(self.sgrt_fn['datetime_1'], self.dtime_1)
+        self.assertEqual(self.sgrt_fn['datetime_2'], self.dtime_2)
 
-        new_start_time = datetime(2009, 1, 1, 12, 23, 33).date()
-        self.sgrt_fn['dtime_1'] = new_start_time
+        new_start_time = datetime(2009, 1, 1, 12, 23, 33)
+        self.sgrt_fn['datetime_1'] = new_start_time
 
-        self.assertEqual(self.sgrt_fn['dtime_1'], new_start_time)
+        self.assertEqual(self.sgrt_fn['datetime_1'], new_start_time)
+        self.assertEqual(self.sgrt_fn['datetime_2'], self.dtime_2)
 
     def test30_get_n_set_date_n_time(self):
         """
         Test set and get date and time for a single datetime.
 
         """
-        self.assertEqual(self.sgrt_fn2['dtime_1'], self.dtime_1.date())
-        self.assertEqual(self.sgrt_fn2['dtime_2'], self.dtime_1.time())
+        self.assertEqual(self.sgrt_fn2['datetime_1'].date(), self.dtime_1.date())
+        self.assertEqual(self.sgrt_fn2['datetime_1'].time(), self.dtime_1.time())
 
         new_start_time = datetime(2009, 1, 1, 12, 23, 33)
-        self.sgrt_fn2['dtime_1'] = new_start_time
-        self.sgrt_fn2['dtime_2'] = new_start_time
+        self.sgrt_fn2['datetime_1'] = new_start_time
 
-        self.assertEqual(self.sgrt_fn2['dtime_1'], new_start_time.date())
-        self.assertEqual(self.sgrt_fn2['dtime_2'], new_start_time.time())
+        self.assertEqual(self.sgrt_fn2['datetime_1'].date(), new_start_time.date())
+        self.assertEqual(self.sgrt_fn2['datetime_1'].time(), new_start_time.time())
 
     def test31_get_n_set_date_n_time_dts(self):
         """
@@ -100,15 +97,13 @@ class TestYeodaFilename(unittest.TestCase):
         returning strings.
 
         """
-        self.assertEqual(self.sgrt_fn2.obj.dtime_1, datetime(2008, 1, 1).date())
-        self.assertEqual(self.sgrt_fn2.obj.dtime_2, time(12, 23, 33))
+        self.assertEqual(self.sgrt_fn2.obj.datetime_1.date(), datetime(2008, 1, 1).date())
+        self.assertEqual(self.sgrt_fn2.obj.datetime_1.time(), time(12, 23, 33))
 
-        new_start_time = datetime(2345, 1, 2, 7, 8, 9)
-        self.sgrt_fn2['dtime_1'] = new_start_time
-        self.sgrt_fn2['dtime_2'] = new_start_time
+        new_start_time = date(2345, 1, 2)
+        self.sgrt_fn2['datetime_1'] = new_start_time
 
-        self.assertEqual(self.sgrt_fn2.obj.dtime_1, datetime(2345, 1, 2).date())
-        self.assertEqual(self.sgrt_fn2.obj.dtime_2, time(7, 8, 9))
+        self.assertEqual(self.sgrt_fn2.obj.datetime_1.time(), time())
 
     def test32_get_n_set_date_n_time_strings(self):
         """
@@ -116,55 +111,42 @@ class TestYeodaFilename(unittest.TestCase):
         returning strings.
 
         """
-        self.assertEqual(self.sgrt_fn3.obj.dtime_1, '20080101')
-        self.assertEqual(self.sgrt_fn3.obj.dtime_2, '122333')
+
+        self.assertEqual(self.sgrt_fn3.obj.datetime_1, '20080101T122333')
 
         new_start_time = datetime(2345, 1, 2, 7, 8, 9)
-        self.sgrt_fn3['dtime_1'] = new_start_time
-        self.sgrt_fn3['dtime_2'] = new_start_time
+        self.sgrt_fn3['datetime_2'] = new_start_time
 
-        self.assertEqual(self.sgrt_fn3.obj.dtime_1, '23450102')
-        self.assertEqual(self.sgrt_fn3.obj.dtime_2, '070809')
+        self.assertEqual(self.sgrt_fn3.obj.datetime_1, '20080101T122333')
+        self.assertEqual(self.sgrt_fn3.obj.datetime_2, '23450102T070809')
 
-    def test4_create_sgrt_filename(self):
+    def test4_create_yeoda_filename(self):
         """
         Tests the creation of a SmartFilename from a given string filename.
 
         """
 
         # testing for single datetime
-        self.assertEqual(self.sgrt_fn4['pflag'], 'M')
-        self.assertEqual(self.sgrt_fn4['dtime_1'], datetime(2017, 7, 25).date())
-        self.assertEqual(self.sgrt_fn4['dtime_2'], time(16, 50, 4))
+        self.assertEqual(self.sgrt_fn4['datetime_1'].date(), datetime(2017, 7, 25).date())
+        self.assertEqual(self.sgrt_fn4['datetime_1'].time(), time(16, 50, 4))
         self.assertEqual(self.sgrt_fn4['var_name'], 'SIG0')
-        self.assertEqual(self.sgrt_fn4['mission_id'], 'S1')
-        self.assertEqual(self.sgrt_fn4['spacecraft_id'], 'B')
-        self.assertEqual(self.sgrt_fn4['mode_id'], 'IW')
-        self.assertEqual(self.sgrt_fn4['product_type'], 'GRD')
-        self.assertEqual(self.sgrt_fn4['res_class'], 'H')
-        self.assertEqual(self.sgrt_fn4['level'], '1')
-        self.assertEqual(self.sgrt_fn4['pol'], 'VV')
-        self.assertEqual(self.sgrt_fn4['orbit_direction'], 'A')
-        self.assertEqual(self.sgrt_fn4['relative_orbit'], 146)
-        self.assertEqual(self.sgrt_fn4['workflow_id'], 'A0104')
+        self.assertEqual(self.sgrt_fn4['sensor_field'], 'S1BIWG1')
+        self.assertEqual(self.sgrt_fn4['band'], 'VV')
+        self.assertEqual(self.sgrt_fn4['extra_field'], 'A146')
+        self.assertEqual(self.sgrt_fn4['version_run_id'], 'V04R01')
         self.assertEqual(self.sgrt_fn4['grid_name'], 'EU500M')
         self.assertEqual(self.sgrt_fn4['tile_name'], 'E048N012T6')
         self.assertEqual(self.sgrt_fn4.ext, '.tif')
 
         # testing for empty fields and two dates
-        self.assertEqual(self.sgrt_fn5['dtime_1'], '20170725')
-        self.assertEqual(self.sgrt_fn5['dtime_2'], '20181225')
+        self.assertEqual(self.sgrt_fn5['datetime_1'], '20170725')
+        self.assertEqual(self.sgrt_fn5['datetime_2'], '20181225')
         self.assertEqual(self.sgrt_fn5['var_name'], 'TMENSIG40')
-        self.assertEqual(self.sgrt_fn5['mission_id'], 'AS')
-        self.assertEqual(self.sgrt_fn5['spacecraft_id'], 'A')
-        self.assertEqual(self.sgrt_fn5['mode_id'], 'WS')
-        self.assertEqual(self.sgrt_fn5['product_type'], '')
-        self.assertEqual(self.sgrt_fn5['res_class'], 'M')
-        self.assertEqual(self.sgrt_fn5['level'], '1')
-        self.assertEqual(self.sgrt_fn5['pol'], '')
+        self.assertEqual(self.sgrt_fn5['sensor_field'], 'ASAWS')
+        self.assertEqual(self.sgrt_fn5['band'], '')
 
         # testing for empty relative orbit field
-        self.assertEqual(self.sgrt_fn6['relative_orbit'], None)
+        self.assertEqual(self.sgrt_fn6['extra_field'], None)
 
     def test5_build_ascat_ssm_fname(self):
         """
@@ -174,30 +156,23 @@ class TestYeodaFilename(unittest.TestCase):
         date_time = '20331122_112233'
         tilename = 'EU500M_E012N024T6'
 
-        xfields = {'pflag': 'D',
-                   'dtime_1': datetime.strptime(date_time[:8], "%Y%m%d"),
-                   'dtime_2': datetime.strptime(date_time[-6:], "%H%M%S"),
+        xfields = {'datetime_1': datetime.strptime(date_time, "%Y%m%d_%H%M%S"),
                    'var_name': 'SSM',
-                   'mission_id': 'AS',
-                   'spacecraft_id': 'C',
-                   'mode_id': 'SM',
-                   'product_type': 'O12',
-                   'res_class': 'N',
-                   'level': 'A',
-                   'pol': 'XX',
-                   'orbit_direction': 'D',
-                   'workflow_id': 'C0102',
+                   'sensor_field': 'ASCSMO12NA',
+                   'band': 'XX',
+                   'extra_field': 'D',
+                   'version_run_id': 'V02R01',
                    'grid_name': tilename[:6],
                    'tile_name': tilename[7:]}
 
-        should = 'D20331122_112233--_SSM------_ASCSMO12NAXXD_---_C0102_EU500M_E012N024T6.tif'
-        fn = SgrtFilename(xfields)
+        should = 'SSM_20331122T112233__XX_D_E012N024T6_EU500M_V02R01_ASCSMO12NA.tif'
+        fn = YeodaFilename(xfields)
         self.assertEqual(str(fn), should)
 
 
 class TestYeodaPath(unittest.TestCase):
     """
-    Tests checking if a yeoda path is correctly reflected by sgrt_tree.
+    Tests checking if a yeoda path is correctly reflected by yeoda_tree.
     """
 
     def setUp(self):
@@ -206,30 +181,23 @@ class TestYeodaPath(unittest.TestCase):
         """
 
         self.test_dir = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR')
+            os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR_IWGRDH')
 
     def test_full_path(self):
         """
         Tests the SmartPath() for the yeoda naming conventions
         """
 
-        should = os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets',
-                              'ssm', 'C1003', 'EQUI7_EU500M', 'E048N012T6',
-                              'ssm', 'qlooks')
+        should = os.path.join(self.test_dir, 'SSM', 'V03R01', 'EQUI7_EU500M', 'E048N012T6', 'qlooks')
 
-        stp1 = yeoda_path(self.test_dir,
-                          mode='IWGRDH', group='products', datalog='datasets',
-                          product='ssm', wflow='C1003', grid='EQUI7_EU500M',
-                          tile='E048N012T6', var='ssm',
-                          qlook=True, make_dir=False)
+        stp1 = yeoda_path(self.test_dir, product='SSM', version=3, run_num=1, grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=False)
 
         self.assertEqual(stp1.directory, should)
 
-        # giving no specifications on group and datalog levels
-        stp2 = yeoda_path(self.test_dir,
-                          mode='IWGRDH', product='ssm', wflow='C1003',
-                          grid='EQUI7_EU500M', tile='E048N012T6', var='ssm',
-                          qlook=True, make_dir=False)
+        # passing the version as string directly
+        stp2 = yeoda_path(self.test_dir, product='SSM', version='V03', run_num=1, grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=False)
 
         self.assertEqual(stp2.directory, should)
 
@@ -243,13 +211,12 @@ class TestYeodaTree(unittest.TestCase):
 
     def setUp(self):
         """
-        Setting up the test sgrt_tree.
+        Setting up the test yeoda_tree.
         """
 
         self.test_dir = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR')
-        self.hierarchy_should = ['root', 'mode', 'group', 'datalog', 'product',
-                                 'wflow', 'grid', 'tile', 'var', 'qlook']
+            os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR_IWGRDH')
+        self.hierarchy_should = ['root', 'product', 'wflow', 'grid', 'tile', 'qlook']
         self.stt = yeoda_tree(self.test_dir, register_file_pattern='.tif')
 
 
