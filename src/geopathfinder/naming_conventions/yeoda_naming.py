@@ -308,10 +308,7 @@ def yeoda_path(root, product=None, version=None, run_num=None, grid=None, tile=N
     SmartPath
         Object for the path
     """
-    # TODO: test and adapt the path approach as well
-    # root/product/wflow/grid/tile
-    # S1_CSAR_IWGRDH\FLOOD-HM\HM2019R02\EQUI7_EU010M\E040N014T1
-    # Sentinel-1\02_processed\IWGRDH\preprocessed\datasets\resampled\A0104\EQUI7_EU010M\E036N009T1\sig0
+    # TODO: how to handle logfiles in the future?
 
     # define the version and run number folder name
     if version:
@@ -365,11 +362,9 @@ def yeoda_tree(root, target_level=None, register_file_pattern=None):
     SmartTree
         Tree object for the yeoda dataset.
     """
-    # TODO: test and adapt the tree approach as well
+
     # defining the hierarchy
-    hierarchy = ['mode', 'group','datalog',
-                 'product', 'wflow', 'grid',
-                 'tile', 'var', 'qlook']
+    hierarchy = ['product', 'wflow', 'grid', 'tile', 'qlook']
 
     sgrt_tree = build_smarttree(root, hierarchy,
                                 target_level=target_level,
