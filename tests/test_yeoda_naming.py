@@ -172,7 +172,7 @@ class TestYeodaFilename(unittest.TestCase):
 
 class TestYeodaPath(unittest.TestCase):
     """
-    Tests checking if a yeoda path is correctly reflected by sgrt_tree.
+    Tests checking if a yeoda path is correctly reflected by yeoda_tree.
     """
 
     def setUp(self):
@@ -188,23 +188,16 @@ class TestYeodaPath(unittest.TestCase):
         Tests the SmartPath() for the yeoda naming conventions
         """
 
-        should = os.path.join(self.test_dir, 'IWGRDH', 'products', 'datasets',
-                              'ssm', 'C1003', 'EQUI7_EU500M', 'E048N012T6',
-                              'ssm', 'qlooks')
+        should = os.path.join(self.test_dir, 'SSM', 'V03R01', 'EQUI7_EU500M', 'E048N012T6', 'qlooks')
 
-        stp1 = yeoda_path(self.test_dir,
-                          mode='IWGRDH', group='products', datalog='datasets',
-                          product='ssm', wflow='C1003', grid='EQUI7_EU500M',
-                          tile='E048N012T6', var='ssm',
-                          qlook=True, make_dir=False)
+        stp1 = yeoda_path(self.test_dir, product='SSM', version=3, run_num=1, grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=False)
 
         self.assertEqual(stp1.directory, should)
 
-        # giving no specifications on group and datalog levels
-        stp2 = yeoda_path(self.test_dir,
-                          mode='IWGRDH', product='ssm', wflow='C1003',
-                          grid='EQUI7_EU500M', tile='E048N012T6', var='ssm',
-                          qlook=True, make_dir=False)
+        # passing the version as string directly
+        stp2 = yeoda_path(self.test_dir, product='SSM', version='V03', run_num=1, grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=False)
 
         self.assertEqual(stp2.directory, should)
 
@@ -218,13 +211,12 @@ class TestYeodaTree(unittest.TestCase):
 
     def setUp(self):
         """
-        Setting up the test sgrt_tree.
+        Setting up the test yeoda_tree.
         """
 
         self.test_dir = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR')
-        self.hierarchy_should = ['root', 'mode', 'group', 'datalog', 'product',
-                                 'wflow', 'grid', 'tile', 'var', 'qlook']
+        self.hierarchy_should = ['root', 'product', 'wflow', 'grid', 'tile', 'qlook']
         self.stt = yeoda_tree(self.test_dir, register_file_pattern='.tif')
 
 
