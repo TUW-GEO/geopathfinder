@@ -181,7 +181,7 @@ class TestYeodaPath(unittest.TestCase):
         """
 
         self.test_dir = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR')
+            os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR_IWGRDH')
 
     def test_full_path(self):
         """
@@ -215,7 +215,7 @@ class TestYeodaTree(unittest.TestCase):
         """
 
         self.test_dir = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR')
+            os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR_IWGRDH')
         self.hierarchy_should = ['root', 'product', 'wflow', 'grid', 'tile', 'qlook']
         self.stt = yeoda_tree(self.test_dir, register_file_pattern='.tif')
 
