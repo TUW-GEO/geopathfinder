@@ -275,7 +275,7 @@ class YeodaFilename(SmartFilename):
         if isinstance(relative_orbit, int):
             return "{:03d}".format(relative_orbit)
         else:
-            return str(relative_orbit)
+            return relative_orbit
 
 
 def yeoda_path(root, product=None, version=None, run_num=None, grid=None, tile=None, qlook=True, make_dir=False):
