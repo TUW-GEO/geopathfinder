@@ -6,5 +6,5 @@ dependencies:
   - regex
   - numpy
   - pandas
-  - python-dateutil=2.6.1
+  - python-dateutil>=2.7.3
   - pytz
