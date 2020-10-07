@@ -43,13 +43,13 @@ class TestYeodaFilename(unittest.TestCase):
 
         self.sgrt_fn3 = YeodaFilename(fields)
 
-        fn = 'SIG0_20170725T165004__VV_A146_E048N012T6_EU500M_V04R01_S1BIWG1.tif'
+        fn = 'SIG0_20170725T165004_-_VV_A146_E048N012T6_EU500M_V04R01_S1BIWG1.tif'
         self.sgrt_fn4 = YeodaFilename.from_filename(fn, convert=True)
 
-        fn = 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M_V04R01_ASAWS.tif'
+        fn = 'TMENSIG40_20170725_20181225_-_A146_E048N012T6_EU500M_V04R01_ASAWS.tif'
         self.sgrt_fn5 = YeodaFilename.from_filename(fn)
 
-        fn = 'TMENSIG40_20170725_20181225_M1__E048N012T6_EU500M_V04R01_ASAWS.tif'
+        fn = 'TMENSIG40_20170725_20181225_M1_-_E048N012T6_EU500M_V04R01_ASAWS.tif'
         self.sgrt_fn6 = YeodaFilename.from_filename(fn, convert=True)
 
 
@@ -58,7 +58,7 @@ class TestYeodaFilename(unittest.TestCase):
         Test building Yeoda file name.
 
         """
-        fn = ('SSM_20080101T122333_20090202T220101___----------_------_------_.tif')
+        fn = ('SSM_20080101T122333_20090202T220101_-_-_-_-_-_-.tif')
 
         self.assertEqual(str(self.sgrt_fn), fn)
 
@@ -165,7 +165,7 @@ class TestYeodaFilename(unittest.TestCase):
                    'grid_name': tilename[:6],
                    'tile_name': tilename[7:]}
 
-        should = 'SSM_20331122T112233__XX_D_E012N024T6_EU500M_V02R01_ASCSMO12NA.tif'
+        should = 'SSM_20331122T112233_-_XX_D_E012N024T6_EU500M_V02R01_ASCSMO12NA.tif'
         fn = YeodaFilename(xfields)
         self.assertEqual(str(fn), should)
 
