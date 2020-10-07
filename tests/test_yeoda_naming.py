@@ -169,6 +169,21 @@ class TestYeodaFilename(unittest.TestCase):
         fn = YeodaFilename(xfields)
         self.assertEqual(str(fn), should)
 
+    def test6_compact_fname(self):
+        """
+        Tests if the compact representation of the filename works as expected.
+
+        """
+        def change_version(version_string):
+            self.sgrt_fn['version_run_id'] = version_string
+
+        with self.assertRaises(ValueError):
+            change_version('V001R01')
+
+        self.sgrt_fn['version_run_id'] = 'V01R0'
+        fn_str = str(self.sgrt_fn)
+        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_-_-_-_-_V01R0_-.tif')
+
 
 class TestYeodaPath(unittest.TestCase):
     """
