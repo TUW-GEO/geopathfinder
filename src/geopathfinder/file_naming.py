@@ -51,6 +51,7 @@ class SmartFilenamePart(object):
         self.compact = compact
         self.decoder = (lambda x: x) if decoder is None else decoder
         self.encoder = (lambda x: x) if encoder is None else encoder
+        length = 0 if compact else length
         self.length = length if length is not None and length != 0 else len(self.encoded)
 
         # check validity
@@ -76,12 +77,8 @@ class SmartFilenamePart(object):
         """
 
         # 0 for accepting any length
-        if self.length == 0:
+        if self.length == 0 or self.compact:
             check = True
-        elif self.compact and not self.arg:
-            check = True
-        elif self.compact:
-            check = self.length >= len(self)
         else:
             check = self.length == len(self)
 
@@ -127,8 +124,6 @@ class SmartFilenamePart(object):
         """
         if self.compact and not self.arg:
             return self.pad
-        elif self.compact:
-            return self.encoded
         return self.encoded.ljust(self.length, self.pad)
 
     def __len__(self):
@@ -207,7 +202,7 @@ class SmartFilename(object):
         self.obj = self.__init_filename_obj()
 
     @classmethod
-    def from_filename(cls, filename_str, fields_def, pad="-", delimiter="_", convert=False):
+    def from_filename(cls, filename_str, fields_def, pad="-", delimiter="_", convert=False, compact=False):
         """
         Converts a filename given as a string into a SmartFilename class object.
 
@@ -251,13 +246,16 @@ class SmartFilename(object):
                 length = value['len']
                 fields[name] = filename_str[start:(start + length)]
             elif 'len' in value.keys():
-                length = value['len']
-                if length == 0:  # handle variable length
+                if compact:
+                    length = 0
                     if 'delim' in value.keys():
                         if not value['delim']:
-                            raise Exception('A variable field length (length = 0) requires a delimiter!')
+                            raise Exception('The compact filename design requires a delimiter for each field!')
                     elif not delimiter:
-                        raise Exception('A variable field length (length = 0) requires a delimiter!')
+                        raise Exception('The compact filename design requires a delimiter for each field!')
+                else:
+                    length = value['len']
+                if length == 0:  # handle variable length
                     end = filename_str.find(delimiter, start) if delimiter in filename_str[start:] \
                         else filename_str.find('.', start)
                     length = end - start
