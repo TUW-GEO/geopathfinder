@@ -257,7 +257,8 @@ class YeodaFilename(SmartFilename):
             return relative_orbit
 
 
-def yeoda_path(root, product=None, version=None, run_num=None, grid=None, tile=None, qlook=True, make_dir=False):
+def yeoda_path(root, product=None, version=None, run_num=None, datalog='datasets', grid=None, tile=None, qlook=True,
+               make_dir=False):
     """
     Realisation of the full yeoda folder naming convention, yielding a single
     SmartPath.
@@ -287,7 +288,16 @@ def yeoda_path(root, product=None, version=None, run_num=None, grid=None, tile=N
     SmartPath
         Object for the path
     """
-    # TODO: how to handle logfiles in the future?
+
+    # get logfile path
+    if datalog == 'datasets':
+        pass
+    elif datalog == 'logfiles':
+        grid = None
+        tile = None
+        qlook = False
+    else:
+        raise ValueError('Wrong input for "datalog" level!')
 
     # define the version and run number folder name
     if version:
