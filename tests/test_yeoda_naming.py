@@ -238,7 +238,16 @@ class TestYeodaPath(unittest.TestCase):
 
         self.assertEqual(stp2.directory, should)
 
-        pass
+    def test_logfile_path(self):
+        """
+        Test the path for logfiles.
+
+        """
+
+        should = '/home/froth/code/geopathfinder/tests/test_data/Sentinel-1_CSAR_IWGRDH/SSM/V03R01'
+        stp = yeoda_path(self.test_dir, datalog='logfiles', product='SSM', version=3, run_num=1, grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=False)
+        self.assertEqual(stp.directory, should)
 
 
 class TestYeodaTree(unittest.TestCase):
