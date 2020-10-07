@@ -450,6 +450,8 @@ class SmartFilename(object):
         if name in self._fn_map:
             fn_part = copy.deepcopy(self._fn_map[name])
             fn_part.arg = value
+            if self.compact:
+                fn_part.length = 0
             if not fn_part.has_valid_len():
                 err_msg = "Length does not comply with definition: {:} > {:}".format(len(fn_part.encoded),
                                                                                      fn_part.length)
