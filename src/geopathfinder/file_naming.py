@@ -22,7 +22,7 @@ from collections import OrderedDict
 class SmartFilenamePart(object):
     """ Represents a part of filename. """
 
-    def __init__(self, arg, start=0, length=None, delimiter="_", pad="-", decoder=None, encoder=None):
+    def __init__(self, arg, start=0, length=None, delimiter="_", pad="-", decoder=None, encoder=None, compact=False):
         """
         Constructor of SmartFilenamePart class.
 
@@ -48,6 +48,7 @@ class SmartFilenamePart(object):
         self.start = start
         self.delimiter = delimiter
         self.pad = pad
+        self.compact = compact
         self.decoder = (lambda x: x) if decoder is None else decoder
         self.encoder = (lambda x: x) if encoder is None else encoder
         self.length = length if length is not None and length != 0 else len(self.encoded)
@@ -77,6 +78,8 @@ class SmartFilenamePart(object):
         # 0 for accepting any length
         if self.length == 0:
             check = True
+        elif self.compact and not self.arg:
+            check = True
         else:
             check = self.length == len(self)
 
@@ -92,7 +95,6 @@ class SmartFilenamePart(object):
         str
             Encoded (string) representation of a filename part.
         """
-
         return self.encoder(self.arg)
 
     @property
@@ -121,7 +123,8 @@ class SmartFilenamePart(object):
         str
             String representation of the class.
         """
-
+        if self.compact and not self.arg:
+            return self.pad
         return self.encoded.ljust(self.length, self.pad)
 
     def __len__(self):
@@ -161,7 +164,7 @@ class SmartFilename(object):
     and field length.
     """
 
-    def __init__(self, fields, fields_def, ext=None, pad='-', delimiter='_', convert=False):
+    def __init__(self, fields, fields_def, ext=None, pad='-', delimiter='_', convert=False, compact=False):
         """
         Define name of fields, length, pad and delimiter symbol.
 
@@ -188,11 +191,14 @@ class SmartFilename(object):
             Delimiter (default: '_')
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
+        compact: bool, optional
+            If true, empty fields are replaced by a single pad character instead of the whole length.
         """
         self.ext = ext
         self.delimiter = delimiter
         self.pad = pad
         self.convert = convert
+        self.compact = compact
         self._fn_map = self.__build_map(fields, fields_def)
         self.obj = self.__init_filename_obj()
 
@@ -342,6 +348,7 @@ class SmartFilename(object):
                 fn_part_kwargs['decoder'] = keys['decoder']
             if 'encoder' in keys:
                 fn_part_kwargs['encoder'] = keys['encoder']
+            fn_part_kwargs['compact'] = self.compact
 
             smart_fn_part = SmartFilenamePart(elem, **fn_part_kwargs)
             fn_map[name] = smart_fn_part
