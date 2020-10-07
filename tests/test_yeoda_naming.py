@@ -175,15 +175,17 @@ class TestYeodaFilename(unittest.TestCase):
         Tests if the compact representation of the filename works as expected.
 
         """
-        def change_version(version_string):
-            self.yeoda_fn['version_run_id'] = version_string
-
-        with self.assertRaises(ValueError):
-            change_version('V001R01')
-
         self.yeoda_fn['version_run_id'] = 'V01R0'
         fn_str = str(self.yeoda_fn)
         self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_-_-_-_-_V01R0_-.tif')
+
+        self.yeoda_fn['version_run_id'] = ''
+        fn_str = str(self.yeoda_fn)
+        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_-_-_-_-_-_-.tif')
+
+        self.yeoda_fn['version_run_id'] = 'V001R002'
+        fn_str = str(self.yeoda_fn)
+        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_-_-_-_-_V001R002_-.tif')
 
     def test7_replace_fnparts(self):
         """
