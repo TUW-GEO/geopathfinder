@@ -46,7 +46,7 @@ class TestYeodaFilename(unittest.TestCase):
         fn = 'SIG0_20170725T165004_-_VV_A146_E048N012T6_EU500M_V04R01_S1BIWG1.tif'
         self.yeoda_fn4 = YeodaFilename.from_filename(fn, convert=True)
 
-        fn = 'TMENSIG40_20170725_20181225_-_A146_E048N012T6_EU500M_V04R01_ASAWS.tif'
+        fn = 'TMENSIG40_20170725_20181225_-_A146_E048N012T6_EU500M_-_ASAWS.tif'
         self.yeoda_fn5 = YeodaFilename.from_filename(fn)
 
         fn = 'TMENSIG40_20170725_20181225_M1_-_E048N012T6_EU500M_V04R01_ASAWS.tif'
@@ -144,6 +144,7 @@ class TestYeodaFilename(unittest.TestCase):
         self.assertEqual(self.yeoda_fn5['var_name'], 'TMENSIG40')
         self.assertEqual(self.yeoda_fn5['sensor_field'], 'ASAWS')
         self.assertEqual(self.yeoda_fn5['band'], '')
+        self.assertEqual(self.yeoda_fn5['version_run_id'], '')
 
         # testing for empty relative orbit field
         self.assertEqual(self.yeoda_fn6['extra_field'], None)
@@ -183,6 +184,25 @@ class TestYeodaFilename(unittest.TestCase):
         self.yeoda_fn['version_run_id'] = 'V01R0'
         fn_str = str(self.yeoda_fn)
         self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_-_-_-_-_V01R0_-.tif')
+
+    def test7_replace_fnparts(self):
+        """
+        Test all types of fields can be altered after creating the SmartFilename object.
+
+        """
+        self.yeoda_fn5['version_run_id'] = 'V01R01'
+        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225_-_A146_E048N012T6_EU500M_V01R01_ASAWS.tif')
+        self.assertEqual(self.yeoda_fn5['version_run_id'], 'V01R01')
+
+        self.yeoda_fn5['version_run_id'] = ''
+        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225_-_A146_E048N012T6_EU500M_-_ASAWS.tif')
+
+        self.yeoda_fn5['band'] = 'VV'
+        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225_VV_A146_E048N012T6_EU500M_-_ASAWS.tif')
+        self.assertEqual(self.yeoda_fn5['band'], 'VV')
+
+        self.yeoda_fn5['band'] = ''
+        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225_-_A146_E048N012T6_EU500M_-_ASAWS.tif')
 
 
 class TestYeodaPath(unittest.TestCase):
