@@ -80,6 +80,8 @@ class SmartFilenamePart(object):
             check = True
         elif self.compact and not self.arg:
             check = True
+        elif self.compact:
+            check = self.length >= len(self)
         else:
             check = self.length == len(self)
 
@@ -125,6 +127,8 @@ class SmartFilenamePart(object):
         """
         if self.compact and not self.arg:
             return self.pad
+        elif self.compact:
+            return self.encoded
         return self.encoded.ljust(self.length, self.pad)
 
     def __len__(self):
