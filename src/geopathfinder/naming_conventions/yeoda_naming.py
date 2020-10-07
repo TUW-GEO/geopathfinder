@@ -83,7 +83,7 @@ class YeodaFilename(SmartFilename):
         fields_def_ext['extra_field']['encoder'] = lambda x: self.encode_extra_field(x)
 
         super(YeodaFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=YeodaFilename.pad,
-                                           delimiter=YeodaFilename.delimiter, convert=convert)
+                                           delimiter=YeodaFilename.delimiter, convert=convert, compact=True)
 
     @classmethod
     def from_filename(cls, filename_str, convert=False):
