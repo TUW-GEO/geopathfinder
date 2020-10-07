@@ -42,9 +42,9 @@ class YeodaFilename(SmartFilename):
         ('datetime_2', {'len': 0}),
         ('band', {'len': 0}),
         ('extra_field', {'len': 0}),
-        ('tile_name', {'len': 10}),
-        ('grid_name', {'len': 6}),
-        ('version_run_id', {'len': 6}),
+        ('tile_name', {'len': 0}),
+        ('grid_name', {'len': 0}),
+        ('version_run_id', {'len': 0}),
         ('sensor_field', {'len': 0})
     ])
     pad = "-"
