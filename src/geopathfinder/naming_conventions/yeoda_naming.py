@@ -104,7 +104,7 @@ class YeodaFilename(SmartFilename):
         """
 
         return super().from_filename(filename_str, YeodaFilename.fields_def, pad=YeodaFilename.pad,
-                                     delimiter=YeodaFilename.delimiter, convert=convert)
+                                     delimiter=YeodaFilename.delimiter, convert=convert, compact=True)
 
     @property
     def stime(self):
