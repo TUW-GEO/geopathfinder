@@ -61,7 +61,7 @@ class YeodaFilename(SmartFilename):
         convert: bool, optional
             If true, decoding is applied to parts of the filename, where such an operation is available (default is False).
         """
-        # TODO: decide if subfields (e.g. orbit_direction, sensor_id, resolution_class) should be included
+
         fields = fields.copy()
 
         # date and time options and checks
@@ -155,25 +155,6 @@ class YeodaFilename(SmartFilename):
             return None
 
     @property
-    def product_id(self):
-        """
-        Builds product id from other filename attributes (e.g. 'S1AIWGRDH').
-
-        Returns
-        -------
-        product_id: str
-            Product id consisting of mission id (e.g., 'S1'), spacecraft id (e.g., 'A'), mode id (e.g., 'IW'),
-            product type (e.g., 'GRD') and resolution class (e.g., 'H').
-        """
-        # TODO: is this still used? Should be adapted!
-        try:
-            product_id = "".join([self["mission_id"], self["spacecraft_id"], self["mode_id"], self["product_type"], self["res_class"]])
-        except TypeError:
-            product_id = None
-
-        return product_id
-
-    @property
     def ftile(self):
         """
         Builds the full tile name from other filename attributes (e.g. 'EU010M_E048N015T1').
@@ -210,7 +191,6 @@ class YeodaFilename(SmartFilename):
                 return datetime.strptime(string, "%Y%m%d")
         else:
             return string
-
 
     def decode_extra_field(self, string):
         """
@@ -256,7 +236,6 @@ class YeodaFilename(SmartFilename):
             return datetime_obj.strftime("%Y%m%d")
         else:
             return datetime_obj
-
 
     def encode_extra_field(self, relative_orbit):
         """
