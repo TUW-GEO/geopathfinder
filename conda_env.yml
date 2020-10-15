@@ -2,7 +2,6 @@ name: geopathfinder
 channels:
   - defaults
 dependencies:
-  - python=3.6
   - regex
   - numpy
   - pandas
