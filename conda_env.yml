@@ -2,9 +2,9 @@ name: geopathfinder
 channels:
   - defaults
 dependencies:
-  - python=3.6
+  - python
   - regex
   - numpy
   - pandas
-  - python-dateutil>=2.7.3
+  - python-dateutil
   - pytz
