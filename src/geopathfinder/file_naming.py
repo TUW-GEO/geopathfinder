@@ -123,7 +123,7 @@ class SmartFilenamePart(object):
             String representation of the class.
         """
         if self.compact and not self.arg:
-            return self.pad
+            return ''
         return self.encoded.ljust(self.length, self.pad)
 
     def __len__(self):

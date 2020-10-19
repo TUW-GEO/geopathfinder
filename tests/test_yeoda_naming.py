@@ -43,13 +43,13 @@ class TestYeodaFilename(unittest.TestCase):
 
         self.yeoda_fn3 = YeodaFilename(fields)
 
-        fn = 'SIG0_20170725T165004_-_VV_A146_E048N012T6_EU500M_V04R01_S1BIWG1.tif'
+        fn = 'SIG0_20170725T165004__VV_A146_E048N012T6_EU500M_V04R01_S1BIWG1.tif'
         self.yeoda_fn4 = YeodaFilename.from_filename(fn, convert=True)
 
-        fn = 'TMENSIG40_20170725_20181225_-_A146_E048N012T6_EU500M_-_ASAWS.tif'
+        fn = 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M__ASAWS.tif'
         self.yeoda_fn5 = YeodaFilename.from_filename(fn)
 
-        fn = 'TMENSIG40_20170725_20181225_M1_-_E048N012T6_EU500M_V04R01_ASAWS.tif'
+        fn = 'TMENSIG40_20170725_20181225_M1__E048N012T6_EU500M_V04R01_ASAWS.tif'
         self.yeoda_fn6 = YeodaFilename.from_filename(fn, convert=True)
 
 
@@ -58,7 +58,7 @@ class TestYeodaFilename(unittest.TestCase):
         Test building Yeoda file name.
 
         """
-        fn = ('SSM_20080101T122333_20090202T220101_-_-_-_-_-_-.tif')
+        fn = ('SSM_20080101T122333_20090202T220101______.tif')
 
         self.assertEqual(str(self.yeoda_fn), fn)
 
@@ -166,7 +166,7 @@ class TestYeodaFilename(unittest.TestCase):
                    'grid_name': tilename[:6],
                    'tile_name': tilename[7:]}
 
-        should = 'SSM_20331122T112233_-_XX_D_E012N024T6_EU500M_V02R01_ASCSMO12NA.tif'
+        should = 'SSM_20331122T112233__XX_D_E012N024T6_EU500M_V02R01_ASCSMO12NA.tif'
         fn = YeodaFilename(xfields)
         self.assertEqual(str(fn), should)
 
@@ -177,19 +177,19 @@ class TestYeodaFilename(unittest.TestCase):
         """
         self.yeoda_fn4['version_run_id'] = 'R01'
         fn_str = str(self.yeoda_fn4)
-        self.assertEqual(fn_str, 'SIG0_20170725T165004_-_VV_A146_E048N012T6_EU500M_R01_S1BIWG1.tif')
+        self.assertEqual(fn_str, 'SIG0_20170725T165004__VV_A146_E048N012T6_EU500M_R01_S1BIWG1.tif')
 
         self.yeoda_fn['version_run_id'] = 'V01R0'
         fn_str = str(self.yeoda_fn)
-        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_-_-_-_-_V01R0_-.tif')
+        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_____V01R0_.tif')
 
         self.yeoda_fn['version_run_id'] = ''
         fn_str = str(self.yeoda_fn)
-        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_-_-_-_-_-_-.tif')
+        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101______.tif')
 
         self.yeoda_fn['version_run_id'] = 'V001R002'
         fn_str = str(self.yeoda_fn)
-        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_-_-_-_-_V001R002_-.tif')
+        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_____V001R002_.tif')
 
     def test7_replace_fnparts(self):
         """
@@ -197,18 +197,18 @@ class TestYeodaFilename(unittest.TestCase):
 
         """
         self.yeoda_fn5['version_run_id'] = 'V01R01'
-        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225_-_A146_E048N012T6_EU500M_V01R01_ASAWS.tif')
+        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M_V01R01_ASAWS.tif')
         self.assertEqual(self.yeoda_fn5['version_run_id'], 'V01R01')
 
         self.yeoda_fn5['version_run_id'] = ''
-        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225_-_A146_E048N012T6_EU500M_-_ASAWS.tif')
+        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M__ASAWS.tif')
 
         self.yeoda_fn5['band'] = 'VV'
-        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225_VV_A146_E048N012T6_EU500M_-_ASAWS.tif')
+        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225_VV_A146_E048N012T6_EU500M__ASAWS.tif')
         self.assertEqual(self.yeoda_fn5['band'], 'VV')
 
         self.yeoda_fn5['band'] = ''
-        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225_-_A146_E048N012T6_EU500M_-_ASAWS.tif')
+        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M__ASAWS.tif')
 
 
 class TestYeodaPath(unittest.TestCase):
