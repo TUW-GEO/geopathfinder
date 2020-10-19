@@ -98,6 +98,16 @@ class TestSmartFilename(unittest.TestCase):
         self.assertEqual(smrtf['pflag'], 'D')
         self.assertEqual(smrtf['dtime_1'], '20180101130000')
 
+    def test_variable_length_fields(self):
+        """
+        Test if required delimiter for field with variable length is detected.
+        """
+        self.fields_def.update({'variable': {'len': 0, 'delim': ''}})
+
+        fields = {'pflag': 'M', 'dtime_1': '20180101120000'}
+        with self.assertRaises(ValueError):
+            smrtf = SmartFilename(fields, self.fields_def)
+
 
 if __name__ == '__main__':
     unittest.main()
