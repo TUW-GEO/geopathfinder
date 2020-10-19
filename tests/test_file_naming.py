@@ -108,6 +108,10 @@ class TestSmartFilename(unittest.TestCase):
         with self.assertRaises(ValueError):
             smrtf = SmartFilename(fields, self.fields_def)
 
+        fn = 'M_20180101120000.tif'
+        with self.assertRaises(ValueError):
+            smrtf = SmartFilename.from_filename(fn, self.fields_def)
+
 
 if __name__ == '__main__':
     unittest.main()
