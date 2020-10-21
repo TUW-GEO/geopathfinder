@@ -19,7 +19,7 @@ import copy
 from collections import OrderedDict
 
 
-class SmartFilenamePart(object):
+class SmartFilenamePart:
     """ Represents a part of filename. """
 
     def __init__(self, arg, start=0, length=None, delimiter="_", pad="-", decoder=None, encoder=None, compact=False):
@@ -58,11 +58,6 @@ class SmartFilenamePart(object):
         if not self.has_valid_len():
             err_msg = "Length does not comply with definition: {:} > {:}".format(len(self), self.length)
             raise ValueError(err_msg)
-
-        # check delimiter in case of zero length
-        if length == 0 and delimiter == '':
-            raise ValueError('A variable field length (length = 0) requires a delimiter!')
-
 
     def has_valid_len(self):
         """
@@ -113,9 +108,9 @@ class SmartFilenamePart(object):
         else:
             return None
 
-    def __repr__(self):
+    def __str__(self):
         """
-        Returns the string representation of the class.
+        Returns the string representation of the field.
 
         Returns
         -------
@@ -125,6 +120,17 @@ class SmartFilenamePart(object):
         if self.compact and not self.arg:
             return ''
         return self.encoded.ljust(self.length, self.pad)
+
+    def __repr__(self):
+        """
+        Returns the class representation, which is the field + delimiter.
+
+        Returns
+        -------
+        str
+            String representation of the class.
+        """
+        return str(self) + self.delimiter
 
     def __len__(self):
         """
@@ -153,7 +159,7 @@ class SmartFilenamePart(object):
             Concatenated strings separated by a delimiter.
         """
 
-        return str(self) + self.delimiter + str(other)
+        return repr(self) + str(other)
 
 
 class SmartFilename(object):
@@ -331,6 +337,7 @@ class SmartFilename(object):
                 raise KeyError("Field name undefined: {:}".format(key))
 
         fn_map = OrderedDict()
+        last_key_name = list(fields_def.keys())[-1]
         for name, keys in fields_def.items():
             if name not in fields:
                 elem = ""
@@ -342,16 +349,25 @@ class SmartFilename(object):
                 fn_part_kwargs['delimiter'] = self.delimiter
             else:
                 fn_part_kwargs['delimiter'] = keys['delim']
-            if 'pad' not in keys:
-                fn_part_kwargs['pad'] = self.pad
+
             if 'len' in keys:
+                # check delimiter in case of zero length
+                if keys['len'] == 0 and fn_part_kwargs['delimiter'] == '':
+                    err_msg = 'A variable field length (length = 0) requires a delimiter!'
+                    raise ValueError(err_msg)
+
                 fn_part_kwargs['length'] = keys['len']
+
             if 'decoder' in keys:
                 fn_part_kwargs['decoder'] = keys['decoder']
             if 'encoder' in keys:
                 fn_part_kwargs['encoder'] = keys['encoder']
             fn_part_kwargs['compact'] = self.compact
 
+            if last_key_name == name:  # set empty delimiter for last field
+                fn_part_kwargs['delimiter'] = ''
+
+            # reset delimiter of last element to be empty
             smart_fn_part = SmartFilenamePart(elem, **fn_part_kwargs)
             fn_map[name] = smart_fn_part
 
@@ -369,12 +385,7 @@ class SmartFilename(object):
         """
 
         fn_parts = list(self._fn_map.values())
-        filename = str(fn_parts[0])
-        for i in range(1, len(fn_parts)):
-            if len(fn_parts[i-1]) == 0:
-                filename = filename + (fn_parts[i - 1] + fn_parts[i])
-            else:
-                filename = filename[:-len(fn_parts[i-1])] + (fn_parts[i-1] + fn_parts[i])
+        filename = ''.join([repr(fn_part) for fn_part in fn_parts])
 
         if self.ext is not None:
             filename += self.ext
