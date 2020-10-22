@@ -45,7 +45,7 @@ class EODRFilename(SmartFilename):
     pad = "-"
     delimiter = "_"
 
-    def __init__(self, fields, ext='.vrt', convert=False):
+    def __init__(self, fields, ext='.vrt', convert=False, compact=False):
         """
         Constructor of eoDRFilename class.
 
@@ -77,10 +77,10 @@ class EODRFilename(SmartFilename):
                 fields_def_ext[key] = {}
 
         super(EODRFilename, self).__init__(fields, fields_def_ext, delimiter=EODRFilename.delimiter,
-                                           pad=EODRFilename.pad, ext=ext, convert=convert)
+                                           pad=EODRFilename.pad, ext=ext, convert=convert, compact=compact)
 
     @classmethod
-    def from_filename(cls, filename_str, convert=False):
+    def from_filename(cls, filename_str, convert=False, compact=False):
         """
         Converts a filename given as a string into an EODRFilename class object.
 
@@ -108,7 +108,7 @@ class EODRFilename(SmartFilename):
                 fields_def_ext[key] = {'len': len(fn_part)}
 
         return super().from_filename(filename_str, fields_def_ext, pad=EODRFilename.pad,
-                                     delimiter=EODRFilename.delimiter, convert=convert)
+                                     delimiter=EODRFilename.delimiter, convert=convert, compact=compact)
 
     @property
     def stime(self):

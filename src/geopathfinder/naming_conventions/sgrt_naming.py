@@ -66,7 +66,7 @@ class SgrtFilename(SmartFilename):
     pad = "-"
     delimiter = "_"
 
-    def __init__(self, fields, ext=".tif", convert=False):
+    def __init__(self, fields, ext=".tif", convert=False, compact=False):
         """
         Constructor of SgrtFilename class.
 
@@ -118,10 +118,10 @@ class SgrtFilename(SmartFilename):
         fields_def_ext['relative_orbit']['encoder'] = lambda x: self.encode_rel_orbit(x)
 
         super(SgrtFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=SgrtFilename.pad,
-                                           delimiter=SgrtFilename.delimiter, convert=convert)
+                                           delimiter=SgrtFilename.delimiter, convert=convert, compact=compact)
 
     @classmethod
-    def from_filename(cls, filename_str, convert=False):
+    def from_filename(cls, filename_str, convert=False, compact=False):
         """
         Converts a filename given as a string into an SgrtFilename class object.
 
@@ -139,7 +139,7 @@ class SgrtFilename(SmartFilename):
         """
 
         return super().from_filename(filename_str, SgrtFilename.fields_def, pad=SgrtFilename.pad,
-                                     delimiter=SgrtFilename.delimiter, convert=convert)
+                                     delimiter=SgrtFilename.delimiter, convert=convert, compact=compact)
 
     @property
     def stime(self):

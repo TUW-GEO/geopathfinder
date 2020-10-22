@@ -47,7 +47,7 @@ class ACubeFilename(SmartFilename):
     pad = "-"
     delimiter = "_"
 
-    def __init__(self, fields, ext=".tif", convert=False):
+    def __init__(self, fields, ext=".tif", convert=False, compact=False):
         """
         Constructor of ACube Filename class.
 
@@ -97,10 +97,10 @@ class ACubeFilename(SmartFilename):
         fields_def_ext['dtime_2']['encoder'] = lambda x: self.encode_time(x)
 
         super(ACubeFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=ACubeFilename.pad,
-                                            delimiter=ACubeFilename.delimiter, convert=convert)
+                                            delimiter=ACubeFilename.delimiter, convert=convert, compact=compact)
 
     @classmethod
-    def from_filename(cls, filename_str, convert=False):
+    def from_filename(cls, filename_str, convert=False, compact=False):
         """
         Converts a filename given as a string into an ACubeFilename class object.
 
@@ -118,7 +118,7 @@ class ACubeFilename(SmartFilename):
         """
 
         return super().from_filename(filename_str, ACubeFilename.fields_def, pad=ACubeFilename.pad,
-                                     delimiter=ACubeFilename.delimiter, convert=convert)
+                                     delimiter=ACubeFilename.delimiter, convert=convert, compact=compact)
 
     @property
     def stime(self):
