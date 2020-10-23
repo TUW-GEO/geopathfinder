@@ -35,6 +35,10 @@ jobs:
         - which pip
         - which python
     - name: "Testing geopathfinder for Python 3.7"
+      after_success:
+        # report coverage results to coveralls.io
+        - pip install coveralls
+        - coveralls
       install:
         - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
         - bash miniconda.sh -b -p $HOME/miniconda
@@ -53,9 +57,6 @@ jobs:
         - which pip
         - which python
 
+
 script: python setup.py test
 
-after_success:
-    # report coverage results to coveralls.io
-    - pip install coveralls
-    - coveralls
