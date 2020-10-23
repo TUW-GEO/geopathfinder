@@ -13,10 +13,7 @@ addons:
       - libgrib-api-dev
 notifications:
   email: false
-python:
-  # We don't actually use the Travis Python, but this keeps it organized.
-  - "3.6"
-  - "3.7"
+
 test_py_36:
   script:
     - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -35,10 +32,7 @@ test_py_36:
     - conda list
     - which pip
     - which python
-  after_success:
-    # report coverage results to coveralls.io
-    - pip install coveralls
-    - coveralls
+
 
 test_py_37:
   script:
@@ -58,7 +52,8 @@ test_py_37:
     - conda list
     - which pip
     - which python
-  after_success:
+
+after_success:
     # report coverage results to coveralls.io
     - pip install coveralls
     - coveralls
