@@ -1,4 +1,3 @@
-=============
 geopathfinder
 =============
 .. image:: https://travis-ci.org/TUW-GEO/geopathfinder.svg?branch=master

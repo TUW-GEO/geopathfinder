@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version v0.0.7
+==============
+
+- introduces yeoda_naming
+- allows flexible lenght filename parts
+- fixes issued with python dependencies
+
+
 Version v0.0.6
 ==============
 
