@@ -26,5 +26,5 @@ Version v0.0.1
 ==============
 
 - Add class SmartPath, SmartTree and SmartFilename
-- Add class SgrtFilename and function sgrt_path
+- Add class SgrtFilename and function yeoda_path
 - Add unit tests

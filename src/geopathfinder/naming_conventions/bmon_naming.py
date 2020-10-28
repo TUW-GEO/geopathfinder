@@ -42,7 +42,7 @@ class BMonFilename(SmartFilename):
     pad = "-"
     delimiter = "_"
 
-    def __init__(self, fields, ext='.nc', convert=False):
+    def __init__(self, fields, ext='.nc', convert=False, compact=False):
         """
         Constructor of BMonFilename class.
 
@@ -63,10 +63,10 @@ class BMonFilename(SmartFilename):
         fields_def_ext['timestamp']['encoder'] = lambda x: self.encode_timestamp(x)
 
         super(BMonFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=BMonFilename.pad,
-                                           delimiter=BMonFilename.delimiter, convert=convert)
+                                           delimiter=BMonFilename.delimiter, convert=convert, compact=compact)
 
     @classmethod
-    def from_filename(cls, filename_str, convert=False):
+    def from_filename(cls, filename_str, convert=False, compact=False):
         """
         Converts a filename given as a string into a BMonFilename class object.
 
@@ -84,7 +84,7 @@ class BMonFilename(SmartFilename):
         """
 
         return super().from_filename(filename_str, BMonFilename.fields_def, pad=BMonFilename.pad,
-                                     delimiter=BMonFilename.delimiter, convert=convert)
+                                     delimiter=BMonFilename.delimiter, convert=convert, compact=compact)
 
     def decode_timestamp(self, string):
         """
