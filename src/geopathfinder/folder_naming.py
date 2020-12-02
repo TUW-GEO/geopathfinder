@@ -912,6 +912,22 @@ class SmartTree(object):
 
             return branch
 
+    # BBM: a function like this should be implemented, reducing all registered files and smartpaths to a filelist
+    # def trim2filelist(self, file_list):
+    #
+    #     included_files = list(set(self.file_register) & set(file_list))
+    #     file_count = len(included_files)
+    #     if file_count != 0:
+    #
+    #         tree = copy.deepcopy(self)
+    #         tree.file_register = included_files
+    #
+    #         tree2 = SmartTree(self.root, self.hierarchy)
+    #         tree2.file_register = included_files
+    #         tree2.file_count = file_count
+    #
+    #
+    #     pass
 
     def make_dirs(self):
         '''
@@ -923,7 +939,7 @@ class SmartTree(object):
 
 
     def copy_smarttree_on_fs(self, target_dir, level=None, level_pattern='',
-                             file_pattern=None):
+                             file_pattern=None, file_list=None):
         """
         Copies all files and directories in the SmartTree to a target
         directory, using shutil.copytree().
@@ -943,7 +959,10 @@ class SmartTree(object):
             string patterns for file matching.
             when starting with "-" it is interpreted as negative pattern
             that should be excluded from the matches
-
+        file_list : list of str, optional
+            List with full file paths that should be included in the copy process.
+            Only files that are in both: tree.file_register & file_list are copied!
+            This list might come from a yeoda datacube filtering
 
         Returns
         -------
@@ -960,7 +979,13 @@ class SmartTree(object):
 
         target_dir = os.path.join(target_dir, base_folder)
 
-        copy_tree(source_dir, target_dir, file_pattern=file_pattern)
+        if file_list is None:
+            copy_tree(source_dir, target_dir, file_pattern=file_pattern)
+        else:
+            included_files = list(set(self.file_register) & set(file_list))
+            file_count = len(included_files)
+            if file_count != 0:
+                copy_tree(source_dir, target_dir, file_list=included_files)
 
 
 class NullSmartTree(SmartTree):
@@ -1277,7 +1302,8 @@ def regex_file_search(path, pattern, full_paths=True):
     return sorted(files), len(files)
 
 
-def copy_tree(source, dest, file_pattern=None, overwrite=False):
+def copy_tree(source, dest, file_pattern=None, overwrite=False,
+              file_list=None):
     """
     Copies a directory tree structure.
 
@@ -1293,6 +1319,9 @@ def copy_tree(source, dest, file_pattern=None, overwrite=False):
         that should be excluded from the matches
     overwrite : bool, optional
         should existing files be overwritten? default: False
+    file_list : list of str, optional
+        List with full file paths that should be included in the copy process.
+        This list might come from a yeoda datacube filtering
 
     """
 
@@ -1307,6 +1336,10 @@ def copy_tree(source, dest, file_pattern=None, overwrite=False):
 
         # all files found
         for file in files:
+
+            if file_list is not None:
+                if os.path.join(root, file) not in file_list:
+                    continue
 
             if file_pattern is not None:
                 include = regex.match(file)
