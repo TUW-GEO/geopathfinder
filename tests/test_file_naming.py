@@ -20,6 +20,20 @@ from collections import OrderedDict
 from geopathfinder.file_naming import SmartFilename
 
 
+def decode_int(string):
+    if isinstance(string, str):
+        return int(string)
+    else:
+        return string
+
+
+def encode_int(num):
+    if isinstance(num, int):
+        return str(num)
+    else:
+        return num
+
+
 class TestSmartFilename(unittest.TestCase):
 
     def setUp(self):
@@ -111,6 +125,15 @@ class TestSmartFilename(unittest.TestCase):
         fn = 'M_20180101120000.tif'
         with self.assertRaises(ValueError):
             smrtf = SmartFilename.from_filename(fn, self.fields_def)
+
+    def test_zero_entries(self):
+        fields_def = OrderedDict([('text', {'len': 0}), ('number', {'len': 6,
+                                                                    'decoder': lambda x: decode_int(x),
+                                                                    'encoder': lambda x: encode_int(x)
+                                                                    })])
+        fields = {'text': 'testfilename', 'number': 0}
+        smrtf = SmartFilename(fields, fields_def, ext='tif', compact=True)
+        self.assertEqual(str(smrtf), 'testfilename_0.tif')
 
 
 if __name__ == '__main__':
