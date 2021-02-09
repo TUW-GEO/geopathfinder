@@ -117,7 +117,7 @@ class SmartFilenamePart:
         str
             String representation of the class.
         """
-        if self.compact and not self.arg:
+        if self.compact and self.arg == "":
             return ''
         return self.encoded.ljust(self.length, self.pad)
 
