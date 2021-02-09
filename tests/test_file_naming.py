@@ -127,13 +127,15 @@ class TestSmartFilename(unittest.TestCase):
             smrtf = SmartFilename.from_filename(fn, self.fields_def)
 
     def test_zero_entries(self):
-        fields_def = OrderedDict([('text', {'len': 0}), ('number', {'len': 6,
-                                                                    'decoder': lambda x: decode_int(x),
-                                                                    'encoder': lambda x: encode_int(x)
-                                                                    })])
+        fields_def = OrderedDict([('text', {'len': 0}), ('empty', {'len': 0}), ('number', {'len': 6,
+                                                                                           'decoder': decode_int,
+                                                                                           'encoder': encode_int
+                                                                                           })])
         fields = {'text': 'testfilename', 'number': 0}
-        smrtf = SmartFilename(fields, fields_def, ext='tif', compact=True)
-        self.assertEqual(str(smrtf), 'testfilename_0.tif')
+        smrtf = SmartFilename(fields, fields_def, ext='.tif', compact=True)
+        self.assertEqual(str(smrtf), 'testfilename__0.tif')
+        smrtf_fn = SmartFilename.from_filename('fromfilename__0.tif', fields_def=fields_def, compact=True, convert=True)
+        self.assertEqual(smrtf_fn['number'], 0)
 
 
 if __name__ == '__main__':
