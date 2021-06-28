@@ -249,8 +249,12 @@ class TestYeodaPath(unittest.TestCase):
         should = os.path.join(self.test_dir, 'SSM', 'V7', 'EQUI7_EU500M', 'E048N012T6', 'qlooks')
         stp2 = yeoda_path(self.test_dir, product='SSM', data_version=7, grid='EQUI7_EU500M',
                           tile='E048N012T6', qlook=True, make_dir=False)
-
         self.assertEqual(stp2.directory, should)
+
+        should = os.path.join(self.test_dir, 'SSM', 'V0', 'EQUI7_EU500M', 'E048N012T6', 'qlooks')
+        stp3 = yeoda_path(self.test_dir, product='SSM', data_version=0, grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=False)
+        self.assertEqual(stp3.directory, should)
 
     def test_logfile_path(self):
         """

@@ -300,7 +300,7 @@ def yeoda_path(root, product=None, data_version=None, datalog='datasets', grid=N
         raise ValueError('Wrong input for "datalog" level!')
 
     # define the data_version and run number folder name
-    if data_version:
+    if data_version is not None:
         if isinstance(data_version, int):
             data_version = 'V' + str(data_version)
     else:
