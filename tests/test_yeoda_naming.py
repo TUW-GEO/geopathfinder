@@ -133,7 +133,7 @@ class TestYeodaFilename(unittest.TestCase):
         self.assertEqual(self.yeoda_fn4['sensor_field'], 'S1BIWG1')
         self.assertEqual(self.yeoda_fn4['band'], 'VV')
         self.assertEqual(self.yeoda_fn4['extra_field'], 'A146')
-        self.assertEqual(self.yeoda_fn4['version_run_id'], 'V04R01')
+        self.assertEqual(self.yeoda_fn4['data_version'], 'V04R01')
         self.assertEqual(self.yeoda_fn4['grid_name'], 'EU500M')
         self.assertEqual(self.yeoda_fn4['tile_name'], 'E048N012T6')
         self.assertEqual(self.yeoda_fn4.ext, '.tif')
@@ -144,7 +144,7 @@ class TestYeodaFilename(unittest.TestCase):
         self.assertEqual(self.yeoda_fn5['var_name'], 'TMENSIG40')
         self.assertEqual(self.yeoda_fn5['sensor_field'], 'ASAWS')
         self.assertEqual(self.yeoda_fn5['band'], '')
-        self.assertEqual(self.yeoda_fn5['version_run_id'], '')
+        self.assertEqual(self.yeoda_fn5['data_version'], '')
 
         # testing for empty relative orbit field
         self.assertEqual(self.yeoda_fn6['extra_field'], None)
@@ -162,11 +162,11 @@ class TestYeodaFilename(unittest.TestCase):
                    'sensor_field': 'ASCSMO12NA',
                    'band': 'XX',
                    'extra_field': 'D',
-                   'version_run_id': 'V02R01',
+                   'data_version': 'V2M3R1',
                    'grid_name': tilename[:6],
                    'tile_name': tilename[7:]}
 
-        should = 'SSM_20331122T112233__XX_D_E012N024T6_EU500M_V02R01_ASCSMO12NA.tif'
+        should = 'SSM_20331122T112233__XX_D_E012N024T6_EU500M_V2M3R1_ASCSMO12NA.tif'
         fn = YeodaFilename(xfields)
         self.assertEqual(str(fn), should)
 
@@ -175,19 +175,27 @@ class TestYeodaFilename(unittest.TestCase):
         Tests if the compact representation of the filename works as expected.
 
         """
-        self.yeoda_fn4['version_run_id'] = 'R01'
+        self.yeoda_fn4['data_version'] = 'R01'
         fn_str = str(self.yeoda_fn4)
         self.assertEqual(fn_str, 'SIG0_20170725T165004__VV_A146_E048N012T6_EU500M_R01_S1BIWG1.tif')
 
-        self.yeoda_fn['version_run_id'] = 'V01R0'
+        self.yeoda_fn['data_version'] = 'V01R0'
         fn_str = str(self.yeoda_fn)
         self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_____V01R0_.tif')
 
-        self.yeoda_fn['version_run_id'] = ''
+        self.yeoda_fn['data_version'] = 'V1M3R3'
+        fn_str = str(self.yeoda_fn)
+        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_____V1M3R3_.tif')
+
+        self.yeoda_fn['data_version'] = 'V2R4'
+        fn_str = str(self.yeoda_fn)
+        self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_____V2R4_.tif')
+
+        self.yeoda_fn['data_version'] = ''
         fn_str = str(self.yeoda_fn)
         self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101______.tif')
 
-        self.yeoda_fn['version_run_id'] = 'V001R002'
+        self.yeoda_fn['data_version'] = 'V001R002'
         fn_str = str(self.yeoda_fn)
         self.assertEqual(fn_str, 'SSM_20080101T122333_20090202T220101_____V001R002_.tif')
 
@@ -196,13 +204,14 @@ class TestYeodaFilename(unittest.TestCase):
         Test all types of fields can be altered after creating the SmartFilename object.
 
         """
-        self.yeoda_fn5['version_run_id'] = 'V01R01'
+        self.yeoda_fn5['data_version'] = 'V01R01'
         self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M_V01R01_ASAWS.tif')
-        self.assertEqual(self.yeoda_fn5['version_run_id'], 'V01R01')
+        self.assertEqual(self.yeoda_fn5['data_version'], 'V01R01')
 
-        self.yeoda_fn5['version_run_id'] = ''
-        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M__ASAWS.tif')
+        self.yeoda_fn5['data_version'] = 'V1M2R1'
+        self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M_V1M2R1_ASAWS.tif')
 
+        self.yeoda_fn5['data_version'] = ''
         self.yeoda_fn5['band'] = 'VV'
         self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225_VV_A146_E048N012T6_EU500M__ASAWS.tif')
         self.assertEqual(self.yeoda_fn5['band'], 'VV')
@@ -229,15 +238,16 @@ class TestYeodaPath(unittest.TestCase):
         Tests the SmartPath() for the yeoda naming conventions
         """
 
-        should = os.path.join(self.test_dir, 'SSM', 'V03R01', 'EQUI7_EU500M', 'E048N012T6', 'qlooks')
-
-        stp1 = yeoda_path(self.test_dir, product='SSM', version=3, run_num=1, grid='EQUI7_EU500M',
+        # passing the version as string directly
+        should = os.path.join(self.test_dir, 'SSM', 'V3M2R1', 'EQUI7_EU500M', 'E048N012T6', 'qlooks')
+        stp1 = yeoda_path(self.test_dir, product='SSM', data_version='V3M2R1', grid='EQUI7_EU500M',
                           tile='E048N012T6', qlook=True, make_dir=False)
 
         self.assertEqual(stp1.directory, should)
 
-        # passing the version as string directly
-        stp2 = yeoda_path(self.test_dir, product='SSM', version='V03', run_num=1, grid='EQUI7_EU500M',
+        # passing the version as integer
+        should = os.path.join(self.test_dir, 'SSM', 'V7', 'EQUI7_EU500M', 'E048N012T6', 'qlooks')
+        stp2 = yeoda_path(self.test_dir, product='SSM', data_version=7, grid='EQUI7_EU500M',
                           tile='E048N012T6', qlook=True, make_dir=False)
 
         self.assertEqual(stp2.directory, should)
@@ -248,9 +258,9 @@ class TestYeodaPath(unittest.TestCase):
 
         """
 
-        should = os.path.join(self.test_dir, 'SSM', 'V03R01')
-        stp = yeoda_path(self.test_dir, datalog='logfiles', product='SSM', version=3, run_num=1, grid='EQUI7_EU500M',
-                          tile='E048N012T6', qlook=True, make_dir=False)
+        should = os.path.join(self.test_dir, 'SSM', 'V3M2R1')
+        stp = yeoda_path(self.test_dir, datalog='logfiles', product='SSM', data_version='V3M2R1', grid='EQUI7_EU500M',
+                         tile='E048N012T6', qlook=True, make_dir=False)
         self.assertEqual(stp.directory, should)
 
 
@@ -266,7 +276,7 @@ class TestYeodaTree(unittest.TestCase):
 
         self.test_dir = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR_IWGRDH')
-        self.hierarchy_should = ['root', 'product', 'wflow', 'grid', 'tile', 'qlook']
+        self.hierarchy_should = ['root', 'product', 'data_version', 'grid', 'tile', 'qlook']
         self.stt = yeoda_tree(self.test_dir, register_file_pattern='.tif')
 
 

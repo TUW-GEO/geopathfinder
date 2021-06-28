@@ -44,7 +44,7 @@ class YeodaFilename(SmartFilename):
         ('extra_field', {'len': 0}),
         ('tile_name', {'len': 0}),
         ('grid_name', {'len': 0}),
-        ('version_run_id', {'len': 0}),
+        ('data_version', {'len': 0}),
         ('sensor_field', {'len': 0})
     ])
     pad = "-"
@@ -257,7 +257,7 @@ class YeodaFilename(SmartFilename):
             return relative_orbit
 
 
-def yeoda_path(root, product=None, version=None, run_num=None, datalog='datasets', grid=None, tile=None, qlook=True,
+def yeoda_path(root, product=None, data_version=None, datalog='datasets', grid=None, tile=None, qlook=True,
                make_dir=False):
     """
     Realisation of the full yeoda folder naming convention, yielding a single
@@ -270,10 +270,10 @@ def yeoda_path(root, product=None, version=None, run_num=None, datalog='datasets
         e.g. "R:\Datapool_processed\Sentinel-1_CSAR"
     product : str
         e.g. "ssm"
-    version : str or int
-        e.g. 2 or "Y2018"
-    run_num : int
-        e.g. 4
+    data_version : int or str
+        e.g. 2 or "V1M3R2"
+    datalog : str
+        'datasets' or 'logfiles'
     grid : str
         e.g. "EQUI7_EU500M"
     tile : str
@@ -299,21 +299,18 @@ def yeoda_path(root, product=None, version=None, run_num=None, datalog='datasets
     else:
         raise ValueError('Wrong input for "datalog" level!')
 
-    # define the version and run number folder name
-    if version:
-        if isinstance(version, int):
-            version = 'V' + "{:02d}".format(version)
-    if run_num:
-        run_num = 'R' + "{:02d}".format(run_num)
-    wflow = str(version) if version else ""
-    wflow += str(run_num) if run_num else ""
-    wflow = wflow if version or run_num else None
+    # define the data_version and run number folder name
+    if data_version:
+        if isinstance(data_version, int):
+            data_version = 'V' + str(data_version)
+    else:
+        raise ValueError('data_version must be defined!')
 
     # defining the folder levels
-    levels = [product, wflow, grid, tile, 'qlooks']
+    levels = [product, data_version, grid, tile, 'qlooks']
 
     # defining the hierarchy
-    hierarchy = ['product', 'wflow', 'grid', 'tile', 'qlook']
+    hierarchy = ['product', 'data_version', 'grid', 'tile', 'qlook']
 
     if qlook is False:
         levels.remove('qlooks')
@@ -354,7 +351,7 @@ def yeoda_tree(root, target_level=None, register_file_pattern=None):
     """
 
     # defining the hierarchy
-    hierarchy = ['product', 'wflow', 'grid', 'tile', 'qlook']
+    hierarchy = ['product', 'data_version', 'grid', 'tile', 'qlook']
 
     sgrt_tree = build_smarttree(root, hierarchy,
                                 target_level=target_level,
