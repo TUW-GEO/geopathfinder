@@ -262,11 +262,14 @@ class TestYeodaPath(unittest.TestCase):
 
         """
 
-        should = os.path.join(self.test_dir, 'SSM', 'V3M2R1')
-        stp = yeoda_path(self.test_dir, datalog='logfiles', product='SSM', data_version='V3M2R1', grid='EQUI7_EU500M',
-                         tile='E048N012T6', qlook=True, make_dir=False)
-        self.assertEqual(stp.directory, should)
+        should = os.path.join(self.test_dir, 'SSM', 'logfiles')
+        stp1 = yeoda_path(self.test_dir, datalog='logfiles', product='SSM', make_dir=False)
+        self.assertEqual(stp1.directory, should)
 
+        # test too much input
+        stp2 = yeoda_path(self.test_dir, datalog='logfiles', product='SSM', data_version='V3M2R1', grid='EQUI7_EU500M',
+                         tile='E048N012T6', qlook=True, make_dir=False)
+        self.assertEqual(stp2.directory, should)
 
 class TestYeodaTree(unittest.TestCase):
     """
