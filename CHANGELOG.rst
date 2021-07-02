@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version v0.0.8
+==============
+
+- yeoda_naming: logfiles folder is handled correctly
+
+
 Version v0.0.7
 ==============
 
