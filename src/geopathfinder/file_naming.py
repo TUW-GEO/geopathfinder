@@ -265,7 +265,9 @@ class SmartFilename(object):
                     end = filename_str.find(delimiter, start) if delimiter in filename_str[start:] \
                         else filename_str.find('.', start)
                     length = end - start
-                fields[name] = filename_str[start:(start + length)]
+                # if length is not 0, i.e. an entry is available, then add the field. Otherwise skip it.
+                if length != 0:
+                    fields[name] = filename_str[start:(start + length)]
             else:
                 length = 0
 
