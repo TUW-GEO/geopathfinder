@@ -117,7 +117,7 @@ class YeodaFilename(SmartFilename):
             Start time.
         """
         try:
-            return self.obj['datetime_1']
+            return self['datetime_1']
         except TypeError:
             return None
 
@@ -132,7 +132,7 @@ class YeodaFilename(SmartFilename):
             End time.
         """
         try:
-            return self.obj['datetime_1']
+            return self['datetime_2']
         except TypeError:
             return None
 
