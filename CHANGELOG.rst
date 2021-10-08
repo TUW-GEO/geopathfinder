@@ -5,8 +5,7 @@ Changelog
 Version v0.1.1
 ==============
 
-- yeoda_naming: fixed time retrieval bug in YeodaFilename
-
+- fixed time retrieval bug in YeodaFilename
 
 Version v0.1.0
 ==============
