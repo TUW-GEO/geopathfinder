@@ -384,7 +384,7 @@ class TestSmartTree(unittest.TestCase):
 
         """
 
-        branch1 = self.stt_1.trim2branch('wflow', 'C1003', register_file_pattern=('.'))
+        branch1 = self.stt_1.get_subtree_unique_rebased('wflow', 'C1003', register_file_pattern=('.'))
         self.assertEqual(branch1.collect_level_topnames('root'), ['C1003'])
 
         self.assertEqual(branch1.dir_count, 4)
@@ -395,7 +395,7 @@ class TestSmartTree(unittest.TestCase):
         self.assertEqual(sorted(branch1.collect_level_topnames('tile')), should)
 
         # handling of multiple matches
-        branch2 = self.stt_1.trim2branch('grid', 'EQUI7_EU500M')
+        branch2 = self.stt_1.get_subtree_unique_rebased('grid', 'EQUI7_EU500M')
         self.assertEqual(branch2.dir_count, 0)
         self.assertEqual(len(branch2.file_register), 0)
         self.assertEqual(branch2.file_count, 0)
