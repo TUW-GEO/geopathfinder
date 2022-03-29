@@ -26,7 +26,6 @@ import datetime as dt
 from datetime import datetime
 from collections import OrderedDict
 
-from geopathfinder.folder_naming import SmartPath
 from geopathfinder.folder_naming import build_smarttree
 from geopathfinder.folder_naming import create_smartpath
 from geopathfinder.file_naming import SmartFilename
@@ -436,7 +435,7 @@ def sgrt_path(root, mode=None, group=None, datalog=None,
 
 
 def sgrt_tree(root, target_level=None, register_file_pattern=None,
-              subset_level=('grid'), subset_pattern=('EQUI7'), subset_unique=False):
+              subset_level=None, subset_pattern=None, subset_unique=False):
 
     """
     Realisation of the full SGRT folder naming convention, yielding a
