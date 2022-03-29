@@ -256,11 +256,12 @@ class YeodaFilename(SmartFilename):
             return relative_orbit
 
 
-def yeoda_path(root, product=None, data_version=None, grid=None, tile=None, qlook=True,
+def yeoda_path(root, product, data_version, grid=None, tile=None, qlook=True,
                make_dir=False):
     """
     Realisation of the full yeoda folder naming convention, yielding a single
     SmartPath.
+    If a keyword is not specified, the yeoda_path is shorthanded, until one level above the missing keyword
 
     Parameters
     ----------
@@ -271,13 +272,13 @@ def yeoda_path(root, product=None, data_version=None, grid=None, tile=None, qloo
         e.g. "ssm"
     data_version : int or str
         e.g. 2 or "V1M3R2"
-    grid : str
+    grid : str, optional
         e.g. "EQUI7_EU500M"
-    tile : str
+    tile : str, optional
         e.g. "E048N012T6"
-    qlook : bool
+    qlook : bool, optional
         if the quicklook subdir should be integrated
-    make_dir : bool
+    make_dir : bool, optional
         if the directory should be created on the filesystem
 
     Returns
@@ -306,11 +307,12 @@ def yeoda_path(root, product=None, data_version=None, grid=None, tile=None, qloo
     return create_smartpath(root, hierarchy=hierarchy, levels=levels, make_dir=make_dir)
 
 
-def yeoda_tree(root, target_level=None, register_file_pattern=None, grid_pattern=('EQUI7')):
+def yeoda_tree(root, target_level=None, register_file_pattern=None,
+               subset_level=('grid'), subset_pattern=('EQUI7'), subset_unique=False):
 
     """
     Realisation of the full yeoda folder naming convention, yielding a
-    SmartTree(), reflecting all subfolders as SmartPath()
+    SmartTree(), reflecting all compatible subfolders as SmartPath()
 
     Parameters
     ----------
@@ -329,12 +331,21 @@ def yeoda_tree(root, target_level=None, register_file_pattern=None, grid_pattern
         No asterisk is needed ('*')!
         Sequence of strings in given tuple is crucial!
         Be careful: If the tree is large, this can take a while!
-    grid_pattern : str tuple, optional
-        strings defining search pattern for file search for file_register
-        e.g. ('EQUI7', '500M'), or ('500M')
-        No asterisk is needed ('*')!
+    subset_level : str tuple, optional
+        Name of level in tree's hierarchy where the subset should be applied
+        e.g. ('tile').
+        Default level is ('grid')
+    subset_pattern : str tuple, optional
+        Strings defining search pattern for subset_level, meaning only paths
+        matching this pattern at "subset_level" will be included in the SmartTree()
+        Default pattern is ('EQUI7').
+        e.g. ('EQUI7', '500M'), or ('500M'). No asterisk is needed ('*')!
         Sequence of strings in given tuple is crucial!
-        Default is 'EQUI7'
+    subset_unique : bool, optional
+        defines of the subset will deliver...
+            True: just one single subtree that matches uniquely the subset_pattern,
+                  and which is rebased to the subset_level.
+            False: all subtrees that match the subset_pattern (Default).
 
     Returns
     -------
@@ -345,15 +356,22 @@ def yeoda_tree(root, target_level=None, register_file_pattern=None, grid_pattern
     # defining the hierarchy
     hierarchy = ['product', 'data_version', 'grid', 'tile', 'qlook']
 
-    sgrt_tree = build_smarttree(root, hierarchy,
+    yeoda_tree = build_smarttree(root, hierarchy,
                                 target_level=target_level,
                                 register_file_pattern=register_file_pattern)
 
+    # limit the tree to a subtree with all paths that match the subset_pattern at subset_level
+    if subset_level is not None and not subset_unique:
+        yeoda_tree = yeoda_tree.get_subtree_matching(subset_level, subset_pattern,
+                                                     register_file_pattern=register_file_pattern)
 
-    if grid_pattern is not None:
-        sgrt_tree = sgrt_tree.get_subtree_matching('grid', grid_pattern)
+    # limit the tree to a single, unique, small subtree that matches the subset_pattern at subset_level,
+    # which is re-rooted to that level.
+    elif subset_level is not None:
+        yeoda_tree = yeoda_tree.get_subtree_unique_rebased(subset_level, subset_pattern,
+                                                           register_file_pattern=register_file_pattern)
 
-    return sgrt_tree
+    return yeoda_tree
 
 
 if __name__ == '__main__':

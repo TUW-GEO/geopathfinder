@@ -315,9 +315,9 @@ class TestYeodaTreeSubset(unittest.TestCase):
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 
-    def test_grid_pattern(self):
+    def test_subtree_subsetting(self):
         """
-        Test the tree to handle logfiles correctly
+        Test the tree to handle subsetting correctly
 
         """
 
@@ -330,10 +330,16 @@ class TestYeodaTreeSubset(unittest.TestCase):
 
         os.makedirs(os.path.join(stp1.get_level('data_version'), 'logfiles', 'dummy'))
 
-        yt = yeoda_tree(self.test_dir, grid_pattern=('EQUI7', '500M'))
-
+        # test get_subtree_matching() to get limited number of paths matching the level pattern.
+        yt = yeoda_tree(self.test_dir, subset_pattern=('EQUI7', '500M'))
         self.assertEqual(yt.dir_count, 2)
         self.assertEqual(sorted(yt.collect_level_topnames('grid')), ['EQUI7_AF500M', 'EQUI7_EU500M'])
+
+        # test get_subtree_unique_rebased() to get small, single, unique subtree,
+        # which is is re-rooted to that level
+        st = yt.get_subtree_unique_rebased('tile', 'E048N012T6')
+        self.assertEqual(st.dir_count, 1)
+        self.assertEqual(st.root, stp1.get_level('tile'))
 
 
 if __name__ == "__main__":

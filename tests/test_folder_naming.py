@@ -267,8 +267,10 @@ class TestSmartTree(unittest.TestCase):
         Tests the dir_ and file_count of SmartTree()
 
         """
-        self.assertEqual(self.stt_1.dir_count, 9)
-        self.assertEqual(self.stt_1.file_count, 17)
+        # PS: "logfiles" are kicked out with subset_level in
+        #       self.stt_1 = sgrt_tree(self.test_dir, register_file_pattern='.tif', subset_level='grid')
+        self.assertEqual(self.stt_1.dir_count, 8)
+        self.assertEqual(self.stt_1.file_count, 16)
         # TODO: should be 16 "file_too_deep.tif" should be not included in
         # file_register!
 
@@ -423,8 +425,7 @@ class TestSmartTree(unittest.TestCase):
                                         level='wflow', level_pattern='A0202')
 
         files = next(os.walk(self.copy_dir))[2]
-        file_count = sum(
-            [len(files) for r, d, files in os.walk(self.copy_dir)])
+        file_count = sum([len(files) for r, d, files in os.walk(self.copy_dir)])
 
         self.assertEqual(file_count, 4)
 
@@ -474,8 +475,10 @@ class TestSmartTree(unittest.TestCase):
         self.assertAlmostEqual(result['du'][0], sig0_du, places=2)
 
         # test complete query result
+        # PS: "logfiles" are kicked out with subset_level in
+        #      self.stt_1 = sgrt_tree(self.test_dir, register_file_pattern='.tif', subset_level='grid')
         result = self.stt_1.get_disk_usage(unit='KB')
-        self.assertEqual(result.shape, (33, 10))
+        self.assertEqual(result.shape, (32, 10))
         should = ['E006N006T1', 'E006N006T1', 'E006N006T6', 'E006N006T6', 'E006N006T6', 'E006N006T6', 'E006N006T6',
                   'E006N006T6', 'E006N006T6', 'E006N006T6', 'E006N006T6', 'E006N012T6', 'E006N012T6', 'E048N012T6',
                   'E048N012T6', 'E048N012T6', 'E048N012T6', 'E048N012T6']
