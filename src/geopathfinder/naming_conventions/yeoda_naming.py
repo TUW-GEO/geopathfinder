@@ -288,11 +288,13 @@ def yeoda_path(root, product, data_version, grid=None, tile=None, qlook=True,
     """
 
     # define the data_version and run number folder name
-    if data_version is not None:
-        if isinstance(data_version, int):
-            data_version = 'V' + str(data_version)
+    if isinstance(data_version, int):
+        data_version = 'V' + str(data_version)
+    elif isinstance(data_version, str):
+        if not data_version.startswith('V'):
+            raise ValueError('data_version must be defined properly as string starting with "V"!')
     else:
-        raise ValueError('data_version must be defined!')
+        raise ValueError('data_version must be defined properly as string or as integer!')
 
     # defining the folder levels
     levels = [product, data_version, grid, tile, 'qlooks']
