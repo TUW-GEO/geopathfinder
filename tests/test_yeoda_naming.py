@@ -258,6 +258,24 @@ class TestYeodaPath(unittest.TestCase):
         self.assertEqual(stp3.directory, should)
 
 
+    def test_data_version(self):
+        """
+        Tests if the dataversion can be handled correctly.
+
+        """
+        stp1 = yeoda_path(self.test_dir, product='SSM', data_version='V3M2R1', grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=False)
+        self.assertEqual(stp1.levels['data_version'], 'V3M2R1')
+
+        stp2 = yeoda_path(self.test_dir, product='SSM', data_version=135, grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=False)
+        self.assertEqual(stp2.levels['data_version'], 'V135')
+
+        with self.assertRaises(Exception) as context:
+            stp3 = yeoda_path(self.test_dir, product='SSM', data_version='v12', grid='EQUI7_EU500M', tile='E048N012T6', qlook=True, make_dir=False)
+        self.assertTrue(type(context.exception) == ValueError)
+
+
 class TestYeodaTree(unittest.TestCase):
     """
     Tests checking if a yeoda tree is correctly reflected by yeoda_tree.
