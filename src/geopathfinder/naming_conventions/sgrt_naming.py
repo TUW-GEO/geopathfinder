@@ -26,7 +26,6 @@ import datetime as dt
 from datetime import datetime
 from collections import OrderedDict
 
-from geopathfinder.folder_naming import SmartPath
 from geopathfinder.folder_naming import build_smarttree
 from geopathfinder.folder_naming import create_smartpath
 from geopathfinder.file_naming import SmartFilename
@@ -435,7 +434,8 @@ def sgrt_path(root, mode=None, group=None, datalog=None,
                      make_dir=make_dir)
 
 
-def sgrt_tree(root, target_level=None, register_file_pattern=None):
+def sgrt_tree(root, target_level=None, register_file_pattern=None,
+              subset_level=None, subset_pattern=None, subset_unique=False):
 
     """
     Realisation of the full SGRT folder naming convention, yielding a
@@ -458,6 +458,21 @@ def sgrt_tree(root, target_level=None, register_file_pattern=None):
         No asterisk is needed ('*')!
         Sequence of strings in given tuple is crucial!
         Be careful: If the tree is large, this can take a while!
+    subset_level : str tuple, optional
+        Name of level in tree's hierarchy where the subset should be applied
+        e.g. ('tile').
+        Default level is ('grid')
+    subset_pattern : str tuple, optional
+        Strings defining search pattern for subset_level, meaning only paths
+        matching this pattern at "subset_level" will be included in the SmartTree().
+        Default pattern is ('EQUI7').
+        e.g. ('EQUI7', '500M'), or ('500M'). No asterisk is needed ('*')!
+        Sequence of strings in given tuple is crucial!
+    subset_unique : bool, optional
+        defines of the subset will deliver...
+            True: just one single subtree that matches uniquely the subset_pattern,
+                  and which is rebased to the subset_level.
+            False: all subtrees that match the subset_pattern (Default).
 
     Returns
     -------
@@ -478,6 +493,17 @@ def sgrt_tree(root, target_level=None, register_file_pattern=None):
     else:
         raise ValueError('Root-directory "{}" does is '
                          'not a valid SGRT folder!'.format(root))
+
+    # limit the tree to a subtree with all paths that match the subset_pattern at subset_level
+    if subset_level is not None and not subset_unique:
+        sgrt_tree = sgrt_tree.get_subtree_matching(subset_level, subset_pattern,
+                                                   register_file_pattern=register_file_pattern)
+
+    # limit the tree to a single, unique, small subtree that matches the subset_pattern at subset_level,
+    # which is re-rooted to that level.
+    elif subset_level is not None:
+        sgrt_tree = sgrt_tree.get_subtree_unique_rebased(subset_level, subset_pattern,
+                                                         register_file_pattern=register_file_pattern)
 
     return sgrt_tree
 

@@ -845,19 +845,25 @@ class SmartTree(object):
         self.count_dirs()
 
 
-    def trim2branch(self, level, pattern, register_file_pattern=None):
+    def get_subtree_matching(self, level, level_pattern, register_file_pattern=None):
         '''
-        Returns a branch (a subtree) of a SmartTree that matches with
-        the pattern at the given level.
+        Returns a subtree of the SmartTree with branches comprising
+        ALL matches with the pattern at the given level.
 
         Parameters
         ----------
         level : str
             Name of level in hierarchy.
             e.g. 'wflow'
-        pattern : str
+        level_pattern : str
             string defining search pattern at given level
             e.g. 'C1003'
+        register_file_pattern : str tuple, optional
+            strings defining search pattern for file search for file_register
+            e.g. ('C1003', 'E048N012T6')
+            No asterisk is needed ('*')!
+            Sequence of strings in given tuple is crucial!
+            Be careful: If the tree is large, this can take a while!
 
         Returns
         -------
@@ -868,13 +874,72 @@ class SmartTree(object):
 
         branch = copy.deepcopy(self)
 
-        branch_path = self.collect_level_string(level, pattern=pattern, unique=True)
+        branch_paths = self.collect_level_string(level, pattern=level_pattern, unique=True)
+
+        if len(branch_paths) == 0:
+            warnings.warn('get_subtree_unique_rebased(): No matches for "level_pattern" at "level"!')
+            return NullSmartTree(self.root)
+        else:
+            for d in self.dirs.keys():
+                match = [x for x in branch_paths if x in d]
+                if len(match) == 0:
+                    branch.remove_smartpath(d)
+
+            # update stats
+            branch.count_dirs()
+            file_register = []
+            file_count = 0
+            # update file_register
+            if register_file_pattern is not None:
+                for sp in branch.dirs.values():
+                    sp.build_file_register(pattern=register_file_pattern)
+                    file_register += sp.file_register
+                    file_count += sp.file_count
+
+            branch.file_register = file_register
+            branch.file_count = file_count
+            branch.has_register = True
+
+            return branch
+
+
+    def get_subtree_unique_rebased(self, level, level_pattern, register_file_pattern=None):
+        '''
+        Returns a single branch (a subtree) of the SmartTree
+        with ONE UNIQUE match with the pattern at the given level.
+        Performs rebasing to deeper root.
+
+        Parameters
+        ----------
+        level : str
+            Name of level in hierarchy.
+            e.g. 'wflow'
+        level_pattern : str
+            string defining search pattern at given level
+            e.g. 'C1003'
+        register_file_pattern : str tuple, optional
+            strings defining search pattern for file search for file_register
+            e.g. ('C1003', 'E048N012T6')
+            No asterisk is needed ('*')!
+            Sequence of strings in given tuple is crucial!
+            Be careful: If the tree is large, this can take a while!
+
+        Returns
+        -------
+        branch : SmartTree
+            SmartTree object that describes the seeked branch,
+            part of current SmartTree
+        '''
+
+        branch = copy.deepcopy(self)
+
+        branch_path = self.collect_level_string(level, pattern=level_pattern, unique=True)
 
         if len(branch_path) == 0:
-            warnings.warn('trim2branch(): No matches for "pattern" at "level"!')
+            warnings.warn('get_subtree_unique_rebased(): No matches for "level_pattern" at "level"!')
             return NullSmartTree(self.root)
         elif len(branch_path) > 1:
-            warnings.warn('trim2branch(): Multiple matches for "pattern" at "level"!')
+            warnings.warn('get_subtree_unique_rebased(): Multiple matches for "level_pattern" at "level"!')
             return NullSmartTree(self.root)
         else:
             for d in self.dirs.keys():
@@ -973,7 +1038,7 @@ class SmartTree(object):
             source_dir = self.root
             base_folder = self.collect_level_topnames('root')[0]
         else:
-            branch = self.trim2branch(level, level_pattern, register_file_pattern=file_pattern)
+            branch = self.get_subtree_unique_rebased(level, level_pattern, register_file_pattern=file_pattern)
             source_dir = branch.collect_level_string('root', level_pattern, unique=True)[0]
             base_folder = branch.collect_level_topnames('root')[0]
 
@@ -1032,9 +1097,7 @@ def create_smartpath(root, hierarchy, levels, make_dir=False):
 def build_smarttree(root,
                     hierarchy,
                     target_level=None,
-                    register_file_pattern=None,
-                    trim_level=None,
-                    trim_pattern=None):
+                    register_file_pattern=None):
     '''
     Function walking through directories in root path for building a structure
     of SmartPaths. Can also search for files.
@@ -1058,17 +1121,11 @@ def build_smarttree(root,
         No asterisk is needed ('*')!
         Sequence of strings in given tuple is crucial!
         Be careful: If the tree is large, this can take a while!
-    trim_level : str
-        Name of level in hierarchy that is subject to the trimming
-        e.g. 'grid'
-    trim_pattern : str or list of str
-        string defining search pattern at trimming level, meaning only paths
-        matching this pattern at "trim_level" will be included in the
-        SmartTree()
-        e.g. 'EQUI7_EU500M'
 
     Returns
     -------
+    SmartTree
+        Tree object for the dataset.
 
     '''
 
@@ -1087,13 +1144,12 @@ def build_smarttree(root,
         depth += [len(dirpath.split(os.sep)) - root_depth]
         # if set, then files are registered
         # (they are in the memory anyway at this moment)
-        if trim_level is None:
-            if register_file_pattern is not None:
-                files, count = regex_file_search(dirpath,
-                                                 register_file_pattern,
-                                                 full_paths=True)
-                smart_tree.file_register += files
-                smart_tree.file_count += count
+        if register_file_pattern is not None:
+            files, count = regex_file_search(dirpath,
+                                             register_file_pattern,
+                                             full_paths=True)
+            smart_tree.file_register += files
+            smart_tree.file_count += count
     alldirs = np.array(alldirs)
 
     # only select paths reaching given target level
@@ -1136,11 +1192,10 @@ def build_smarttree(root,
         smart_tree.add_smartpath(smart_path)
 
         # to register only files down to target level
-        if trim_level is None:
-            if register_file_pattern is not None and target_level is not None:
-                smart_path.build_file_register(down_to_level=target_level,
-                                               pattern=register_file_pattern)
-                file_register += smart_path.file_register
+        if register_file_pattern is not None and target_level is not None:
+            smart_path.build_file_register(down_to_level=target_level,
+                                           pattern=register_file_pattern)
+            file_register += smart_path.file_register
 
         smart_path = None
         levels = None
@@ -1149,14 +1204,9 @@ def build_smarttree(root,
     smart_tree.count_dirs()
 
     # register only files in paths down to target level
-    if trim_level is None:
-        if register_file_pattern is not None and target_level is not None:
-            smart_tree.file_register = list(set(file_register))
-            smart_tree.file_count = len(smart_tree.file_register)
-
-    if trim_level is not None and trim_pattern is not None:
-        smart_tree = smart_tree.trim2branch(trim_level, pattern=trim_pattern,
-                                            register_file_pattern=register_file_pattern)
+    if register_file_pattern is not None and target_level is not None:
+        smart_tree.file_register = list(set(file_register))
+        smart_tree.file_count = len(smart_tree.file_register)
 
     if register_file_pattern is not None:
         smart_tree.has_register = True

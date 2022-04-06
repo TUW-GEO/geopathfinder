@@ -16,6 +16,7 @@
 
 
 import os
+import shutil
 import unittest
 import logging
 from datetime import datetime, time, date
@@ -256,20 +257,24 @@ class TestYeodaPath(unittest.TestCase):
                           tile='E048N012T6', qlook=True, make_dir=False)
         self.assertEqual(stp3.directory, should)
 
-    def test_logfile_path(self):
+
+    def test_data_version(self):
         """
-        Test the path for logfiles.
+        Tests if the dataversion can be handled correctly.
 
         """
+        stp1 = yeoda_path(self.test_dir, product='SSM', data_version='V3M2R1', grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=False)
+        self.assertEqual(stp1.levels['data_version'], 'V3M2R1')
 
-        should = os.path.join(self.test_dir, 'SSM', 'logfiles')
-        stp1 = yeoda_path(self.test_dir, datalog='logfiles', product='SSM', make_dir=False)
-        self.assertEqual(stp1.directory, should)
+        stp2 = yeoda_path(self.test_dir, product='SSM', data_version=135, grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=False)
+        self.assertEqual(stp2.levels['data_version'], 'V135')
 
-        # test too much input
-        stp2 = yeoda_path(self.test_dir, datalog='logfiles', product='SSM', data_version='V3M2R1', grid='EQUI7_EU500M',
-                         tile='E048N012T6', qlook=True, make_dir=False)
-        self.assertEqual(stp2.directory, should)
+        with self.assertRaises(Exception) as context:
+            stp3 = yeoda_path(self.test_dir, product='SSM', data_version='v12', grid='EQUI7_EU500M', tile='E048N012T6', qlook=True, make_dir=False)
+        self.assertTrue(type(context.exception) == ValueError)
+
 
 class TestYeodaTree(unittest.TestCase):
     """
@@ -285,7 +290,6 @@ class TestYeodaTree(unittest.TestCase):
             os.path.abspath(__file__)), 'test_data', 'Sentinel-1_CSAR_IWGRDH')
         self.hierarchy_should = ['root', 'product', 'data_version', 'grid', 'tile', 'qlook']
         self.stt = yeoda_tree(self.test_dir, register_file_pattern='.tif')
-
 
     def test_tree_hierarchy(self):
         """
@@ -307,6 +311,53 @@ class TestYeodaTree(unittest.TestCase):
 
         self.assertTrue(all([len(x.split(os.sep)) <= max_depth_allowed
                              for x in self.stt.get_all_dirs()]))
+
+
+class TestYeodaTreeSubset(unittest.TestCase):
+    """
+    Tests checking if a yeoda tree is correctly reflected by yeoda_tree.
+    """
+
+    def setUp(self):
+        """
+        Setting up the test yeoda_tree.
+        """
+
+        self.test_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_data', 'Sentinel-123')
+        os.mkdir(self.test_dir)
+        self.hierarchy_should = ['root', 'product', 'data_version', 'grid', 'tile', 'qlook']
+        self.stt = yeoda_tree(self.test_dir, register_file_pattern='.tif')
+
+
+    def tearDown(self):
+        if os.path.exists(self.test_dir):
+            shutil.rmtree(self.test_dir)
+
+    def test_subtree_subsetting(self):
+        """
+        Test the tree to handle subsetting correctly
+
+        """
+
+        stp1 = yeoda_path(self.test_dir, product='SSM', data_version='V3M2R1', grid='EQUI7_EU500M',
+                          tile='E048N012T6', qlook=True, make_dir=True)
+        stp2 = yeoda_path(self.test_dir, product='SSM', data_version='V3M2R1', grid='EQUI7_AF500M',
+                          tile='E066N030T6', qlook=True, make_dir=True)
+        stp3 = yeoda_path(self.test_dir, product='SSM', data_version='V3M2R1', grid='EQUI7_NA040M',
+                          tile='E066N030T3', qlook=True, make_dir=True)
+
+        os.makedirs(os.path.join(stp1.get_level('data_version'), 'logfiles', 'dummy'))
+
+        # test get_subtree_matching() to get limited number of paths matching the level pattern.
+        yt = yeoda_tree(self.test_dir, subset_pattern=('EQUI7', '500M'))
+        self.assertEqual(yt.dir_count, 2)
+        self.assertEqual(sorted(yt.collect_level_topnames('grid')), ['EQUI7_AF500M', 'EQUI7_EU500M'])
+
+        # test get_subtree_unique_rebased() to get small, single, unique subtree,
+        # which is is re-rooted to that level
+        st = yt.get_subtree_unique_rebased('tile', 'E048N012T6')
+        self.assertEqual(st.dir_count, 1)
+        self.assertEqual(st.root, stp1.get_level('tile'))
 
 
 if __name__ == "__main__":

@@ -269,8 +269,7 @@ class TestSmartTree(unittest.TestCase):
         """
         self.assertEqual(self.stt_1.dir_count, 9)
         self.assertEqual(self.stt_1.file_count, 17)
-        # TODO: should be 16 "file_too_deep.tif" should be not included in
-        # file_register!
+        # TODO: should be 16 "file_too_deep.tif" should be not included in file_register!
 
 
     def test_get_smartpath(self):
@@ -384,7 +383,7 @@ class TestSmartTree(unittest.TestCase):
 
         """
 
-        branch1 = self.stt_1.trim2branch('wflow', 'C1003', register_file_pattern=('.'))
+        branch1 = self.stt_1.get_subtree_unique_rebased('wflow', 'C1003', register_file_pattern=('.'))
         self.assertEqual(branch1.collect_level_topnames('root'), ['C1003'])
 
         self.assertEqual(branch1.dir_count, 4)
@@ -395,7 +394,7 @@ class TestSmartTree(unittest.TestCase):
         self.assertEqual(sorted(branch1.collect_level_topnames('tile')), should)
 
         # handling of multiple matches
-        branch2 = self.stt_1.trim2branch('grid', 'EQUI7_EU500M')
+        branch2 = self.stt_1.get_subtree_unique_rebased('grid', 'EQUI7_EU500M')
         self.assertEqual(branch2.dir_count, 0)
         self.assertEqual(len(branch2.file_register), 0)
         self.assertEqual(branch2.file_count, 0)
@@ -423,8 +422,7 @@ class TestSmartTree(unittest.TestCase):
                                         level='wflow', level_pattern='A0202')
 
         files = next(os.walk(self.copy_dir))[2]
-        file_count = sum(
-            [len(files) for r, d, files in os.walk(self.copy_dir)])
+        file_count = sum([len(files) for r, d, files in os.walk(self.copy_dir)])
 
         self.assertEqual(file_count, 4)
 

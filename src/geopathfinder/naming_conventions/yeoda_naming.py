@@ -25,7 +25,6 @@ import datetime as dt
 from datetime import datetime
 from collections import OrderedDict
 
-from geopathfinder.folder_naming import SmartPath
 from geopathfinder.folder_naming import build_smarttree
 from geopathfinder.folder_naming import create_smartpath
 from geopathfinder.file_naming import SmartFilename
@@ -257,11 +256,12 @@ class YeodaFilename(SmartFilename):
             return relative_orbit
 
 
-def yeoda_path(root, product=None, data_version=None, datalog='datasets', grid=None, tile=None, qlook=True,
+def yeoda_path(root, product, data_version, grid=None, tile=None, qlook=True,
                make_dir=False):
     """
     Realisation of the full yeoda folder naming convention, yielding a single
     SmartPath.
+    If a keyword is not specified, the yeoda_path is shorthanded, until one level above the missing keyword
 
     Parameters
     ----------
@@ -272,15 +272,13 @@ def yeoda_path(root, product=None, data_version=None, datalog='datasets', grid=N
         e.g. "ssm"
     data_version : int or str
         e.g. 2 or "V1M3R2"
-    datalog : str
-        'datasets' or 'logfiles'
-    grid : str
+    grid : str, optional
         e.g. "EQUI7_EU500M"
-    tile : str
+    tile : str, optional
         e.g. "E048N012T6"
-    qlook : bool
+    qlook : bool, optional
         if the quicklook subdir should be integrated
-    make_dir : bool
+    make_dir : bool, optional
         if the directory should be created on the filesystem
 
     Returns
@@ -289,25 +287,14 @@ def yeoda_path(root, product=None, data_version=None, datalog='datasets', grid=N
         Object for the path
     """
 
-    # get logfile path
-    if datalog == 'datasets':
-        pass
-    elif datalog == 'logfiles':
-        data_version = 'logfiles'
-        grid = None
-        tile = None
-        qlook = False
-    else:
-        raise ValueError('Wrong input for "datalog" level!')
-
     # define the data_version and run number folder name
-    if data_version == 'logfiles':
-        pass
-    elif data_version is not None:
-        if isinstance(data_version, int):
-            data_version = 'V' + str(data_version)
+    if isinstance(data_version, int):
+        data_version = 'V' + str(data_version)
+    elif isinstance(data_version, str):
+        if not data_version.startswith('V'):
+            raise ValueError('data_version must be defined properly as string starting with "V"!')
     else:
-        raise ValueError('data_version must be defined!')
+        raise ValueError('data_version must be defined properly as string or as integer!')
 
     # defining the folder levels
     levels = [product, data_version, grid, tile, 'qlooks']
@@ -319,15 +306,15 @@ def yeoda_path(root, product=None, data_version=None, datalog='datasets', grid=N
         levels.remove('qlooks')
         hierarchy.remove('qlook')
 
-    return create_smartpath(root, hierarchy=hierarchy, levels=levels,
-                     make_dir=make_dir)
+    return create_smartpath(root, hierarchy=hierarchy, levels=levels, make_dir=make_dir)
 
 
-def yeoda_tree(root, target_level=None, register_file_pattern=None):
+def yeoda_tree(root, target_level=None, register_file_pattern=None,
+               subset_level=('grid'), subset_pattern=('EQUI7'), subset_unique=False):
 
     """
     Realisation of the full yeoda folder naming convention, yielding a
-    SmartTree(), reflecting all subfolders as SmartPath()
+    SmartTree(), reflecting all compatible subfolders as SmartPath()
 
     Parameters
     ----------
@@ -346,6 +333,21 @@ def yeoda_tree(root, target_level=None, register_file_pattern=None):
         No asterisk is needed ('*')!
         Sequence of strings in given tuple is crucial!
         Be careful: If the tree is large, this can take a while!
+    subset_level : str tuple, optional
+        Name of level in tree's hierarchy where the subset should be applied
+        e.g. ('tile').
+        Default level is ('grid')
+    subset_pattern : str tuple, optional
+        Strings defining search pattern for subset_level, meaning only paths
+        matching this pattern at "subset_level" will be included in the SmartTree()
+        Default pattern is ('EQUI7').
+        e.g. ('EQUI7', '500M'), or ('500M'). No asterisk is needed ('*')!
+        Sequence of strings in given tuple is crucial!
+    subset_unique : bool, optional
+        defines of the subset will deliver...
+            True: just one single subtree that matches uniquely the subset_pattern,
+                  and which is rebased to the subset_level.
+            False: all subtrees that match the subset_pattern (Default).
 
     Returns
     -------
@@ -356,11 +358,22 @@ def yeoda_tree(root, target_level=None, register_file_pattern=None):
     # defining the hierarchy
     hierarchy = ['product', 'data_version', 'grid', 'tile', 'qlook']
 
-    sgrt_tree = build_smarttree(root, hierarchy,
+    yeoda_tree = build_smarttree(root, hierarchy,
                                 target_level=target_level,
                                 register_file_pattern=register_file_pattern)
 
-    return sgrt_tree
+    # limit the tree to a subtree with all paths that match the subset_pattern at subset_level
+    if subset_level is not None and not subset_unique:
+        yeoda_tree = yeoda_tree.get_subtree_matching(subset_level, subset_pattern,
+                                                     register_file_pattern=register_file_pattern)
+
+    # limit the tree to a single, unique, small subtree that matches the subset_pattern at subset_level,
+    # which is re-rooted to that level.
+    elif subset_level is not None:
+        yeoda_tree = yeoda_tree.get_subtree_unique_rebased(subset_level, subset_pattern,
+                                                           register_file_pattern=register_file_pattern)
+
+    return yeoda_tree
 
 
 if __name__ == '__main__':

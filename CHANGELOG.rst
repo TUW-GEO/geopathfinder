@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version v0.1.2
+==============
+
+- logfiles are not anymore part of a yeoda_tree anymore, be default.
+- reform on smart_tree.get_subtree_matching() and smart_tree.get_subtree_unique_rebased()
+
 Version v0.1.1
 ==============
 
