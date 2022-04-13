@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version v0.1.3
+==============
+
+- added "creator" as last filename part in the yeoda_filenaming & SmartFilename allows now empty last entry
+
 Version v0.1.2
 ==============
 

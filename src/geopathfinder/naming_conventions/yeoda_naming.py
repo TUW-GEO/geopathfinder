@@ -44,7 +44,8 @@ class YeodaFilename(SmartFilename):
         ('tile_name', {'len': 0}),
         ('grid_name', {'len': 0}),
         ('data_version', {'len': 0}),
-        ('sensor_field', {'len': 0})
+        ('sensor_field', {'len': 0}),
+        ('creator', {'len': 0})
     ])
     pad = "-"
     delimiter = "_"

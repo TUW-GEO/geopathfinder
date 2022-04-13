@@ -265,8 +265,9 @@ class SmartFilename(object):
                     end = filename_str.find(delimiter, start) if delimiter in filename_str[start:] \
                         else filename_str.find('.', start)
                     length = end - start
-                # if length is not 0, i.e. an entry is available, then add the field. Otherwise skip it.
-                if length != 0:
+                # if length is not 0, i.e. an entry is available, then add the field. Otherwise skip it. N
+                # Negative length can come from undefined last entries
+                if length > 0:
                     fields[name] = filename_str[start:(start + length)]
             else:
                 length = 0
@@ -366,7 +367,7 @@ class SmartFilename(object):
                 fn_part_kwargs['encoder'] = keys['encoder']
             fn_part_kwargs['compact'] = self.compact
 
-            if last_key_name == name:  # set empty delimiter for last field
+            if name == last_key_name:  # set empty delimiter for last field
                 fn_part_kwargs['delimiter'] = ''
 
             # reset delimiter of last element to be empty
@@ -387,7 +388,12 @@ class SmartFilename(object):
         """
 
         fn_parts = list(self._fn_map.values())
+
         filename = ''.join([repr(fn_part) for fn_part in fn_parts])
+
+        # handle case if last field is not defined (skip the last delimeter then)
+        if filename.endswith(self.delimiter):
+            filename = filename[:-1]
 
         if self.ext is not None:
             filename += self.ext
