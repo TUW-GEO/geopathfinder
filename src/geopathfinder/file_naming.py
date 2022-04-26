@@ -256,8 +256,6 @@ class SmartFilename(object):
 
             # parse part of filename via start and end position
             if start is not None and length is not None:
-                start = value['start']
-                length = value['len']
                 fields[name] = filename_str[start:(start + length)]
             elif length is not None:
                 start = pos
