@@ -219,8 +219,8 @@ class SmartFilename(object):
         fields_def : OrderedDict
             Name of fields (keys) in right order and length (values). It must contain:
                 - "len": int
-                    Length of filename part (must be given).
-                    "0" to allow any length.
+                    Length (positive number) of filename part (must be given).
+                    0 to allow any length.
                 - "start": int, optional
                     Start index of filename part (default is 0).
                 - "delim": str, optional
@@ -244,40 +244,44 @@ class SmartFilename(object):
         ext = os.path.splitext(filename_str)[1]
 
         fields = dict()
-        start = 0
+        pos = 0
         for name, value in fields_def.items():
+            start = value.get('start')
+            length = value.get('len')
+            delim = value.get('delim')
+
+            if length is not None and length < 0:
+                err_msg = "The length of the attribute '{}' must be a positive number".format(name)
+                raise ValueError(err_msg)
+
             # parse part of filename via start and end position
-            if 'start' in value.keys() and 'len' in value.keys():
+            if start is not None and length is not None:
                 start = value['start']
                 length = value['len']
                 fields[name] = filename_str[start:(start + length)]
-            elif 'len' in value.keys():
+            elif length is not None:
+                start = pos
                 if compact:
                     length = 0
-                    if 'delim' in value.keys():
-                        if not value['delim']:
-                            raise Exception('The compact filename design requires a delimiter for each field!')
-                    elif not delimiter:
+                    if delim is None and delimiter is None:
                         raise Exception('The compact filename design requires a delimiter for each field!')
-                else:
-                    length = value['len']
+
                 if length == 0:  # handle variable length
                     end = filename_str.find(delimiter, start) if delimiter in filename_str[start:] \
                         else filename_str.find('.', start)
                     length = end - start
-                # if length is not 0, i.e. an entry is available, then add the field. Otherwise skip it. N
-                # Negative length can come from undefined last entries
+                # if length is not 0, i.e. an entry is available, then add the field. Otherwise skip it.
                 if length > 0:
                     fields[name] = filename_str[start:(start + length)]
             else:
                 length = 0
 
-            start += length
+            pos += length
 
-            if 'delim' in value.keys():
-                start += len(value['delim'])
+            if delim is not None:
+                pos += len(delim)
             else:
-                start += len(delimiter)
+                pos += len(delimiter)
 
         if cls.__name__ == "SmartFilename":
             return cls(fields, fields_def, ext=ext, convert=convert, pad=pad, delimiter=delimiter)
@@ -319,8 +323,8 @@ class SmartFilename(object):
         fields_def : OrderedDict
             Name of fields (keys) in right order and length (values). It must contain:
                 - "len": int
-                    Length of filename part (must be given).
-                    "0" to allow any length.
+                    Length (positive number) of filename part (must be given).
+                    0 to allow any length.
                 - "start": int, optional
                     Start index of filename part (default is 0).
                 - "delim": str, optional
@@ -357,6 +361,10 @@ class SmartFilename(object):
                 # check delimiter in case of zero length
                 if keys['len'] == 0 and fn_part_kwargs['delimiter'] == '':
                     err_msg = 'A variable field length (length = 0) requires a delimiter!'
+                    raise ValueError(err_msg)
+
+                if keys['len'] < 0:
+                    err_msg = "The length of the attribute '{}' must be a positive number".format(name)
                     raise ValueError(err_msg)
 
                 fn_part_kwargs['length'] = keys['len']
