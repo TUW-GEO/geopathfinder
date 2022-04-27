@@ -53,6 +53,11 @@ class TestYeodaFilename(unittest.TestCase):
         fn = 'TMENSIG40_20170725_20181225_M1__E048N012T6_EU500M_V04R01_ASAWS.tif'
         self.yeoda_fn6 = YeodaFilename.from_filename(fn, convert=True)
 
+        fn = 'SIG0_20210128T184253__VH__E036N039T3_EU020M_V1M0R1_S1AIWGRDH_TUWIEN.tif'
+        self.yeoda_fn7a = YeodaFilename.from_filename(fn, convert=True)
+        fn = 'SIG0_20210128T184253__VH__E036N039T3_EU020M_V1M0R1_S1AIWGRDH.tif'
+        self.yeoda_fn7b = YeodaFilename.from_filename(fn, convert=True)
+
 
     def test1_build_yeoda_filename(self):
         """
@@ -219,6 +224,39 @@ class TestYeodaFilename(unittest.TestCase):
 
         self.yeoda_fn5['band'] = ''
         self.assertEqual(str(self.yeoda_fn5), 'TMENSIG40_20170725_20181225__A146_E048N012T6_EU500M__ASAWS.tif')
+
+
+    def test8_optional_last_field(self):
+
+        # testing for case with creator field
+        self.assertEqual(self.yeoda_fn7a._build_fn(), 'SIG0_20210128T184253__VH__E036N039T3_EU020M_V1M0R1_S1AIWGRDH_TUWIEN.tif')
+
+        self.assertEqual(self.yeoda_fn7a['datetime_1'].date(), datetime(2021, 1, 28).date())
+        self.assertEqual(self.yeoda_fn7a['datetime_1'].time(), time(18, 42, 53))
+        self.assertEqual(self.yeoda_fn7a['var_name'], 'SIG0')
+        self.assertEqual(self.yeoda_fn7a['sensor_field'], 'S1AIWGRDH')
+        self.assertEqual(self.yeoda_fn7a['band'], 'VH')
+        self.assertEqual(self.yeoda_fn7a['extra_field'], None)
+        self.assertEqual(self.yeoda_fn7a['data_version'], 'V1M0R1')
+        self.assertEqual(self.yeoda_fn7a['grid_name'], 'EU020M')
+        self.assertEqual(self.yeoda_fn7a['tile_name'], 'E036N039T3')
+        self.assertEqual(self.yeoda_fn7a['creator'], 'TUWIEN')
+        self.assertEqual(self.yeoda_fn7a.ext, '.tif')
+
+        # testing for case without creator field
+        self.assertEqual(self.yeoda_fn7b._build_fn(), 'SIG0_20210128T184253__VH__E036N039T3_EU020M_V1M0R1_S1AIWGRDH.tif')
+
+        self.assertEqual(self.yeoda_fn7b['datetime_1'].date(), datetime(2021, 1, 28).date())
+        self.assertEqual(self.yeoda_fn7b['datetime_1'].time(), time(18, 42, 53))
+        self.assertEqual(self.yeoda_fn7b['var_name'], 'SIG0')
+        self.assertEqual(self.yeoda_fn7b['sensor_field'], 'S1AIWGRDH')
+        self.assertEqual(self.yeoda_fn7b['band'], 'VH')
+        self.assertEqual(self.yeoda_fn7b['extra_field'], None)
+        self.assertEqual(self.yeoda_fn7b['data_version'], 'V1M0R1')
+        self.assertEqual(self.yeoda_fn7b['grid_name'], 'EU020M')
+        self.assertEqual(self.yeoda_fn7b['tile_name'], 'E036N039T3')
+        self.assertEqual(self.yeoda_fn7b['creator'], None)
+        self.assertEqual(self.yeoda_fn7b.ext, '.tif')
 
 
 class TestYeodaPath(unittest.TestCase):
