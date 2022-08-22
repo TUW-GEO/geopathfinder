@@ -21,6 +21,8 @@ Yeoda folder and file name definition.
 
 import copy
 
+import numpy as np
+import pandas as pd
 import datetime as dt
 from datetime import datetime
 from collections import OrderedDict
@@ -230,6 +232,9 @@ class YeodaFilename(SmartFilename):
         str, object
             Original object or str object parsed from the given datetime object.
         """
+        if isinstance(datetime_obj, np.datetime64):
+            datetime_obj = pd.Timestamp(datetime_obj).to_pydatetime()
+
         if isinstance(datetime_obj, dt.datetime):
             return datetime_obj.strftime("%Y%m%dT%H%M%S")
         elif isinstance(datetime_obj, dt.date):
