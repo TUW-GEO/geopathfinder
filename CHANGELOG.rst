@@ -2,6 +2,11 @@
 Changelog
 =========
 
+Version v0.1.4
+==============
+
+- minor NumPy datetime conversion fix in YeodaFilename
+
 Version v0.1.3
 ==============
 
