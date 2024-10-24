@@ -43,9 +43,3 @@ The following description aims to show how to implement a new naming convention:
   To allow this, one can define methods tagged with *property* in the current class. *SmartFilename* then handles the properties of the inherited class equally to a common filename entry given in the field definition.
 
 - Add tests to "tests" and name the test file "test_[]_naming.py", where "[]" should be replaced by the abbreviation of the new naming convention.
-
-Note
-====
-
-This project has been set up using PyScaffold 3.1. For details and usage
-information on PyScaffold see https://pyscaffold.org/.
