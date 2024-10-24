@@ -43,3 +43,6 @@ MANIFEST
 
 # user defined
 .scripts
+
+.venv
+venv
