@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Vienna University of Technology (TU Wien), Department
+# Copyright (c) 2025, TU Wien
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
@@ -13,10 +13,8 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 Yeoda folder and file name definition.
-
 """
 
 import copy
@@ -37,18 +35,27 @@ class YeodaFilename(SmartFilename):
     Yeoda file name definition using SmartFilename class.
     """
 
-    fields_def = OrderedDict([
-        ('var_name', {'len': 0}),
-        ('datetime_1', {'len': 0}),
-        ('datetime_2', {'len': 0}),
-        ('band', {'len': 0}),
-        ('extra_field', {'len': 0}),
-        ('tile_name', {'len': 0}),
-        ('grid_name', {'len': 0}),
-        ('data_version', {'len': 0}),
-        ('sensor_field', {'len': 0}),
-        ('creator', {'len': 0})
-    ])
+    fields_def = OrderedDict([('var_name', {
+        'len': 0
+    }), ('datetime_1', {
+        'len': 0
+    }), ('datetime_2', {
+        'len': 0
+    }), ('band', {
+        'len': 0
+    }), ('extra_field', {
+        'len': 0
+    }), ('tile_name', {
+        'len': 0
+    }), ('grid_name', {
+        'len': 0
+    }), ('data_version', {
+        'len': 0
+    }), ('sensor_field', {
+        'len': 0
+    }), ('creator', {
+        'len': 0
+    })])
     pad = "-"
     delimiter = "_"
 
@@ -77,15 +84,26 @@ class YeodaFilename(SmartFilename):
             self.single_date = True
 
         fields_def_ext = copy.deepcopy(YeodaFilename.fields_def)
-        fields_def_ext['datetime_1']['decoder'] = lambda x: self.decode_datetime(x)
-        fields_def_ext['datetime_1']['encoder'] = lambda x: self.encode_datetime(x)
-        fields_def_ext['datetime_2']['decoder'] = lambda x: self.decode_datetime(x)
-        fields_def_ext['datetime_2']['encoder'] = lambda x: self.encode_datetime(x)
-        fields_def_ext['extra_field']['decoder'] = lambda x: self.decode_extra_field(x)
-        fields_def_ext['extra_field']['encoder'] = lambda x: self.encode_extra_field(x)
+        fields_def_ext['datetime_1'][
+            'decoder'] = lambda x: self.decode_datetime(x)
+        fields_def_ext['datetime_1'][
+            'encoder'] = lambda x: self.encode_datetime(x)
+        fields_def_ext['datetime_2'][
+            'decoder'] = lambda x: self.decode_datetime(x)
+        fields_def_ext['datetime_2'][
+            'encoder'] = lambda x: self.encode_datetime(x)
+        fields_def_ext['extra_field'][
+            'decoder'] = lambda x: self.decode_extra_field(x)
+        fields_def_ext['extra_field'][
+            'encoder'] = lambda x: self.encode_extra_field(x)
 
-        super(YeodaFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=YeodaFilename.pad,
-                                           delimiter=YeodaFilename.delimiter, convert=convert, compact=True)
+        super(YeodaFilename, self).__init__(fields,
+                                            fields_def_ext,
+                                            ext=ext,
+                                            pad=YeodaFilename.pad,
+                                            delimiter=YeodaFilename.delimiter,
+                                            convert=convert,
+                                            compact=True)
 
     @classmethod
     def from_filename(cls, filename_str, convert=False):
@@ -105,8 +123,12 @@ class YeodaFilename(SmartFilename):
             Class representing an Yeoda filename.
         """
 
-        return super().from_filename(filename_str, YeodaFilename.fields_def, pad=YeodaFilename.pad,
-                                     delimiter=YeodaFilename.delimiter, convert=convert, compact=True)
+        return super().from_filename(filename_str,
+                                     YeodaFilename.fields_def,
+                                     pad=YeodaFilename.pad,
+                                     delimiter=YeodaFilename.delimiter,
+                                     convert=convert,
+                                     compact=True)
 
     @property
     def stime(self):
@@ -262,7 +284,12 @@ class YeodaFilename(SmartFilename):
             return relative_orbit
 
 
-def yeoda_path(root, product, data_version, grid=None, tile=None, qlook=True,
+def yeoda_path(root,
+               product,
+               data_version,
+               grid=None,
+               tile=None,
+               qlook=True,
                make_dir=False):
     """
     Realisation of the full yeoda folder naming convention, yielding a single
@@ -298,9 +325,12 @@ def yeoda_path(root, product, data_version, grid=None, tile=None, qlook=True,
         data_version = 'V' + str(data_version)
     elif isinstance(data_version, str):
         if not data_version.startswith('V'):
-            raise ValueError('data_version must be defined properly as string starting with "V"!')
+            raise ValueError(
+                'data_version must be defined properly as string starting with "V"!'
+            )
     else:
-        raise ValueError('data_version must be defined properly as string or as integer!')
+        raise ValueError(
+            'data_version must be defined properly as string or as integer!')
 
     # defining the folder levels
     levels = [product, data_version, grid, tile, 'qlooks']
@@ -312,12 +342,18 @@ def yeoda_path(root, product, data_version, grid=None, tile=None, qlook=True,
         levels.remove('qlooks')
         hierarchy.remove('qlook')
 
-    return create_smartpath(root, hierarchy=hierarchy, levels=levels, make_dir=make_dir)
+    return create_smartpath(root,
+                            hierarchy=hierarchy,
+                            levels=levels,
+                            make_dir=make_dir)
 
 
-def yeoda_tree(root, target_level=None, register_file_pattern=None,
-               subset_level=('grid'), subset_pattern=('EQUI7'), subset_unique=False):
-
+def yeoda_tree(root,
+               target_level=None,
+               register_file_pattern=None,
+               subset_level=('grid'),
+               subset_pattern=('EQUI7'),
+               subset_unique=False):
     """
     Realisation of the full yeoda folder naming convention, yielding a
     SmartTree(), reflecting all compatible subfolders as SmartPath()
@@ -364,20 +400,25 @@ def yeoda_tree(root, target_level=None, register_file_pattern=None,
     # defining the hierarchy
     hierarchy = ['product', 'data_version', 'grid', 'tile', 'qlook']
 
-    yeoda_tree = build_smarttree(root, hierarchy,
-                                target_level=target_level,
-                                register_file_pattern=register_file_pattern)
+    yeoda_tree = build_smarttree(root,
+                                 hierarchy,
+                                 target_level=target_level,
+                                 register_file_pattern=register_file_pattern)
 
     # limit the tree to a subtree with all paths that match the subset_pattern at subset_level
     if subset_level is not None and not subset_unique:
-        yeoda_tree = yeoda_tree.get_subtree_matching(subset_level, subset_pattern,
-                                                     register_file_pattern=register_file_pattern)
+        yeoda_tree = yeoda_tree.get_subtree_matching(
+            subset_level,
+            subset_pattern,
+            register_file_pattern=register_file_pattern)
 
     # limit the tree to a single, unique, small subtree that matches the subset_pattern at subset_level,
     # which is re-rooted to that level.
     elif subset_level is not None:
-        yeoda_tree = yeoda_tree.get_subtree_unique_rebased(subset_level, subset_pattern,
-                                                           register_file_pattern=register_file_pattern)
+        yeoda_tree = yeoda_tree.get_subtree_unique_rebased(
+            subset_level,
+            subset_pattern,
+            register_file_pattern=register_file_pattern)
 
     return yeoda_tree
 

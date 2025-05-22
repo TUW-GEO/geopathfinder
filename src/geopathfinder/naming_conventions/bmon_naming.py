@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Vienna University of Technology (TU Wien), Department
+# Copyright (c) 2025, TU Wien
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
@@ -13,7 +13,6 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 BMon file name definition.
 
@@ -28,17 +27,20 @@ from geopathfinder.file_naming import SmartFilename
 
 
 class BMonFilename(SmartFilename):
-
     """
     BMon file name definition using SmartFilename class.
     """
 
-    fields_def = OrderedDict([
-        ('var_name', {'len': 16}),
-        ('sres', {'len': 4, 'start': 17}),
-        ('timestamp', {'len': 14}),
-        ('version', {'len': 2})
-    ])
+    fields_def = OrderedDict([('var_name', {
+        'len': 16
+    }), ('sres', {
+        'len': 4,
+        'start': 17
+    }), ('timestamp', {
+        'len': 14
+    }), ('version', {
+        'len': 2
+    })])
     pad = "-"
     delimiter = "_"
 
@@ -59,11 +61,18 @@ class BMonFilename(SmartFilename):
         self.timestamp_format = "%Y%m%d%H%M%S"
 
         fields_def_ext = copy.deepcopy(BMonFilename.fields_def)
-        fields_def_ext['timestamp']['decoder'] = lambda x: self.decode_timestamp(x)
-        fields_def_ext['timestamp']['encoder'] = lambda x: self.encode_timestamp(x)
+        fields_def_ext['timestamp'][
+            'decoder'] = lambda x: self.decode_timestamp(x)
+        fields_def_ext['timestamp'][
+            'encoder'] = lambda x: self.encode_timestamp(x)
 
-        super(BMonFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=BMonFilename.pad,
-                                           delimiter=BMonFilename.delimiter, convert=convert, compact=compact)
+        super(BMonFilename, self).__init__(fields,
+                                           fields_def_ext,
+                                           ext=ext,
+                                           pad=BMonFilename.pad,
+                                           delimiter=BMonFilename.delimiter,
+                                           convert=convert,
+                                           compact=compact)
 
     @classmethod
     def from_filename(cls, filename_str, convert=False, compact=False):
@@ -83,8 +92,12 @@ class BMonFilename(SmartFilename):
             Class representing a BMON filename.
         """
 
-        return super().from_filename(filename_str, BMonFilename.fields_def, pad=BMonFilename.pad,
-                                     delimiter=BMonFilename.delimiter, convert=convert, compact=compact)
+        return super().from_filename(filename_str,
+                                     BMonFilename.fields_def,
+                                     pad=BMonFilename.pad,
+                                     delimiter=BMonFilename.delimiter,
+                                     convert=convert,
+                                     compact=compact)
 
     def decode_timestamp(self, string):
         """
@@ -125,6 +138,7 @@ class BMonFilename(SmartFilename):
             return time_obj.strftime(self.timestamp_format)
         else:
             return time_obj
+
 
 if __name__ == '__main__':
     pass

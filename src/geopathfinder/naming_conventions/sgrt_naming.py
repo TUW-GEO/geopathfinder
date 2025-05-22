@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Vienna University of Technology (TU Wien), Department
+# Copyright (c) 2025, TU Wien
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
@@ -13,7 +13,6 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 SGRT folder and file name definition.
 
@@ -30,38 +29,58 @@ from geopathfinder.folder_naming import build_smarttree
 from geopathfinder.folder_naming import create_smartpath
 from geopathfinder.file_naming import SmartFilename
 
-
 # Please add here new sensors if they follow the SGRT naming convention.
-allowed_sensor_dirs = ['Sentinel-1_CSAR',
-                       'SCATSAR',
-                       'METOP_ASCAT',
-                       'Envisat_ASAR']
+allowed_sensor_dirs = [
+    'Sentinel-1_CSAR', 'SCATSAR', 'METOP_ASCAT', 'Envisat_ASAR'
+]
 
 
 class SgrtFilename(SmartFilename):
-
     """
     SGRT file name definition using SmartFilename class.
     """
 
-    fields_def = OrderedDict([
-        ('pflag', {'len': 1, 'delim': ''}),
-        ('dtime_1', {'len': 8}),
-        ('dtime_2', {'len': 8}),
-        ('var_name', {'len': 9}),
-        ('mission_id', {'len': 2, 'delim': ''}),
-        ('spacecraft_id', {'len': 1, 'delim': ''}),
-        ('mode_id', {'len': 2, 'delim': ''}),
-        ('product_type', {'len': 3, 'delim': ''}),
-        ('res_class', {'len': 1, 'delim': ''}),
-        ('level', {'len': 1, 'delim': ''}),
-        ('pol', {'len': 2, 'delim': ''}),
-        ('orbit_direction', {'len': 1}),
-        ('relative_orbit', {'len': 3}),
-        ('workflow_id', {'len': 5}),
-        ('grid_name', {'len': 6}),
-        ('tile_name', {'len': 10})
-    ])
+    fields_def = OrderedDict([('pflag', {
+        'len': 1,
+        'delim': ''
+    }), ('dtime_1', {
+        'len': 8
+    }), ('dtime_2', {
+        'len': 8
+    }), ('var_name', {
+        'len': 9
+    }), ('mission_id', {
+        'len': 2,
+        'delim': ''
+    }), ('spacecraft_id', {
+        'len': 1,
+        'delim': ''
+    }), ('mode_id', {
+        'len': 2,
+        'delim': ''
+    }), ('product_type', {
+        'len': 3,
+        'delim': ''
+    }), ('res_class', {
+        'len': 1,
+        'delim': ''
+    }), ('level', {
+        'len': 1,
+        'delim': ''
+    }), ('pol', {
+        'len': 2,
+        'delim': ''
+    }), ('orbit_direction', {
+        'len': 1
+    }), ('relative_orbit', {
+        'len': 3
+    }), ('workflow_id', {
+        'len': 5
+    }), ('grid_name', {
+        'len': 6
+    }), ('tile_name', {
+        'len': 10
+    })])
     pad = "-"
     delimiter = "_"
 
@@ -92,7 +111,8 @@ class SgrtFilename(SmartFilename):
                 if fields['dtime_2'].endswith('--'):
                     self.single_date = True
             else:
-                if isinstance(fields['dtime_2'], dt.time) or (fields['dtime_2'].year < 1950):
+                if isinstance(fields['dtime_2'],
+                              dt.time) or (fields['dtime_2'].year < 1950):
                     self.single_date = True
 
         if 'dtime_1' in fields.keys():
@@ -113,11 +133,18 @@ class SgrtFilename(SmartFilename):
         fields_def_ext['dtime_1']['encoder'] = lambda x: self.encode_date(x)
         fields_def_ext['dtime_2']['decoder'] = lambda x: self.decode_time(x)
         fields_def_ext['dtime_2']['encoder'] = lambda x: self.encode_time(x)
-        fields_def_ext['relative_orbit']['decoder'] = lambda x: self.decode_rel_orbit(x)
-        fields_def_ext['relative_orbit']['encoder'] = lambda x: self.encode_rel_orbit(x)
+        fields_def_ext['relative_orbit'][
+            'decoder'] = lambda x: self.decode_rel_orbit(x)
+        fields_def_ext['relative_orbit'][
+            'encoder'] = lambda x: self.encode_rel_orbit(x)
 
-        super(SgrtFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=SgrtFilename.pad,
-                                           delimiter=SgrtFilename.delimiter, convert=convert, compact=compact)
+        super(SgrtFilename, self).__init__(fields,
+                                           fields_def_ext,
+                                           ext=ext,
+                                           pad=SgrtFilename.pad,
+                                           delimiter=SgrtFilename.delimiter,
+                                           convert=convert,
+                                           compact=compact)
 
     @classmethod
     def from_filename(cls, filename_str, convert=False, compact=False):
@@ -137,8 +164,12 @@ class SgrtFilename(SmartFilename):
             Class representing an SGRT filename.
         """
 
-        return super().from_filename(filename_str, SgrtFilename.fields_def, pad=SgrtFilename.pad,
-                                     delimiter=SgrtFilename.delimiter, convert=convert, compact=compact)
+        return super().from_filename(filename_str,
+                                     SgrtFilename.fields_def,
+                                     pad=SgrtFilename.pad,
+                                     delimiter=SgrtFilename.delimiter,
+                                     convert=convert,
+                                     compact=compact)
 
     @property
     def stime(self):
@@ -151,7 +182,9 @@ class SgrtFilename(SmartFilename):
             Start time.
         """
         try:
-            return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_1"]
+            return datetime.combine(
+                self["dtime_1"],
+                self["dtime_2"]) if self.single_date else self["dtime_1"]
         except TypeError:
             return None
 
@@ -166,7 +199,9 @@ class SgrtFilename(SmartFilename):
             End time.
         """
         try:
-            return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_2"]
+            return datetime.combine(
+                self["dtime_1"],
+                self["dtime_2"]) if self.single_date else self["dtime_2"]
         except TypeError:
             return None
 
@@ -200,7 +235,10 @@ class SgrtFilename(SmartFilename):
             product type (e.g., 'GRD') and resolution class (e.g., 'H').
         """
         try:
-            product_id = "".join([self["mission_id"], self["spacecraft_id"], self["mode_id"], self["product_type"], self["res_class"]])
+            product_id = "".join([
+                self["mission_id"], self["spacecraft_id"], self["mode_id"],
+                self["product_type"], self["res_class"]
+            ])
         except TypeError:
             product_id = None
 
@@ -258,7 +296,8 @@ class SgrtFilename(SmartFilename):
         """
         if isinstance(string, str):
             if self.single_date:
-                return datetime.time(datetime.strptime(string, self.time_format))
+                return datetime.time(
+                    datetime.strptime(string, self.time_format))
             else:
                 return self.decode_date(string)
         else:
@@ -344,9 +383,17 @@ class SgrtFilename(SmartFilename):
             return relative_orbit
 
 
-def sgrt_path(root, mode=None, group=None, datalog=None,
-              product=None, wflow=None, grid=None, tile=None, var=None,
-              qlook=True, make_dir=False):
+def sgrt_path(root,
+              mode=None,
+              group=None,
+              datalog=None,
+              product=None,
+              wflow=None,
+              grid=None,
+              tile=None,
+              var=None,
+              qlook=True,
+              make_dir=False):
     """
     Realisation of the full SGRT folder naming convention, yielding a single
     SmartPath.
@@ -403,7 +450,6 @@ def sgrt_path(root, mode=None, group=None, datalog=None,
     else:
         raise ValueError('Wrong input for "datalog" level!')
 
-
     # define the group folder name
     if group is None:
         if wflow.startswith('A'):
@@ -415,28 +461,31 @@ def sgrt_path(root, mode=None, group=None, datalog=None,
         else:
             raise ValueError('Wrong input for "wflow" level!')
 
-
     # defining the folder levels
-    levels = [mode, group,
-              datalog, product, wflow, grid,
-              tile,  var, 'qlooks']
+    levels = [mode, group, datalog, product, wflow, grid, tile, var, 'qlooks']
 
     # defining the hierarchy
-    hierarchy = ['mode', 'group',
-                 'datalog', 'product', 'wflow', 'grid',
-                 'tile', 'var', 'qlook']
+    hierarchy = [
+        'mode', 'group', 'datalog', 'product', 'wflow', 'grid', 'tile', 'var',
+        'qlook'
+    ]
 
     if qlook is False:
         levels.remove('qlooks')
         hierarchy.remove('qlook')
 
-    return create_smartpath(root, hierarchy=hierarchy, levels=levels,
-                     make_dir=make_dir)
+    return create_smartpath(root,
+                            hierarchy=hierarchy,
+                            levels=levels,
+                            make_dir=make_dir)
 
 
-def sgrt_tree(root, target_level=None, register_file_pattern=None,
-              subset_level=None, subset_pattern=None, subset_unique=False):
-
+def sgrt_tree(root,
+              target_level=None,
+              register_file_pattern=None,
+              subset_level=None,
+              subset_pattern=None,
+              subset_unique=False):
     """
     Realisation of the full SGRT folder naming convention, yielding a
     SmartTree(), reflecting all subfolders as SmartPath()
@@ -481,29 +530,36 @@ def sgrt_tree(root, target_level=None, register_file_pattern=None,
     """
 
     # defining the hierarchy
-    hierarchy = ['mode', 'group','datalog',
-                 'product', 'wflow', 'grid',
-                 'tile', 'var', 'qlook']
+    hierarchy = [
+        'mode', 'group', 'datalog', 'product', 'wflow', 'grid', 'tile', 'var',
+        'qlook'
+    ]
 
     # Check for allowed directory topnames for "root".
     if root.split(os.sep)[-1] in allowed_sensor_dirs:
-        sgrt_tree = build_smarttree(root, hierarchy,
-                                    target_level=target_level,
-                                    register_file_pattern=register_file_pattern)
+        sgrt_tree = build_smarttree(
+            root,
+            hierarchy,
+            target_level=target_level,
+            register_file_pattern=register_file_pattern)
     else:
         raise ValueError('Root-directory "{}" does is '
                          'not a valid SGRT folder!'.format(root))
 
     # limit the tree to a subtree with all paths that match the subset_pattern at subset_level
     if subset_level is not None and not subset_unique:
-        sgrt_tree = sgrt_tree.get_subtree_matching(subset_level, subset_pattern,
-                                                   register_file_pattern=register_file_pattern)
+        sgrt_tree = sgrt_tree.get_subtree_matching(
+            subset_level,
+            subset_pattern,
+            register_file_pattern=register_file_pattern)
 
     # limit the tree to a single, unique, small subtree that matches the subset_pattern at subset_level,
     # which is re-rooted to that level.
     elif subset_level is not None:
-        sgrt_tree = sgrt_tree.get_subtree_unique_rebased(subset_level, subset_pattern,
-                                                         register_file_pattern=register_file_pattern)
+        sgrt_tree = sgrt_tree.get_subtree_unique_rebased(
+            subset_level,
+            subset_pattern,
+            register_file_pattern=register_file_pattern)
 
     return sgrt_tree
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Vienna University of Technology (TU Wien), Department
+# Copyright (c) 2025, TU Wien
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
@@ -13,7 +13,6 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 Module handling folder trees.
 """
@@ -32,7 +31,6 @@ import pandas as pd
 
 
 class SmartPath(object):
-
     """
     Base class for the single path structure to a data set.
     - allows building a path,
@@ -70,7 +68,8 @@ class SmartPath(object):
                 self.make_dir()
 
         else:
-            raise ValueError('Levels are not reflected by the given hierarchy!')
+            raise ValueError(
+                'Levels are not reflected by the given hierarchy!')
 
     def __getitem__(self, level):
         """
@@ -89,7 +88,6 @@ class SmartPath(object):
         """
         return self.get_level(level)
 
-
     def print_file_register(self):
         '''
         Nice function to print nicely all registered files to screen.
@@ -97,14 +95,12 @@ class SmartPath(object):
 
         print('\n'.join(self.file_register))
 
-
     def print_dir(self):
         '''
         Nice function to print nicely the directory of the path.
         '''
 
         print(self.directory)
-
 
     def get_dir(self, make_dir=False):
         """
@@ -183,7 +179,6 @@ class SmartPath(object):
             print('\'{}\' is not part of the path\'s hierarchy. '
                   'Try on of {}.'.format(level, self.hierarchy))
 
-
     def remove_level(self, level):
         '''
         In the SmartPath-instance, it removes a level from the hierarchy
@@ -205,7 +200,6 @@ class SmartPath(object):
         else:
             print('Level \'{}\' is not in hierarchy!')
 
-
     def trim2level(self, level, remove='deeper_including'):
         '''
         Removes all levels that are higher or equal to given level.
@@ -220,17 +214,20 @@ class SmartPath(object):
             e.g. "deeper_including" removes the level itself, and deeper levels.
         '''
 
-        dict = {'deeper_including': '>=',
-                'deeper_excluding': '>',
-                'higher_including': '<=',
-                'higher_excluding': '<'}
+        dict = {
+            'deeper_including': '>=',
+            'deeper_excluding': '>',
+            'higher_including': '<=',
+            'higher_excluding': '<'
+        }
 
         if level in self.hierarchy:
 
             hierarchy = copy.copy(self.hierarchy)
             level_ind = hierarchy.index(level)
             indxs = np.array(range(len(hierarchy)))
-            cmd = 'np.array(hierarchy)[indxs {} {}].tolist()'.format(dict[remove], level_ind)
+            cmd = 'np.array(hierarchy)[indxs {} {}].tolist()'.format(
+                dict[remove], level_ind)
             subset = eval(cmd)
 
             for h in subset:
@@ -238,7 +235,6 @@ class SmartPath(object):
 
         else:
             print('Level \'{}\' is not in hierarchy!')
-
 
     def base_onto_root(self, root):
         '''
@@ -258,7 +254,6 @@ class SmartPath(object):
 
         self.__init__(self.levels, self.hierarchy)
 
-
     def expand_full_path(self, level, files):
         """
         Joins the path at level with given filenames.
@@ -276,7 +271,6 @@ class SmartPath(object):
             Full file path.
         """
         return expand_full_path(self[level], files)
-
 
     def search_files(self, level, pattern=('.'), full_paths=False):
         """
@@ -300,13 +294,18 @@ class SmartPath(object):
         if level not in self.levels.keys():
             return []
         else:
-            return regex_file_search(self.build_levels(level), pattern,
-                                 full_paths=full_paths)[0]
+            return regex_file_search(self.build_levels(level),
+                                     pattern,
+                                     full_paths=full_paths)[0]
 
-
-    def search_files_ts(self, level, pattern=('.'),
-                        date_position=1, date_format='%Y%m%d_%H%M%S',
-                        starttime=None, endtime=None, full_paths=False):
+    def search_files_ts(self,
+                        level,
+                        pattern=('.'),
+                        date_position=1,
+                        date_format='%Y%m%d_%H%M%S',
+                        starttime=None,
+                        endtime=None,
+                        full_paths=False):
         """
         Function searching files at a level in the SmartPath,
         returning the filenames and the datetimes as pd.DataFrame
@@ -337,8 +336,9 @@ class SmartPath(object):
         """
 
         files = self.search_files(level, pattern=pattern)
-        times = extract_times(
-            files, date_position=date_position, date_format=date_format)
+        times = extract_times(files,
+                              date_position=date_position,
+                              date_format=date_format)
 
         if full_paths:
             files = self.expand_full_path(level, files)
@@ -355,8 +355,10 @@ class SmartPath(object):
 
         return df
 
-
-    def build_file_register(self, down_to_level=None, up_to_level=None, pattern=('.')):
+    def build_file_register(self,
+                            down_to_level=None,
+                            up_to_level=None,
+                            pattern=('.')):
         """
         Builds a file register collecting files at all levels in the SmartPath.
 
@@ -385,7 +387,9 @@ class SmartPath(object):
         # search files at each level
         for h in idx:
             if self.levels[h] is not None:
-                r, c = regex_file_search(self.build_levels(level=h), pattern, full_paths=True)
+                r, c = regex_file_search(self.build_levels(level=h),
+                                         pattern,
+                                         full_paths=True)
                 file_register += r
                 file_count += c
 
@@ -393,8 +397,11 @@ class SmartPath(object):
         self.file_count = file_count
         self.has_register = True
 
-
-    def get_disk_usage(self, unit=None, up_to_level=None, down_to_level=None, file_pattern=('.')):
+    def get_disk_usage(self,
+                       unit=None,
+                       up_to_level=None,
+                       down_to_level=None,
+                       file_pattern=('.')):
         '''
         Computes the disk usage for each SmartPath and creates a Pandas DataFrame.
 
@@ -417,12 +424,13 @@ class SmartPath(object):
 
         '''
 
-
-        self.build_file_register(down_to_level=down_to_level, up_to_level=up_to_level,
+        self.build_file_register(down_to_level=down_to_level,
+                                 up_to_level=up_to_level,
                                  pattern=file_pattern)
 
         # compute size of directory
-        nbytes = sum([os.path.getsize(filepath) for filepath in self.file_register])
+        nbytes = sum(
+            [os.path.getsize(filepath) for filepath in self.file_register])
         dir_size = transform_bytes(nbytes, unit=unit)
 
         return np.round(dir_size, 3)
@@ -433,6 +441,7 @@ class NullSmartPath(SmartPath):
     Class for non-exiting paths. Helps to avoid errors.
 
     '''
+
     def __init__(self):
         super(NullSmartPath, self).__init__({}, [], make_dir=False)
 
@@ -472,7 +481,6 @@ class SmartTree(object):
             if not os.path.exists(self.root):
                 os.makedirs(self.root)
 
-
     def __getitem__(self, pattern):
         '''
         Shortcut for get_smartpath()
@@ -482,7 +490,6 @@ class SmartTree(object):
 
         return self.get_smartpath(pattern)
 
-
     def print_root(self):
         '''
         Function to print nicely the root to screen.
@@ -490,7 +497,6 @@ class SmartTree(object):
         '''
 
         print(self.root)
-
 
     def print_all_dirs(self):
         '''
@@ -500,7 +506,6 @@ class SmartTree(object):
 
         print('\n'.join(self.get_all_dirs()))
 
-
     def print_file_register(self):
         '''
         Nice function to print nicely all registered files to screen.
@@ -508,24 +513,22 @@ class SmartTree(object):
 
         print('\n'.join(self.file_register))
 
-
     def print_collect_level(self, level, pattern=None, unique=False):
         '''
         Nice function to print nicely output from collect_level_string()
         '''
 
-        print('\n'.join(self.collect_level_string(level, pattern=pattern,
-                                                  unique=unique)))
-
+        print('\n'.join(
+            self.collect_level_string(level, pattern=pattern, unique=unique)))
 
     def print_collect_level_topnames(self, level, pattern=None, unique=True):
         '''
         Nice function to print nicely output from collect_level_topnames()
         '''
 
-        print('\n'.join(self.collect_level_topnames(level, pattern=pattern,
-                                                    unique=unique)))
-
+        print('\n'.join(
+            self.collect_level_topnames(level, pattern=pattern,
+                                        unique=unique)))
 
     def file_register_search(self, pattern, full_paths=True):
         """
@@ -547,7 +550,9 @@ class SmartTree(object):
         pattern = patterns_2_regex(pattern)
 
         regex = re.compile(pattern)
-        files = [f for f in self.file_register if regex.match(os.path.basename(f))]
+        files = [
+            f for f in self.file_register if regex.match(os.path.basename(f))
+        ]
 
         if not full_paths:
             files = [os.path.basename(f) for f in files]
@@ -557,7 +562,6 @@ class SmartTree(object):
             return file
         else:
             return sorted(files)
-
 
     def get_all_smartpaths(self):
         '''
@@ -571,7 +575,6 @@ class SmartTree(object):
 
         return list(self.dirs.values())
 
-
     def get_all_dirs(self):
         '''
         Returns all full paths in the SmartTree
@@ -584,8 +587,8 @@ class SmartTree(object):
 
         return sorted(list(self.dirs.keys()))
 
-
-    def get_disk_usage(self, unit='KB',
+    def get_disk_usage(self,
+                       unit='KB',
                        group_by=[],
                        file_pattern=('.'),
                        total=False):
@@ -627,28 +630,40 @@ class SmartTree(object):
             for smpt in smpts_at_level:
                 dir_elems = smpt.get_dir().replace(self.root, '').split(os.sep)
                 dir_elems = map(lambda x: x.replace(os.sep, ''), dir_elems)
-                dir_elems = [dir_elem for dir_elem in dir_elems if dir_elem != '']
+                dir_elems = [
+                    dir_elem for dir_elem in dir_elems if dir_elem != ''
+                ]
 
                 # fill up levels below with None
                 remaining_levels = n - (i + 2) + 1
                 dir_elems += [None] * remaining_levels
 
-                filepaths = smpt.search_files(level, pattern=file_pattern, full_paths=True)
-                filepaths = [filepath for filepath in filepaths if filepath in self.file_register]
+                filepaths = smpt.search_files(level,
+                                              pattern=file_pattern,
+                                              full_paths=True)
+                filepaths = [
+                    filepath for filepath in filepaths
+                    if filepath in self.file_register
+                ]
 
                 # get the disk usage of all files at the current level
-                nbytes = sum([os.path.getsize(filepath) for filepath in filepaths])
+                nbytes = sum(
+                    [os.path.getsize(filepath) for filepath in filepaths])
                 disk_usage = transform_bytes(nbytes, unit=unit)
 
                 dir_elems.append(disk_usage)
                 dir_size_table.append(dir_elems)
 
         # create Pandas DataFrame
-        df = pd.DataFrame(data=dir_size_table, columns=self.hierarchy[1:] + ['du'])
+        df = pd.DataFrame(data=dir_size_table,
+                          columns=self.hierarchy[1:] + ['du'])
 
         # return total disk usage
         if total:
-            return pd.DataFrame(data=[[self.collect_level_topnames('root')[0], df['du'].sum()]], columns=['root', 'du'])
+            return pd.DataFrame(
+                data=[[self.collect_level_topnames('root')[0],
+                       df['du'].sum()]],
+                columns=['root', 'du'])
         # return disk usage of each SmartPaths
         elif group_by == []:
             return df
@@ -656,14 +671,12 @@ class SmartTree(object):
         else:
             return df.groupby(group_by).sum()
 
-
     def count_dirs(self):
         '''
         Sets the dir_count the SmartTree
         '''
 
         self.dir_count = len(self.dirs)
-
 
     def get_smartpath(self, pattern):
         '''
@@ -700,7 +713,6 @@ class SmartTree(object):
         else:
             return self.dirs[matching_paths[0]]
 
-
     def collect_level_string(self, level, pattern=None, unique=False):
         '''
         Returns a list of paths at given level,
@@ -721,12 +733,13 @@ class SmartTree(object):
             list of paths at given level, matching the given pattern
         '''
 
-        result = self.collect_level_smartpath(level=level, pattern=pattern, unique=unique)
+        result = self.collect_level_smartpath(level=level,
+                                              pattern=pattern,
+                                              unique=unique)
 
         strings = [x.get_dir() for x in result]
 
         return strings
-
 
     def collect_level_smartpath(self, level, pattern=None, unique=False):
         '''
@@ -766,13 +779,13 @@ class SmartTree(object):
         result = np.array(result)
         if unique:
             # remove duplicates after trimming the tree
-            _, uni_idx = np.unique([x.get_dir() for x in result], return_index=True)
+            _, uni_idx = np.unique([x.get_dir() for x in result],
+                                   return_index=True)
             result = result[uni_idx]
 
         sort_ind = np.argsort([x.get_dir() for x in result])
 
         return result[sort_ind].tolist()
-
 
     def collect_level_topnames(self, level, pattern=None, unique=True):
         '''
@@ -794,12 +807,13 @@ class SmartTree(object):
             list of folder-topnames at given level, matching the given pattern
         '''
 
-        paths = self.collect_level_string(level, pattern=pattern, unique=unique)
+        paths = self.collect_level_string(level,
+                                          pattern=pattern,
+                                          unique=unique)
 
         topnames = [x.split(os.sep)[-1] for x in paths]
 
         return topnames
-
 
     def add_smartpath(self, smartpath, make_dir=False):
         '''
@@ -830,7 +844,6 @@ class SmartTree(object):
             if make_dir:
                 smartpath.make_dir()
 
-
     def remove_smartpath(self, key):
         '''
         Removes the SmartPath with 'key' from the SmartTree
@@ -844,8 +857,10 @@ class SmartTree(object):
         self.dirs.pop(key)
         self.count_dirs()
 
-
-    def get_subtree_matching(self, level, level_pattern, register_file_pattern=None):
+    def get_subtree_matching(self,
+                             level,
+                             level_pattern,
+                             register_file_pattern=None):
         '''
         Returns a subtree of the SmartTree with branches comprising
         ALL matches with the pattern at the given level.
@@ -874,10 +889,14 @@ class SmartTree(object):
 
         branch = copy.deepcopy(self)
 
-        branch_paths = self.collect_level_string(level, pattern=level_pattern, unique=True)
+        branch_paths = self.collect_level_string(level,
+                                                 pattern=level_pattern,
+                                                 unique=True)
 
         if len(branch_paths) == 0:
-            warnings.warn('get_subtree_unique_rebased(): No matches for "level_pattern" at "level"!')
+            warnings.warn(
+                'get_subtree_unique_rebased(): No matches for "level_pattern" at "level"!'
+            )
             return NullSmartTree(self.root)
         else:
             for d in self.dirs.keys():
@@ -902,8 +921,10 @@ class SmartTree(object):
 
             return branch
 
-
-    def get_subtree_unique_rebased(self, level, level_pattern, register_file_pattern=None):
+    def get_subtree_unique_rebased(self,
+                                   level,
+                                   level_pattern,
+                                   register_file_pattern=None):
         '''
         Returns a single branch (a subtree) of the SmartTree
         with ONE UNIQUE match with the pattern at the given level.
@@ -933,20 +954,27 @@ class SmartTree(object):
 
         branch = copy.deepcopy(self)
 
-        branch_path = self.collect_level_string(level, pattern=level_pattern, unique=True)
+        branch_path = self.collect_level_string(level,
+                                                pattern=level_pattern,
+                                                unique=True)
 
         if len(branch_path) == 0:
-            warnings.warn('get_subtree_unique_rebased(): No matches for "level_pattern" at "level"!')
+            warnings.warn(
+                'get_subtree_unique_rebased(): No matches for "level_pattern" at "level"!'
+            )
             return NullSmartTree(self.root)
         elif len(branch_path) > 1:
-            warnings.warn('get_subtree_unique_rebased(): Multiple matches for "level_pattern" at "level"!')
+            warnings.warn(
+                'get_subtree_unique_rebased(): Multiple matches for "level_pattern" at "level"!'
+            )
             return NullSmartTree(self.root)
         else:
             for d in self.dirs.keys():
                 if not branch_path[0] in d:
                     branch.remove_smartpath(d)
                 else:
-                    branch.dirs.get(d).trim2level(level, remove="higher_including")
+                    branch.dirs.get(d).trim2level(level,
+                                                  remove="higher_including")
                     branch.dirs.get(d).base_onto_root(branch_path[0])
 
             # update dir_count
@@ -1002,9 +1030,12 @@ class SmartTree(object):
         for _, smartpath in self.dirs.items():
             smartpath.make_dir()
 
-
-    def copy_smarttree_on_fs(self, target_dir, level=None, level_pattern='',
-                             file_pattern=None, file_list=None):
+    def copy_smarttree_on_fs(self,
+                             target_dir,
+                             level=None,
+                             level_pattern='',
+                             file_pattern=None,
+                             file_list=None):
         """
         Copies all files and directories in the SmartTree to a target
         directory, using shutil.copytree().
@@ -1038,8 +1069,11 @@ class SmartTree(object):
             source_dir = self.root
             base_folder = self.collect_level_topnames('root')[0]
         else:
-            branch = self.get_subtree_unique_rebased(level, level_pattern, register_file_pattern=file_pattern)
-            source_dir = branch.collect_level_string('root', level_pattern, unique=True)[0]
+            branch = self.get_subtree_unique_rebased(
+                level, level_pattern, register_file_pattern=file_pattern)
+            source_dir = branch.collect_level_string('root',
+                                                     level_pattern,
+                                                     unique=True)[0]
             base_folder = branch.collect_level_topnames('root')[0]
 
         target_dir = os.path.join(target_dir, base_folder)
@@ -1057,6 +1091,7 @@ class NullSmartTree(SmartTree):
     '''
     Class for non-exiting paths. Helps to avoid errors.
     '''
+
     def __init__(self, root):
         super(NullSmartTree, self).__init__(root, [], make_dir=False)
 
@@ -1275,8 +1310,7 @@ def extract_times(files, date_position=1, date_format='%Y%m%d_%H%M%S'):
     times = []
     for f in files:
         t = datetime.strptime(
-            f[date_position:date_position + len(date_format) + 2],
-            date_format)
+            f[date_position:date_position + len(date_format) + 2], date_format)
         times.append(t)
 
     return times
@@ -1352,7 +1386,10 @@ def regex_file_search(path, pattern, full_paths=True):
     return sorted(files), len(files)
 
 
-def copy_tree(source, dest, file_pattern=None, overwrite=False,
+def copy_tree(source,
+              dest,
+              file_pattern=None,
+              overwrite=False,
               file_list=None):
     """
     Copies a directory tree structure.
@@ -1423,7 +1460,8 @@ def transform_bytes(bytes, unit='KB'):
         except KeyError:
             raise KeyError('Unit {} unknown.'.format(unit))
 
-    return bytes*scale_factor
+    return bytes * scale_factor
+
 
 if __name__ == '__main__':
     pass

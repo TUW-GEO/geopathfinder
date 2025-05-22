@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Vienna University of Technology (TU Wien), Department
+# Copyright (c) 2025, TU Wien
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
@@ -13,7 +13,6 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 eoDR file name definition.
 
@@ -24,24 +23,23 @@ import os
 from datetime import datetime
 from collections import OrderedDict
 
-
 from geopathfinder.file_naming import SmartFilename
 
 
 class EODRFilename(SmartFilename):
-
     """
     eoDataReaders file name definition using SmartFilename class.
     """
 
-    fields_def = OrderedDict([
-        ('counter', {'len': 5}),
-        ('id', {'len': 12}),
-        ('dt_1', {'len': 15}),
-        ('dt_2', {'len': 15}),
-        ('file_num', {}),
-        ('band', {})
-    ])
+    fields_def = OrderedDict([('counter', {
+        'len': 5
+    }), ('id', {
+        'len': 12
+    }), ('dt_1', {
+        'len': 15
+    }), ('dt_2', {
+        'len': 15
+    }), ('file_num', {}), ('band', {})])
     pad = "-"
     delimiter = "_"
 
@@ -76,8 +74,13 @@ class EODRFilename(SmartFilename):
             if key not in fields_def_keys:
                 fields_def_ext[key] = {}
 
-        super(EODRFilename, self).__init__(fields, fields_def_ext, delimiter=EODRFilename.delimiter,
-                                           pad=EODRFilename.pad, ext=ext, convert=convert, compact=compact)
+        super(EODRFilename, self).__init__(fields,
+                                           fields_def_ext,
+                                           delimiter=EODRFilename.delimiter,
+                                           pad=EODRFilename.pad,
+                                           ext=ext,
+                                           convert=convert,
+                                           compact=compact)
 
     @classmethod
     def from_filename(cls, filename_str, convert=False, compact=False):
@@ -97,18 +100,24 @@ class EODRFilename(SmartFilename):
             Class representing an EODR filename.
         """
 
-        fn_parts = os.path.splitext(os.path.basename(filename_str))[0].split(EODRFilename.delimiter)
+        fn_parts = os.path.splitext(os.path.basename(filename_str))[0].split(
+            EODRFilename.delimiter)
         fields_def_ext = copy.deepcopy(EODRFilename.fields_def)
         fields_def_ext['file_num']['len'] = len(fn_parts[4])
-        fields_def_ext['band']['len'] = len(fn_parts[5])  # get length of the band in the filename
+        fields_def_ext['band']['len'] = len(
+            fn_parts[5])  # get length of the band in the filename
         # if the filename consists of more than 4 parts, additional "dimensions" are added to the fields dictionary
         if len(fn_parts) > 6:
             for i, fn_part in enumerate(fn_parts[6:]):
                 key = 'd' + str(i + 1)
                 fields_def_ext[key] = {'len': len(fn_part)}
 
-        return super().from_filename(filename_str, fields_def_ext, pad=EODRFilename.pad,
-                                     delimiter=EODRFilename.delimiter, convert=convert, compact=compact)
+        return super().from_filename(filename_str,
+                                     fields_def_ext,
+                                     pad=EODRFilename.pad,
+                                     delimiter=EODRFilename.delimiter,
+                                     convert=convert,
+                                     compact=compact)
 
     @property
     def stime(self):
@@ -223,6 +232,7 @@ class EODRFilename(SmartFilename):
             return "{:05d}".format(file_counter)
         else:
             return file_counter
+
 
 if __name__ == '__main__':
     pass

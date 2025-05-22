@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Vienna University of Technology (TU Wien), Department
+# Copyright (c) 2025, TU Wien
 # of Geodesy and Geoinformation (GEO).
 # All rights reserved.
 
@@ -13,10 +13,8 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 ACube file name definition.
-
 """
 
 import copy
@@ -28,22 +26,33 @@ from geopathfinder.file_naming import SmartFilename
 
 
 class ACubeFilename(SmartFilename):
-
     """
     ACube file name definition using SmartFilename class.
     """
 
-    fields_def = OrderedDict([
-        ('var_name', {'len': 9}),
-        ('algorithm', {'len': 7}),
-        ('sat_name', {'len': 3}),
-        ('product', {'len': 7, 'delim': ''}),
-        ('pol', {'len': 2, 'delim': ''}),
-        ('direction', {'len': 1}),
-        ('dtime_1', {'len': 8}),
-        ('dtime_2', {'len': 8}),
-        ('grid_name', {'len': 6}),
-        ('tile_name', {'len': 10})])
+    fields_def = OrderedDict([('var_name', {
+        'len': 9
+    }), ('algorithm', {
+        'len': 7
+    }), ('sat_name', {
+        'len': 3
+    }), ('product', {
+        'len': 7,
+        'delim': ''
+    }), ('pol', {
+        'len': 2,
+        'delim': ''
+    }), ('direction', {
+        'len': 1
+    }), ('dtime_1', {
+        'len': 8
+    }), ('dtime_2', {
+        'len': 8
+    }), ('grid_name', {
+        'len': 6
+    }), ('tile_name', {
+        'len': 10
+    })])
     pad = "-"
     delimiter = "_"
 
@@ -74,7 +83,8 @@ class ACubeFilename(SmartFilename):
                 if fields['dtime_2'].endswith('--'):
                     self.single_date = True
             else:
-                if isinstance(fields['dtime_2'], dt.time) or (fields['dtime_2'].year < 1950):
+                if isinstance(fields['dtime_2'],
+                              dt.time) or (fields['dtime_2'].year < 1950):
                     self.single_date = True
 
         if 'dtime_1' in fields.keys():
@@ -96,8 +106,13 @@ class ACubeFilename(SmartFilename):
         fields_def_ext['dtime_2']['decoder'] = lambda x: self.decode_time(x)
         fields_def_ext['dtime_2']['encoder'] = lambda x: self.encode_time(x)
 
-        super(ACubeFilename, self).__init__(fields, fields_def_ext, ext=ext, pad=ACubeFilename.pad,
-                                            delimiter=ACubeFilename.delimiter, convert=convert, compact=compact)
+        super(ACubeFilename, self).__init__(fields,
+                                            fields_def_ext,
+                                            ext=ext,
+                                            pad=ACubeFilename.pad,
+                                            delimiter=ACubeFilename.delimiter,
+                                            convert=convert,
+                                            compact=compact)
 
     @classmethod
     def from_filename(cls, filename_str, convert=False, compact=False):
@@ -117,8 +132,12 @@ class ACubeFilename(SmartFilename):
             Class representing an ACube file name.
         """
 
-        return super().from_filename(filename_str, ACubeFilename.fields_def, pad=ACubeFilename.pad,
-                                     delimiter=ACubeFilename.delimiter, convert=convert, compact=compact)
+        return super().from_filename(filename_str,
+                                     ACubeFilename.fields_def,
+                                     pad=ACubeFilename.pad,
+                                     delimiter=ACubeFilename.delimiter,
+                                     convert=convert,
+                                     compact=compact)
 
     @property
     def stime(self):
@@ -131,7 +150,9 @@ class ACubeFilename(SmartFilename):
             Start time.
         """
         try:
-            return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_1"]
+            return datetime.combine(
+                self["dtime_1"],
+                self["dtime_2"]) if self.single_date else self["dtime_1"]
         except TypeError:
             return None
 
@@ -146,7 +167,9 @@ class ACubeFilename(SmartFilename):
             End time.
         """
         try:
-            return datetime.combine(self["dtime_1"], self["dtime_2"]) if self.single_date else self["dtime_2"]
+            return datetime.combine(
+                self["dtime_1"],
+                self["dtime_2"]) if self.single_date else self["dtime_2"]
         except TypeError:
             return None
 
@@ -220,7 +243,8 @@ class ACubeFilename(SmartFilename):
         """
         if isinstance(string, str):
             if self.single_date:
-                return datetime.time(datetime.strptime(string, self.time_format))
+                return datetime.time(
+                    datetime.strptime(string, self.time_format))
             else:
                 return self.decode_date(string)
         else:
@@ -266,6 +290,7 @@ class ACubeFilename(SmartFilename):
                 return time_obj.strftime(self.date_format)
         else:
             return time_obj
+
 
 if __name__ == '__main__':
     pass
