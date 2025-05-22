@@ -1,5 +1,7 @@
+=============
 geopathfinder
 =============
+
 .. image:: https://github.com/TUW-GEO/geopathfinder/workflows/ubuntu/badge.svg
    :target: https://github.com/TUW-GEO/geopathfinder/actions/workflows/ubuntu.yml
 
