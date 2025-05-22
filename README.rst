@@ -1,10 +1,10 @@
 geopathfinder
 =============
-.. image:: https://travis-ci.org/TUW-GEO/geopathfinder.svg?branch=master
-    :target: https://travis-ci.org/TUW-GEO/geopathfinder
+.. image:: https://github.com/TUW-GEO/geopathfinder/workflows/ubuntu/badge.svg
+   :target: https://github.com/TUW-GEO/geopathfinder/actions/workflows/ubuntu.yml
 
-.. image:: https://coveralls.io/repos/github/TUW-GEO/geopathfinder/badge.svg?branch=master
-    :target: https://coveralls.io/github/TUW-GEO/geopathfinder?branch=master
+.. image:: https://github.com/TUW-GEO/geopathfinder/workflows/windows/badge.svg
+   :target: https://github.com/TUW-GEO/geopathfinder/actions/workflows/windows.yml
 
 .. image:: https://badge.fury.io/py/geopathfinder.svg
     :target: https://badge.fury.io/py/geopathfinder
