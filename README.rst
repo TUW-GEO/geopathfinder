@@ -47,5 +47,5 @@ The following description aims to show how to implement a new naming convention:
 Note
 ====
 
-This project has been set up using PyScaffold 3.1. For details and usage
+This project has been set up using PyScaffold 4.6. For details and usage
 information on PyScaffold see https://pyscaffold.org/.

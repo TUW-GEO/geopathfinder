@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version v0.2.0
+==============
+
+- Update project metadata
+- Remove pkg dependency
+
 Version v0.1.4
 ==============
 
